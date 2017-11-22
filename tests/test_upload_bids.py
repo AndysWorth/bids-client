@@ -1,3 +1,5 @@
+import csv
+import json
 import os
 import shutil
 import unittest
@@ -16,6 +18,16 @@ class BidsUploadTestCases(unittest.TestCase):
         # Cleanup 'testdir', if present
         if os.path.exists(self.testdir):
             shutil.rmtree(self.testdir)
+
+    def _create_json(self, filename, contents):
+        with open(filename, 'w') as fp:
+            fp.write(json.dumps(contents))
+
+    def _create_tsv(self, filename, contents):
+        with open(filename, 'w') as fp:
+            writer = csv.writer(fp, delimiter='\t')
+            for row in contents:
+                writer.writerow(row)
 
     def test_validate_dirname_valid(self):
         """ Assert function does not raise error when valid dirname an input"""
@@ -40,6 +52,358 @@ class BidsUploadTestCases(unittest.TestCase):
         # Assert SystemExit raised
         with self.assertRaises(SystemExit) as err:
             upload_bids.validate_dirname(filename)
+
+    def test_parse_bids_dir_valid(self):
+        """ """
+        pass
+
+    def test_handle_group_project_1layer(self):
+        """ Assert bids_hierarchy correctly identified and
+        group_id and project_label added to bids_hierarchy that
+        are passed to function
+        """
+        # Define inputs
+        bids_hierarchy = {
+                'sub-01': {
+                    'func': {'files': 'sub-01_bold.nii.gz'},
+                    'anat': {'files': 'sub-01_T1w.nii.gz'}
+                    },
+                'sub-02': {
+                    'func': {'files': 'sub-01_bold.nii.gz'},
+                    'anat': {'files': 'sub-01_T1w.nii.gz'}
+                    }
+                }
+        group_id_cli = 'group123'
+        project_label_cli = 'project123'
+        rootdir_original = '/path/to/bids'
+
+        # call function
+        #bh, rootdir = upload_bids.handle_group_project(
+        #                bids_hierarchy, group_id_cli,
+        #                project_label_cli, rootdir_original
+        #                )
+
+        # confirm the returned bids hierarchy has
+        #     group_id_cli and project_label_cli
+        #self.assertEqual(bh,
+        #        {group_id_cli: {project_label_cli : bids_hierarchy}})
+        #self.assertEqual(rootdir, rootdir_original)
+
+    def test_handle_group_project_2layers(self):
+        """  Assert bids_hierarchy correctly identified and
+        group_id and project_label added to bids_hierarchy that
+        are passed to function
+        """
+        # Define inputs
+        bids_hierarchy = {
+            'project_label_holder': {
+                'sub-01': {
+                    'func': {'files': 'sub-01_bold.nii.gz'},
+                    'anat': {'files': 'sub-01_T1w.nii.gz'}
+                    },
+                'sub-02': {
+                    'func': {'files': 'sub-01_bold.nii.gz'},
+                    'anat': {'files': 'sub-01_T1w.nii.gz'}
+                    }
+                }
+            }
+        group_id_cli = 'group123'
+        project_label_cli = 'project123'
+        rootdir_original = '/path/to/bids'
+        # call function
+        #bh, rootdir = upload_bids.handle_group_project(
+        #        bids_hierarchy, group_id_cli,
+        #        project_label_cli, rootdir_original)
+        # Assert dictionaries are equal
+        #self.assertEqual(bh,
+        #        {group_id_cli: {project_label_cli : bids_hierarchy['project_label_holder']}})
+        # Assert root directory
+        #self.assertEqual(
+        #        rootdir,
+        #        os.path.join(rootdir_original, 'project_label_holder')
+        #        )
+
+    def test_handle_group_project_3layers(self):
+        """  Assert bids_hierarchy correctly identified and
+        group_id and project_label added to bids_hierarchy that
+        are passed to function
+        """
+        # Define inputs
+        bids_hierarchy = {
+            'group_id_holder': {
+                'project_label_holder': {
+                    'sub-01': {
+                        'func': {'files': 'sub-01_bold.nii.gz'},
+                        'anat': {'files': 'sub-01_T1w.nii.gz'}
+                        },
+                    'sub-02': {
+                        'func': {'files': 'sub-01_bold.nii.gz'},
+                        'anat': {'files': 'sub-01_T1w.nii.gz'}
+                        }
+                    }
+                }
+            }
+        group_id_cli = 'group123'
+        project_label_cli = 'project123'
+        rootdir_original = '/path/to/bids'
+        # call function
+        #bh, rootdir = upload_bids.handle_group_project(
+        #        bids_hierarchy, group_id_cli, project_label_cli)
+        # confirm
+        #self.assertEqual(bh,
+        #        {group_id_cli: {
+        #            project_label_cli : bids_hierarchy['group_id_holder']['project_label_holder']}})
+        # Assert root directory
+        #self.assertEqual(
+        #        rootdir,
+        #        os.path.join(rootdir_original, 'group_id_holder', 'project_label_holder')
+        #        )
+
+    def test_handle_group_project_4layers(self):
+        """ """
+        # Define inputs
+        bids_hierarchy = {
+            'extra': {
+                'group_id_holder': {
+                    'project_label_holder': {
+                        'sub-01': {
+                            'func': {'files': 'sub-01_bold.nii.gz'},
+                            'anat': {'files': 'sub-01_T1w.nii.gz'}
+                            },
+                        'sub-02': {
+                            'func': {'files': 'sub-01_bold.nii.gz'},
+                            'anat': {'files': 'sub-01_T1w.nii.gz'}
+                            }
+                        }
+                    }
+                }
+            }
+        group_id_cli = 'group123'
+        project_label_cli = 'project123'
+        # call function
+        #bh = upload_bids.handle_group_project(
+        #        bids_hierarchy, group_id_cli, project_label_cli)
+        # confirm
+        #self.assertEqual(bh,
+        #        {group_id_cli: {
+        #            project_label_cli : bids_hierarchy['group_id_holder']['project_label_holder']}})
+
+
+    def test_handle_group_project_1layer_error(self):
+        """ Assert errors raised if group_id and project_label
+        are not given
+        """
+        # Define inputs
+        bids_hierarchy = {
+                'sub-01': {
+                    'func': {'files': 'sub-01_bold.nii.gz'},
+                    'anat': {'files': 'sub-01_T1w.nii.gz'}
+                    },
+                'sub-02': {
+                    'func': {'files': 'sub-01_bold.nii.gz'},
+                    'anat': {'files': 'sub-01_T1w.nii.gz'}
+                    }
+                }
+        group_id_cli = None
+        project_label_cli = None
+
+        # Assert SystemExit raised
+        #with self.assertRaises(SystemExit) as err:
+        #    upload_bids.handle_group_project(
+        #        bids_hierarchy, group_id_cli, project_label_cli)
+
+    def test_handle_group_project_2layers_error(self):
+        """ Assert errors raised if group_id and project_label
+        are not given
+        """
+        # Define inputs
+        bids_hierarchy = {
+            'project_label_holder': {
+                'sub-01': {
+                    'func': {'files': 'sub-01_bold.nii.gz'},
+                    'anat': {'files': 'sub-01_T1w.nii.gz'}
+                    },
+                'sub-02': {
+                    'func': {'files': 'sub-01_bold.nii.gz'},
+                    'anat': {'files': 'sub-01_T1w.nii.gz'}
+                    }
+                }
+            }
+        group_id_cli = None
+        project_label_cli = None
+        # Assert SystemExit raised
+        #with self.assertRaises(SystemExit) as err:
+        #    upload_bids.handle_group_project(
+        #        bids_hierarchy, group_id_cli, project_label_cli)
+
+    def test_handle_group_project_3layers_no_error(self):
+        """ Assert no errors raised if group_id and project_label
+        are not given
+        """
+        # Define inputs
+        bids_hierarchy = {
+            'group_id_holder': {
+                'project_label_holder': {
+                    'sub-01': {
+                        'func': {'files': 'sub-01_bold.nii.gz'},
+                        'anat': {'files': 'sub-01_T1w.nii.gz'}
+                        },
+                    'sub-02': {
+                        'func': {'files': 'sub-01_bold.nii.gz'},
+                        'anat': {'files': 'sub-01_T1w.nii.gz'}
+                        }
+                    }
+                }
+            }
+        group_id_cli = None
+        project_label_cli = None
+        # call function
+        #bh = upload_bids.handle_group_project(
+        #        bids_hierarchy, group_id_cli, project_label_cli)
+        # confirm dictionaries equal
+        #self.assertEqual(bh, bids_hierarchy)
+
+    def test_determine_acquisition_label_bids(self):
+        """ """
+        foldername = 'anat'
+        fname = 'sub-01_ses-01_T1w.nii.gz'
+        hierarchy_type = 'BIDS'
+        # Call function
+        acq_label = upload_bids.determine_acquisition_label(
+                foldername,
+                fname,
+                hierarchy_type
+                )
+        # Assert the foldername is used as the acquisition label
+        self.assertEqual(foldername, acq_label)
+
+    def test_determine_acquisition_label_flywheel_T1w(self):
+        """ """
+        foldername = 'anat'
+        fname = 'sub-control01_ses-01_T1w.nii.gz'
+        hierarchy_type = 'Flywheel'
+        # Call function
+        acq_label = upload_bids.determine_acquisition_label(
+                foldername,
+                fname,
+                hierarchy_type
+                )
+        # Assert base of the filename is used as the acquisition label
+        self.assertEqual('T1w', acq_label)
+
+    def test_determine_acquisition_label_flywheel_dwi(self):
+        """ """
+        foldername = 'dwi'
+        fname = 'sub-control01_ses-01_task-nback_dwi.nii.gz'
+        hierarchy_type = 'Flywheel'
+        # Call function
+        acq_label = upload_bids.determine_acquisition_label(
+                foldername,
+                fname,
+                hierarchy_type
+                )
+        # Assert base of the filename is used as the acquisition label
+        self.assertEqual('task-nback_dwi', acq_label)
+
+    def test_determine_acquisition_label_flywheel_niigz(self):
+        """ """
+        foldername = 'func'
+        fname = 'sub-control01_ses-01_task-nback_bold.nii.gz'
+        hierarchy_type = 'Flywheel'
+        # Call function
+        acq_label = upload_bids.determine_acquisition_label(
+                foldername,
+                fname,
+                hierarchy_type
+                )
+        # Assert base of the filename is used as the acquisition label
+        self.assertEqual('task-nback', acq_label)
+
+    def test_determine_acquisition_label_flywheel_json(self):
+        """ """
+        foldername = 'func'
+        fname = 'sub-control01_ses-01_task-nback_bold.json'
+        hierarchy_type = 'Flywheel'
+        # Call function
+        acq_label = upload_bids.determine_acquisition_label(
+                foldername,
+                fname,
+                hierarchy_type
+                )
+        # Assert base of the filename is used as the acquisition label
+        self.assertEqual('task-nback', acq_label)
+
+    def test_determine_acquisition_label_flywheel_eventstsv(self):
+        """ """
+        foldername = 'func'
+        fname = 'sub-control01_ses-01_task-nback_events.tsv'
+        hierarchy_type = 'Flywheel'
+        # Call function
+        acq_label = upload_bids.determine_acquisition_label(
+                foldername,
+                fname,
+                hierarchy_type
+                )
+        # Assert base of the filename is used as the acquisition label
+        self.assertEqual('task-nback', acq_label)
+
+    def test_determine_acquisition_label_flywheel_physio(self):
+        """ """
+        foldername = 'func'
+        fname = 'sub-control01_ses-01_task-nback_recording-label1_physio.tsv.gz'
+        hierarchy_type = 'Flywheel'
+        # Call function
+        acq_label = upload_bids.determine_acquisition_label(
+                foldername,
+                fname,
+                hierarchy_type
+                )
+        # Assert base of the filename is used as the acquisition label
+        self.assertEqual('task-nback', acq_label)
+
+    def test_determine_acquisition_label_flywheel_physiojson(self):
+        """ """
+        foldername = 'func'
+        fname = 'sub-control01_ses-01_task-nback_recording-label1_physio.json'
+        hierarchy_type = 'Flywheel'
+        # Call function
+        acq_label = upload_bids.determine_acquisition_label(
+                foldername,
+                fname,
+                hierarchy_type
+                )
+        # Assert base of the filename is used as the acquisition label
+        self.assertEqual('task-nback', acq_label)
+
+    def test_determine_acquisition_label_flywheel_stim(self):
+        """ """
+        foldername = 'func'
+        fname = 'sub-control01_ses-01_task-nback_recording-label1_stim.tsv.gz'
+        hierarchy_type = 'Flywheel'
+        # Call function
+        acq_label = upload_bids.determine_acquisition_label(
+                foldername,
+                fname,
+                hierarchy_type
+                )
+        # Assert base of the filename is used as the acquisition label
+        self.assertEqual('task-nback', acq_label)
+
+    def test_determine_acquisition_label_flywheel_stimjson(self):
+        """ """
+        foldername = 'func'
+        fname = 'sub-control01_ses-01_task-nback_recording-label1_stim.json'
+        hierarchy_type = 'Flywheel'
+        # Call function
+        acq_label = upload_bids.determine_acquisition_label(
+                foldername,
+                fname,
+                hierarchy_type
+                )
+        # Assert base of the filename is used as the acquisition label
+        self.assertEqual('task-nback', acq_label)
+
+
 
     def test_classify_acquisition_T1w(self):
         """ Assert T1w image classified as anatomy_t1w """
@@ -252,6 +616,36 @@ class BidsUploadTestCases(unittest.TestCase):
         meta_info = upload_bids.fill_in_properties(context, folder_name)
         # Assert equal
         self.assertEqual(meta_info_expected, meta_info)
+
+    def test_parse_json_valid(self):
+        """ """
+        # Create json file
+        os.mkdir(self.testdir)
+        filename = os.path.join(self.testdir, 'test.json')
+        contents = {
+                'test1': {'_id': '123', 'id_type': 'test'},
+                }
+        self._create_json(filename, contents)
+        # Call function
+        parsed_contents = upload_bids.parse_json(filename)
+        # Assert parsed is the same as original contents
+        self.assertEqual(parsed_contents, contents)
+
+    def test_parse_tsv_valid(self):
+        """ """
+        # Create tsv file
+        os.mkdir(self.testdir)
+        filename = os.path.join(self.testdir, 'test.tsv')
+        contents = [
+                ['title', 'id', 'id_type'],
+                ['test1', '123', 'test2']
+                ]
+        self._create_tsv(filename, contents)
+        # Call function
+        parsed_contents = upload_bids.parse_tsv(filename)
+        # Assert parsed is the same as original contents
+        self.assertEqual(parsed_contents, contents)
+
 
 
 if __name__ == "__main__":

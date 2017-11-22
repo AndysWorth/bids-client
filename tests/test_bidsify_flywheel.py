@@ -368,7 +368,8 @@ class BidsifyTestCases(unittest.TestCase):
             'info': {
                 'BIDS': {
                     'Filename': u'sub-001_ses-sestest_acq-acqtest_bold.nii.gz',
-                    'Folder': 'func', 'Task': '', 'Rec': '', 'Run': '', 'Echo': ''
+                    'Folder': 'func', 'Task': '', 'Modality': 'bold',
+                    'Rec': '', 'Run': '', 'Echo': ''
                     }
                 },
             u'measurements': [u'functional'], u'type': u'nifti'}
@@ -395,7 +396,7 @@ class BidsifyTestCases(unittest.TestCase):
             'info': {
                 'BIDS': {
                     'Filename': u'sub-001_ses-sestest_acq-acqtest_dwi.nii.gz',
-                    'Folder': 'dwi', 'Task': '', 'Rec': '', 'Run': '', 'Echo': ''
+                    'Folder': 'dwi', 'Run': ''
                     }
                 },
             u'measurements': [u'diffusion'], u'type': u'nifti'}

@@ -35,9 +35,10 @@ anat_file_template = {
     },
     "properties": {
         "Filename": {"type": "string", "label": "Filename", "default": "",
-            "auto_update": 'sub-<subject.code>[_ses-<session.label>][_acq-<acquisition.label>]_T1w{ext}'},
+            "auto_update": 'sub-<subject.code>[_ses-<session.label>]_T1w{ext}'},
         "Folder": {"type": "string", "label":"Folder", "default": "anat"},
-        "Ce": {"type": "string", "label": "CE Label", "default": ""},
+        "Acq": {"type": "string", "label": "Acq Label", "default": ""},
+        "Ce": {"type": "string", "label": "Ce Label", "default": ""},
         "Rec": {"type": "string", "label": "Rec Label", "default": ""},
         "Run": {"type": "string", "label": "Run Index", "default": ""},
         "Mod": {"type": "string", "label": "Mod Label", "default": ""},
@@ -61,7 +62,7 @@ anat_file_template = {
             ]
         }
     },
-    "required": ["Modality"]
+    "required": ["Filename", "Folder", "Modality"]
 }
 
 func_file_template = {
@@ -73,8 +74,9 @@ func_file_template = {
     },
     "properties": {
         "Filename": {"type": "string", "label": "Filename", "default": "",
-            "auto_update": 'sub-<subject.code>[_ses-<session.label>][_acq-<acquisition.label>]_bold{ext}'},
+            "auto_update": 'sub-<subject.code>[_ses-<session.label>]_bold{ext}'},
         "Folder": {"type": "string", "label": "Folder", "default": "func"},
+        "Acq": {"type": "string", "label": "Acq Label", "default": ""},
         "Task": {"type": "string", "label": "Task Label", "default": ""},
         "Rec": {"type": "string", "label": "Rec Label", "default": ""},
         "Run": {"type": "string", "label": "Run Index", "default": ""},
@@ -88,9 +90,10 @@ func_file_template = {
             ]
         }
     },
-    "required": ["Task", "Modality"]
+    "required": ["Filename", "Folder", "Task", "Modality"]
 }
 
+# Matches to functional
 task_events_file_template = {
     "container_type": "file",
     "description": "BIDS template for task files",
@@ -100,11 +103,68 @@ task_events_file_template = {
     },
     "properties": {
         "Filename": {"type": "string", "label": "Filename", "default": "",
-            "auto_update": 'sub-<subject.code>[_ses-<session.label>][_acq-<acquisition.label>]_events.tsv'},
+            "auto_update": 'sub-<subject.code>[_ses-<session.label>]_events.tsv'},
         "Folder": {"type": "string", "label": "Folder", "default": "func"},
-        "Task": {"type": "string", "label": "Task Label", "default": ""}
+        "Task": {"type": "string", "label": "Task Label", "default": ""},
+        "Acq": {"type": "string", "label": "Acq Label", "default": ""},
+        "Rec": {"type": "string", "label": "Rec Label", "default": ""},
+        "Run": {"type": "string", "label": "Run Index", "default": ""},
+        "Echo": {"type": "string", "label": "Echo Index", "default": ""},
     },
-    "required": ["Task"]
+    "required": ["Filename", "Folder", "Task"]
+}
+
+# Matches to functional
+physio_events_file_template = {
+    "container_type": "file",
+    "description": "BIDS template for task files",
+    "where": {
+        "measurements": ["physio"] # TODO: determine this... what is the measurement name of physio data?
+    },
+    "properties": {
+        "Filename": {"type": "string", "label": "Filename", "default": "",
+            "auto_update": 'sub-<subject.code>[_ses-<session.label>]_physio{ext}'},
+        "Folder": {"type": "string", "label": "Folder", "default": "func"},
+        "Task": {"type": "string", "label": "Task Label", "default": ""},
+        "Acq": {"type": "string", "label": "Acq Label", "default": ""},
+        "Rec": {"type": "string", "label": "Rec Label", "default": ""},
+        "Run": {"type": "string", "label": "Run Index", "default": ""},
+        "Echo": {"type": "string", "label": "Echo Index", "default": ""},
+        "Recording": {"type": "string", "label": "Recording Label", "default": ""},
+        "Modality": {"type": "string", "label": "Modality Label", "default": "physio",
+            "enum": [
+                "physio",
+                "stim"
+            ]
+        }
+
+    },
+    "required": ["Filename", "Folder", "Task"]
+}
+
+beh_events_file_template = {
+    "container_type": "file",
+    "description": "BIDS template for task files",
+    "where": {
+        "measurements": [""] # TODO: determine this... what is the measurement name of behavioral experiments?
+    },
+    "properties": {
+        "Filename": {"type": "string", "label": "Filename", "default": "",
+            "auto_update": 'sub-<subject.code>[_ses-<session.label>]_beh{ext}'},
+        "Folder": {"type": "string", "label": "Folder", "default": "beh"},
+        "Task": {"type": "string", "label": "Task Label", "default": ""},
+        "Acq": {"type": "string", "label": "Acq Label", "default": ""},
+        "Modality": {"type": "string", "label": "Modality Label", "default": "beh",
+            "enum": [
+                "beh",
+                "events",
+                "physio",
+                "stim"
+            ]
+        }
+
+    },
+    "required": ["Filename", "Folder", "Task"]
 }
 
 
@@ -117,11 +177,12 @@ diffusion_file_template = {
     },
     "properties": {
         "Filename": {"type": "string", "label": "Filename", "default": "",
-            "auto_update":'sub-<subject.code>[_ses-<session.label>][_acq-<acquisition.label>]_dwi{ext}'},
+            "auto_update":'sub-<subject.code>[_ses-<session.label>]_dwi{ext}'},
         "Folder": {"type": "string", "label": "Folder", "default": "dwi"},
+        "Acq": {"type": "string", "label": "Acq Label", "default": ""},
         "Run": {"type": "string", "label": "Run Index", "default": ""}
     },
-    "required": ["Task"]
+    "required": []
 }
 
 fieldmap_file_template = {
@@ -133,10 +194,11 @@ fieldmap_file_template = {
     },
     "properties": {
         "Filename": {"type": "string", "label": "Filename", "default": "",
-            "auto_update":'sub-<subject.code>[_ses-<session.label>][_acq-<acquisition.label>]_phase{ext}'},
+            "auto_update":'sub-<subject.code>[_ses-<session.label>]_phase{ext}'},
         "Folder": {"type": "string", "label": "Folder", "default": "fmap"},
+        "Acq": {"type": "string", "label": "Acq Label", "default": ""},
         "Run": {"type": "string", "label": "Run Index", "default": ""},
-        "Dir": {"type": "string", "label": "Dir Label", "default": ""},
+        "Dir": {"type": "string", "label": "Dir Label", "default": ""}, # TODO: This is only required for 'epi' fieldmap
         "Modality": {"type": "string", "label": "Modality Label", "default": "",
             "enum": [
                 "phasediff",
@@ -148,10 +210,9 @@ fieldmap_file_template = {
                 "fieldmap",
                 "epi"
                 ]
-
+        }
     },
     "required": ["Modality"]
-}
 }
 
 
