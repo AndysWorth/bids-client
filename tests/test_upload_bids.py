@@ -57,211 +57,141 @@ class BidsUploadTestCases(unittest.TestCase):
         """ """
         pass
 
-    def test_handle_group_project_1layer(self):
-        """ Assert bids_hierarchy correctly identified and
-        group_id and project_label added to bids_hierarchy that
-        are passed to function
-        """
-        # Define inputs
-        bids_hierarchy = {
-                'sub-01': {
-                    'func': {'files': 'sub-01_bold.nii.gz'},
-                    'anat': {'files': 'sub-01_T1w.nii.gz'}
-                    },
-                'sub-02': {
-                    'func': {'files': 'sub-01_bold.nii.gz'},
-                    'anat': {'files': 'sub-01_T1w.nii.gz'}
-                    }
-                }
-        group_id_cli = 'group123'
-        project_label_cli = 'project123'
-        rootdir_original = '/path/to/bids'
-
-        # call function
-        #bh, rootdir = upload_bids.handle_group_project(
-        #                bids_hierarchy, group_id_cli,
-        #                project_label_cli, rootdir_original
-        #                )
-
-        # confirm the returned bids hierarchy has
-        #     group_id_cli and project_label_cli
-        #self.assertEqual(bh,
-        #        {group_id_cli: {project_label_cli : bids_hierarchy}})
-        #self.assertEqual(rootdir, rootdir_original)
-
-    def test_handle_group_project_2layers(self):
-        """  Assert bids_hierarchy correctly identified and
-        group_id and project_label added to bids_hierarchy that
-        are passed to function
-        """
-        # Define inputs
-        bids_hierarchy = {
-            'project_label_holder': {
-                'sub-01': {
-                    'func': {'files': 'sub-01_bold.nii.gz'},
-                    'anat': {'files': 'sub-01_T1w.nii.gz'}
-                    },
-                'sub-02': {
-                    'func': {'files': 'sub-01_bold.nii.gz'},
-                    'anat': {'files': 'sub-01_T1w.nii.gz'}
-                    }
-                }
-            }
-        group_id_cli = 'group123'
-        project_label_cli = 'project123'
-        rootdir_original = '/path/to/bids'
-        # call function
-        #bh, rootdir = upload_bids.handle_group_project(
-        #        bids_hierarchy, group_id_cli,
-        #        project_label_cli, rootdir_original)
-        # Assert dictionaries are equal
-        #self.assertEqual(bh,
-        #        {group_id_cli: {project_label_cli : bids_hierarchy['project_label_holder']}})
-        # Assert root directory
-        #self.assertEqual(
-        #        rootdir,
-        #        os.path.join(rootdir_original, 'project_label_holder')
-        #        )
-
-    def test_handle_group_project_3layers(self):
-        """  Assert bids_hierarchy correctly identified and
-        group_id and project_label added to bids_hierarchy that
-        are passed to function
-        """
-        # Define inputs
-        bids_hierarchy = {
-            'group_id_holder': {
-                'project_label_holder': {
-                    'sub-01': {
-                        'func': {'files': 'sub-01_bold.nii.gz'},
-                        'anat': {'files': 'sub-01_T1w.nii.gz'}
-                        },
-                    'sub-02': {
-                        'func': {'files': 'sub-01_bold.nii.gz'},
-                        'anat': {'files': 'sub-01_T1w.nii.gz'}
-                        }
-                    }
-                }
-            }
-        group_id_cli = 'group123'
-        project_label_cli = 'project123'
-        rootdir_original = '/path/to/bids'
-        # call function
-        #bh, rootdir = upload_bids.handle_group_project(
-        #        bids_hierarchy, group_id_cli, project_label_cli)
-        # confirm
-        #self.assertEqual(bh,
-        #        {group_id_cli: {
-        #            project_label_cli : bids_hierarchy['group_id_holder']['project_label_holder']}})
-        # Assert root directory
-        #self.assertEqual(
-        #        rootdir,
-        #        os.path.join(rootdir_original, 'group_id_holder', 'project_label_holder')
-        #        )
-
-    def test_handle_group_project_4layers(self):
+    def test_handle_project_label_group(self):
         """ """
         # Define inputs
         bids_hierarchy = {
-            'extra': {
-                'group_id_holder': {
-                    'project_label_holder': {
+                'group_id': {
+                    'project_label': {
+                        'files': ['CHANGES', 'dataset_description.json'],
+                        'code1': {'files': ['debug.py']},
+                        'code2': {'files': ['debug.py']},
                         'sub-01': {
-                            'func': {'files': 'sub-01_bold.nii.gz'},
-                            'anat': {'files': 'sub-01_T1w.nii.gz'}
-                            },
-                        'sub-02': {
-                            'func': {'files': 'sub-01_bold.nii.gz'},
-                            'anat': {'files': 'sub-01_T1w.nii.gz'}
-                            }
-                        }
-                    }
-                }
-            }
-        group_id_cli = 'group123'
-        project_label_cli = 'project123'
-        # call function
-        #bh = upload_bids.handle_group_project(
-        #        bids_hierarchy, group_id_cli, project_label_cli)
-        # confirm
-        #self.assertEqual(bh,
-        #        {group_id_cli: {
-        #            project_label_cli : bids_hierarchy['group_id_holder']['project_label_holder']}})
-
-
-    def test_handle_group_project_1layer_error(self):
-        """ Assert errors raised if group_id and project_label
-        are not given
-        """
-        # Define inputs
-        bids_hierarchy = {
-                'sub-01': {
-                    'func': {'files': 'sub-01_bold.nii.gz'},
-                    'anat': {'files': 'sub-01_T1w.nii.gz'}
-                    },
-                'sub-02': {
-                    'func': {'files': 'sub-01_bold.nii.gz'},
-                    'anat': {'files': 'sub-01_T1w.nii.gz'}
-                    }
-                }
-        group_id_cli = None
+                            'files': [],
+                            'anat': {'files': ['test.nii.gz']},
+                            'dwi': {'files': ['test.nii.gz']},
+                            'func': {'files': ['test.nii.gz']}}}}}
         project_label_cli = None
-
+        rootdir = '/root'
         # Assert SystemExit raised
-        #with self.assertRaises(SystemExit) as err:
-        #    upload_bids.handle_group_project(
-        #        bids_hierarchy, group_id_cli, project_label_cli)
+        with self.assertRaises(SystemExit) as err:
+            upload_bids.handle_project_label(
+                bids_hierarchy, project_label_cli, rootdir)
 
-    def test_handle_group_project_2layers_error(self):
-        """ Assert errors raised if group_id and project_label
-        are not given
-        """
+    def test_handle_project_label_project_nocli(self):
+        """ """
         # Define inputs
         bids_hierarchy = {
-            'project_label_holder': {
-                'sub-01': {
-                    'func': {'files': 'sub-01_bold.nii.gz'},
-                    'anat': {'files': 'sub-01_T1w.nii.gz'}
-                    },
-                'sub-02': {
-                    'func': {'files': 'sub-01_bold.nii.gz'},
-                    'anat': {'files': 'sub-01_T1w.nii.gz'}
-                    }
-                }
-            }
-        group_id_cli = None
-        project_label_cli = None
-        # Assert SystemExit raised
-        #with self.assertRaises(SystemExit) as err:
-        #    upload_bids.handle_group_project(
-        #        bids_hierarchy, group_id_cli, project_label_cli)
-
-    def test_handle_group_project_3layers_no_error(self):
-        """ Assert no errors raised if group_id and project_label
-        are not given
-        """
-        # Define inputs
-        bids_hierarchy = {
-            'group_id_holder': {
-                'project_label_holder': {
+                'project_label': {
+                    'files': ['CHANGES', 'dataset_description.json'],
+                    'code1': {'files': ['debug.py']},
+                    'code2': {'files': ['debug.py']},
                     'sub-01': {
-                        'func': {'files': 'sub-01_bold.nii.gz'},
-                        'anat': {'files': 'sub-01_T1w.nii.gz'}
-                        },
-                    'sub-02': {
-                        'func': {'files': 'sub-01_bold.nii.gz'},
-                        'anat': {'files': 'sub-01_T1w.nii.gz'}
-                        }
-                    }
-                }
-            }
-        group_id_cli = None
+                        'files': [],
+                        'anat': {'files': ['test.nii.gz']},
+                        'dwi': {'files': ['test.nii.gz']},
+                        'func': {'files': ['test.nii.gz']}}}}
         project_label_cli = None
-        # call function
-        #bh = upload_bids.handle_group_project(
-        #        bids_hierarchy, group_id_cli, project_label_cli)
-        # confirm dictionaries equal
-        #self.assertEqual(bh, bids_hierarchy)
+        rootdir = '/root'
+        # Call function
+        bids_hierarchy_returned, rootdir_returned = upload_bids.handle_project_label(
+                bids_hierarchy, project_label_cli, rootdir)
+        # Assert output is as expected
+        self.assertEqual(bids_hierarchy_returned,
+                bids_hierarchy)
+        # Assert rootdir is expected
+        self.assertEqual(rootdir_returned, rootdir)
+
+    def test_handle_project_label_project_cli(self):
+        """ """
+        # Define inputs
+        bids_hierarchy = {
+                'project_label': {
+                    'files': ['CHANGES', 'dataset_description.json'],
+                    'code1': {'files': ['debug.py']},
+                    'code2': {'files': ['debug.py']},
+                    'sub-01': {
+                        'files': [],
+                        'anat': {'files': ['test.nii.gz']},
+                        'dwi': {'files': ['test.nii.gz']},
+                        'func': {'files': ['test.nii.gz']}}}}
+        project_label_cli = 'new_project_label'
+        rootdir = '/root'
+        # Call function
+        bids_hierarchy_returned, rootdir_returned = upload_bids.handle_project_label(
+                bids_hierarchy, project_label_cli, rootdir)
+        # Assert output is as expected
+        bids_hierarchy_expected = {
+                'new_project_label': {
+                    'files': ['CHANGES', 'dataset_description.json'],
+                    'code1': {'files': ['debug.py']},
+                    'code2': {'files': ['debug.py']},
+                    'sub-01': {
+                        'files': [],
+                        'anat': {'files': ['test.nii.gz']},
+                        'dwi': {'files': ['test.nii.gz']},
+                        'func': {'files': ['test.nii.gz']}}}}
+        self.assertEqual(bids_hierarchy_returned,
+                bids_hierarchy_expected)
+        # Assert rootdir is expected
+        self.assertEqual(rootdir_returned, rootdir)
+
+    def test_handle_project_label_sub_nocli(self):
+        """ """
+        # Define inputs
+        bids_hierarchy = {
+                'files': ['CHANGES', 'dataset_description.json'],
+                'code1': {'files': ['debug.py']},
+                'code2': {'files': ['debug.py']},
+                'sub-01': {
+                    'files': [],
+                    'anat': {'files': ['test.nii.gz']},
+                    'dwi': {'files': ['test.nii.gz']},
+                    'func': {'files': ['test.nii.gz']}}
+                }
+        project_label_cli = None
+        rootdir = '/root/sub-01'
+        # Call function -- assert error raised because project label cannot be determined
+        with self.assertRaises(SystemExit) as err:
+            bids_hierarchy_returned = upload_bids.handle_project_label(
+                bids_hierarchy, project_label_cli, rootdir)
+
+    def test_handle_project_label_sub_cli(self):
+        """ """
+        # Define inputs
+        bids_hierarchy = {
+                'files': ['CHANGES', 'dataset_description.json'],
+                'code1': {'files': ['debug.py']},
+                'code2': {'files': ['debug.py']},
+                'sub-01': {
+                    'files': [],
+                    'anat': {'files': ['test.nii.gz']},
+                    'dwi': {'files': ['test.nii.gz']},
+                    'func': {'files': ['test.nii.gz']}}
+                }
+        project_label_cli = 'new_project_label'
+        rootdir = '/root/sub-01'
+        # Call function
+        bids_hierarchy_returned, rootdir_returned = upload_bids.handle_project_label(
+                bids_hierarchy, project_label_cli, rootdir)
+        # Assert output is as expected
+        bids_hierarchy_expected = {project_label_cli: bids_hierarchy}
+        bids_hierarchy_expected[project_label_cli]['files'] = []
+        self.assertEqual(bids_hierarchy_returned,
+                bids_hierarchy_expected)
+        # Assert rootdir is expected
+        self.assertEqual(rootdir_returned, '/root')
+
+    def test_handle_project_label_files(self):
+        """ """
+        # Define inputs
+        bids_hierarchy = {'files': ['debug.py']}
+        project_label_cli = None
+        rootdir = '/root'
+        # Assert SystemExit raised
+        with self.assertRaises(SystemExit) as err:
+            bids_hierarchy_returned = upload_bids.handle_project_label(
+                bids_hierarchy, project_label_cli, rootdir)
 
     def test_determine_acquisition_label_bids(self):
         """ """
