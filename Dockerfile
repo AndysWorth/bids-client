@@ -31,6 +31,6 @@ ENV ROOTDIR /code
 RUN mkdir -p ${ROOTDIR}
 COPY upload_bids.py ${ROOTDIR}/upload_bids.py
 COPY supporting_files ${ROOTDIR}/supporting_files
-
+COPY export_bids.py ${ROOTDIR}/export_bids.py
 
 
