@@ -13,6 +13,9 @@ MAINTAINER Flywheel <support@flywheel.io>
 
 # Install jsonschema
 RUN pip install jsonschema==2.6.0
+# Install numpy
+RUN pip install numpy==1.13.3
+
 
 # Install BIDS validator from INCF
 #     https://github.com/INCF/bids-validator

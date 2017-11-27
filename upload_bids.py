@@ -6,9 +6,9 @@ import shutil
 import re
 import json
 import csv
-
 from pprint import pprint
 
+import numpy
 import flywheel
 
 from supporting_files import bidsify_flywheel, templates, classifications
@@ -251,15 +251,14 @@ def determine_acquisition_label(foldername, fname, hierarchy_type):
     if hierarchy_type == 'BIDS':
         acq_label = foldername
     else:
-        # TODO: Get acq_label from file basename
-        # Remove extension from the filename
+        # Get acq_label from file basename
+        #  remove extension from the filename
         fname = fname.split('.')[0]
-        # split up filename into parts, removing the final part, the Modality
+        #  split up filename into parts, removing the final part, the Modality
         parts = fname.split('_')
         # If the last section of the filename matches 'bold', 'events', 'physio' or 'stim', remove!
         if parts[-1] in ['bold', 'events', 'physio', 'stim']:
             parts = parts[:-1]
-
         # Rejoin filename parts to form acquisition label
         acq_label = '_'.join(parts)
         # Remove any of the following values
@@ -556,6 +555,60 @@ def parse_json(filename):
         contents = json.load(json_data)
     return contents
 
+def attach_json(fw, file_info):
+    # parse JSON file
+    contents = parse_json(file_info['full_filename'])
+    # Attach parsed JSON to project
+    if file_info['id_type'] == 'project':
+        fw.modify_project(file_info['_id'], {templates.namespace['namespace']: contents})
+
+def convert_dtype(contents):
+    """
+    Take the parsed TSV file and convert columns
+        from string to float or int
+    """
+    # Convert contents to array
+    contents_arr = numpy.asarray(contents[1:])
+    # Iterate over every column in array
+    for idx in xrange(len(contents_arr.T)):
+        # Get column
+        col = contents_arr.T[idx]
+        # Determine if column contains float/integer/string
+        #    Check if first element is a float
+        if '.' in col[0]:
+            # Try to convert to float
+            try:
+                col = col.astype('float')
+            except ValueError:
+                pass
+        # Else try and convert column to integer
+        else:
+            # Convert to integer
+            try:
+                col = col.astype('int')
+            # Otherwise leave as string
+            except ValueError:
+                pass
+
+        # Check if column only contains 'F'/'M'
+        #   if so, convert to 'Female'/'Male'
+        if set(col).issubset({'F', 'M'}):
+            # Convert from array to list
+            col = col.tolist()
+            # Iterate over column, replace
+            for idxxx, item in enumerate(col):
+                if item == 'F':
+                    col[idxxx] = 'Female'
+                elif item == 'M':
+                    col[idxxx] = 'Male'
+                else:
+                    continue
+        ### Take converted column and place back into the content list
+        for idxx in xrange(len(contents[1:])):
+            contents[idxx+1][idx] = col[idxx]
+
+    return contents
+
 def parse_tsv(filename):
     """"""
     contents = []
@@ -564,20 +617,12 @@ def parse_tsv(filename):
         for row in rd:
             contents.append(row)
 
-    # TODO: If all values in the column are floats/ints, then convert
-    # TODO: If only 'F' and 'M' in a column, convert to 'Female'/'Male'
+    # If all values in the column are floats/ints, then convert
+    # If only 'F' and 'M' in a column, convert to 'Female'/'Male'
+    contents = convert_dtype(contents)
     print contents
 
     return contents
-
-def attach_json(fw, file_info):
-    # parse JSON file
-    contents = parse_json(file_info['full_filename'])
-    # Attach parsed JSON to project
-    if file_info['id_type'] == 'project':
-        #print contents
-        #fw.modify_project(file_info['_id'], {'info': {namespace: contents}})
-        pass
 
 def attach_tsv(fw, file_info):
     ## Parse TSV file
@@ -611,9 +656,7 @@ def attach_tsv(fw, file_info):
                 else:
                     continue
                 # Modify session
-                #fw.modify_session(session['_id'], session_info)
-                #print('session_info')
-                #print(session_info)
+                fw.modify_session(ses['_id'], session_info)
 
     # Else id_type is 'session' and we get acquisitions
     else:
@@ -636,11 +679,7 @@ def attach_tsv(fw, file_info):
                         # Create dict
                         info_object = dict(zip(keys, values))
                         # Modify acquisition file
-                        file_info = {'info': info_object}
-                        #fw.set_acquisition_file_info(acq['_id'], filename, file_info)
-                        #print('file_info')
-                        #print(file_info)
-
+                        fw.set_acquisition_file_info(acq['_id'], filename, info_object)
 
 def parse_meta_files(fw, files_of_interest):
     """
@@ -711,15 +750,14 @@ if __name__ == '__main__':
     # TODO: determine if hierarchy is valid BIDS
     #(bids_hierarchy)
 
-    # TODO: Define group_id
-    group_id = 'jr'
-
-
     ### Upload BIDS directory
     # define rootdir
     rootdir = os.path.dirname(args.bids_dir)
-    # upload bids dir
-    files_of_interest = upload_bids_dir(fw, {group_id: bids_hierarchy}, rootdir, args.hierarchy_type)
+    # upload bids dir (and get files 
+    files_of_interest = upload_bids_dir(
+            fw, {args.group_id: bids_hierarchy},
+            rootdir, args.hierarchy_type
+            )
 
     print 'files_of_interest'
     pprint(files_of_interest)

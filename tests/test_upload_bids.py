@@ -403,8 +403,6 @@ class BidsUploadTestCases(unittest.TestCase):
         # Assert base of the filename is used as the acquisition label
         self.assertEqual('task-nback', acq_label)
 
-
-
     def test_classify_acquisition_T1w(self):
         """ Assert T1w image classified as anatomy_t1w """
         full_fname = '/sub-01/ses-123/anat/sub-01_ses-123_T1w.nii.gz'
@@ -642,9 +640,101 @@ class BidsUploadTestCases(unittest.TestCase):
                 ]
         self._create_tsv(filename, contents)
         # Call function
-        parsed_contents = upload_bids.parse_tsv(filename)
+        contents_parsed = upload_bids.parse_tsv(filename)
+        # Expected contents
+        contents_expected = [
+                ['title', 'id', 'id_type'],
+                ['test1', 123, 'test2']
+                ]
         # Assert parsed is the same as original contents
-        self.assertEqual(parsed_contents, contents)
+        self.assertEqual(contents_parsed,
+                contents_expected)
+
+    def test_convert_dtype_valid(self):
+        """ """
+        # Define contents
+        contents = [
+                ['participant_id', 'sex', 'age_at_first_scan_years', 'number_of_scans_before', 'handedness'],
+                ['sub-01', 'F', '29', '17', '100'],
+                ['sub-02', 'F', '23', '6', '100'],
+                ['sub-03', 'M', '25', '18', '86'],
+                ]
+        # Call function
+        contents_converted = upload_bids.convert_dtype(contents)
+        # Define expected contents
+        contents_expected = [
+                ['participant_id', 'sex', 'age_at_first_scan_years', 'number_of_scans_before', 'handedness'],
+                ['sub-01', 'Female', 29, 17, 100],
+                ['sub-02', 'Female', 23, 6, 100],
+                ['sub-03', 'Male', 25, 18, 86],
+                ]
+        # Assert equal
+        self.assertEqual(contents_converted,
+                contents_expected)
+
+    def test_convert_dtype_2rows(self):
+        # Define contents
+        contents = [
+                ['session', 'sex', 'test1', 'test2'],
+                ['ses-1', 'F', '1', '1.2']
+                ]
+        # Call function
+        contents_converted = upload_bids.convert_dtype(contents)
+        # Define expected contents
+        contents_expected = [
+                ['session', 'sex', 'test1', 'test2'],
+                ['ses-1', 'Female', 1, 1.2]
+                ]
+        # Assert equal
+        self.assertEqual(contents_converted,
+                contents_expected)
+
+    def test_convert_dtype_filename(self):
+        # Define contents
+        contents = [
+                ['filename', 'positive'],
+                ['bold1.nii.gz', '1'],
+                ['bold2.nii.gz', '9'],
+                ['bold3.nii.gz', '7']
+                ]
+        # Call function
+        contents_converted = upload_bids.convert_dtype(contents)
+        # Define expected contents
+        contents_expected = [
+                ['filename', 'positive'],
+                ['bold1.nii.gz', 1],
+                ['bold2.nii.gz', 9],
+                ['bold3.nii.gz', 7]
+                ]
+        # Assert equal
+        self.assertEqual(contents_converted,
+                contents_expected)
+
+    def test_convert_dtype_male_female(self):
+        # Define contents
+        contents = [
+                ['session', 'sex'],
+                ['ses-1', 'F'],
+                ['ses-2', 'M'],
+                ['ses-3', 'F'],
+                ['ses-4', 'F'],
+                ['ses-5', 'M'],
+                ]
+        # Call function
+        contents_converted = upload_bids.convert_dtype(contents)
+        # Define expected contents
+        contents_expected = [
+                ['session', 'sex'],
+                ['ses-1', 'Female'],
+                ['ses-2', 'Male'],
+                ['ses-3', 'Female'],
+                ['ses-4', 'Female'],
+                ['ses-5', 'Male'],
+                ]
+
+        # Assert equal
+        self.assertEqual(contents_converted,
+                contents_expected)
 
 
 
