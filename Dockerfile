@@ -19,7 +19,17 @@ RUN pip install numpy==1.13.3
 
 # Install BIDS validator from INCF
 #     https://github.com/INCF/bids-validator
-#RUN npm install -g /src
+RUN apt-get update && \
+    apt-get install -y curl && \
+    curl -sL https://deb.nodesource.com/setup_8.x | bash - && \
+    apt-get remove -y curl && \
+    apt-get install -y nodejs && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+ENV SRCDIR /src
+RUN mkdir -p ${SRCDIR}
+ADD https://github.com/INCF/bids-validator/archive/0.24.0.tar.gz ${SRCDIR}
+RUN npm install -g /src/bids-validator-0.24.0/
 
 
 # Install python SDK

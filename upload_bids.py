@@ -1,11 +1,12 @@
 import argparse
+import csv
+import json
 import logging
 import os
-import sys
-import shutil
 import re
-import json
-import csv
+import shutil
+import subprocess
+import sys
 
 import numpy
 import flywheel
@@ -23,7 +24,7 @@ def validate_dirname(dirname):
         - dirname is a directory
     If criteria not met, raise an error
     """
-    logger.info('Validating BIDS directory')
+    logger.info('Verifying directory exists')
 
     # Check dirname exists
     if not os.path.exists(dirname):
@@ -52,6 +53,22 @@ def parse_bids_dir(bids_dir):
         parent[folders[-1]] = subdir
 
     return bids_hierarchy
+
+def validate_bids(dirname):
+    """ """
+    logger.info('Validating BIDS directory')
+
+    cmd = ['/usr/bin/bids-validator', dirname]
+    proc = subprocess.Popen(cmd,
+                            #cwd=dirname,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+    stdout, stderr = proc.communicate()
+    returncode = proc.returncode
+    if returncode != 0:
+        logger.info('\n' + stdout)
+
+    # TODO: Determine if an error should be raised or just a warning
 
 def handle_project_label(bids_hierarchy, project_label_cli, rootdir):
     """ Determines the values for the group_id and project_label information
@@ -738,8 +755,8 @@ if __name__ == '__main__':
     # TODO: Determine if project label are present
     bids_hierarchy, rootdir = handle_project_label(bids_hierarchy, args.project_label, args.bids_dir)
 
-    # TODO: determine if hierarchy is valid BIDS
-    #(bids_hierarchy)
+    # Determine if hierarchy is valid BIDS
+    validate_bids(rootdir)
 
     ### Upload BIDS directory
     # upload bids dir (and get files of interest)
