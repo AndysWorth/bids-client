@@ -1,7 +1,9 @@
 import argparse
 import logging
 import os
+import re
 import sys
+import zipfile
 
 import flywheel
 
@@ -16,7 +18,7 @@ def validate_dirname(dirname):
         - dirname is a directory
     If criteria not met, raise an error
     """
-    logger.info('Validating BIDS directory')
+    logger.info('Validating download directory')
 
     # Check dirname is a directory
     if not os.path.isdir(dirname):
@@ -49,6 +51,21 @@ def validate_project_label(fw, project_label):
 
     return project_id
 
+def define_path(outdir, f, namespace):
+    """"""
+    # Ensure that the folder exists...
+    foldername = os.path.join(outdir,
+            f['info'][namespace]['Folder'])
+    if not os.path.exists(foldername):
+        os.makedirs(foldername)
+    # Define path to download file to...
+    path = os.path.join(
+            foldername,
+            f['info'][namespace]['Filename']
+        )
+
+    return path
+
 def download_bids_dir(fw, project_id, outdir):
     """
 
@@ -64,60 +81,49 @@ def download_bids_dir(fw, project_id, outdir):
     # Get project
     project = fw.get_project(project_id)
 
+    logger.info('Downloading project files')
     # Iterate over any project files
-    for f in project['files']:
-        # Ensure that the folder exists...
-        foldername = os.path.join(outdir,
-                f['info'][namespace]['Folder'])
-        if not os.path.exists(foldername):
-            os.mkdir(foldername)
-        # Define path to download file to...
-        path = os.path.join(foldername,
-                f['info'][namespace]['Filename']
-                )
+    for f in project.get('files', []):
+        # Define the folder name
+        path = define_path(outdir, f, namespace)
         # Download the file
         fw.download_file_from_project(project['_id'], f['name'], path)
-        # TODO:If zipfile, unzip...
+        # If zipfile is attached to project, unzip...
+        zip_pattern = re.compile('[a-zA-Z0-9]+(.zip)')
+        zip_dirname = path[:-4]
+        if zip_pattern.search(path):
+            zip_ref = zipfile.ZipFile(path, 'r')
+            zip_ref.extractall(zip_dirname)
+            zip_ref.close()
+            # Remove the zipfile
+            os.remove(path)
 
-
+    logger.info('Downloading session files')
     # Get project sessions
     project_sessions = fw.get_project_sessions(project_id)
     for proj_ses in project_sessions:
+        # Get true session, in order to access file info
+        session = fw.get_session(proj_ses['_id'])
+        # Check if session contains files
         # Iterate over any session files
-        for f in proj_ses['files']:
-            
-            print 'f'
-            print f
-            
+        for f in session.get('files', []):
             # Ensure that the folder exists...
-            foldername = os.path.join(outdir,
-                    f['info'][namespace]['Folder'])
-            if not os.path.exists(foldername):
-                os.mkdir(foldername)
-            # Define path to download file to...
-            path = os.path.join(foldername,
-                    f['info'][namespace]['Filename']
-                    )
+            path = define_path(outdir, f, namespace)
             # Download the file
             fw.download_file_from_session(session['_id'], f['name'], path)
 
+        logger.info('Downloading acquisition files')
         # Get acquisitions
-        session_acqs = fw.get_sessions_acquisitions(proj_ses['_id'])
+        session_acqs = fw.get_session_acquisitions(proj_ses['_id'])
         for ses_acq in session_acqs:
+            # Get true session, in order to access file info
+            acq = fw.get_acquisition(ses_acq['_id'])
             # Iterate over acquistion files
-            for f in ses_acq['files']:
+            for f in acq.get('files', []):
                 # Ensure that the folder exists...
-                foldername = os.path.join(outdir,
-                        f['info'][namespace]['Folder'])
-                if not os.path.exists(foldername):
-                    os.mkdir(foldername)
-                # Define path to download file to...
-                path = os.path.join(foldername,
-                        f['info'][namespace]['Filename']
-                        )
+                path = define_path(outdir, f, namespace)
                 # Download the file
-                fw.download_file_from_acquisition(session['_id'], f['name'], path)
-
+                fw.download_file_from_acquisition(acq['_id'], f['name'], path)
 
 if __name__ == '__main__':
     ### Read in arguments

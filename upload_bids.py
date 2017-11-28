@@ -375,7 +375,8 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
             # Identify the templates for the file and return file object
             context['file'] = bidsify_flywheel.process_matching_templates(context)
             # Update the meta info files w/ BIDS info from the filename...
-            meta_info = fill_in_properties(context, proj_label)
+            full_foldername = proj_label
+            meta_info = fill_in_properties(context, full_foldername)
             # Upload the meta info onto the project file
             fw.set_project_file_info(context['project']['_id'], fname, meta_info)
 
@@ -413,7 +414,8 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
             # Identify the templates for the file and return file object
             context['file'] = bidsify_flywheel.process_matching_templates(context)
             # Update the meta info files w/ BIDS info from the filename...
-            meta_info = fill_in_properties(context, proj_label)
+            full_foldername = proj_label
+            meta_info = fill_in_properties(context, full_foldername)
             # Upload the meta info onto the project file
             fw.set_project_file_info(context['project']['_id'], dirr+'.zip', meta_info)
 
@@ -444,7 +446,8 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
                     # Identify the templates for the file and return file object
                     context['file'] = bidsify_flywheel.process_matching_templates(context)
                     # Update the meta info files w/ BIDS info from the filename...
-                    meta_info = fill_in_properties(context, subject_code)
+                    full_foldername = os.path.join(proj_label, subject_code)
+                    meta_info = fill_in_properties(context, full_foldername)
                     # Upload the meta info onto the project file
                     fw.set_project_file_info(context['project']['_id'], fname, meta_info)
 
@@ -472,8 +475,10 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
                     #       is not actually present within the original directory structure
                     if session_label == subject_code:
                         full_fname = os.path.join(rootdir, subject_code, fname)
+                        full_foldername = os.path.join(proj_label, subject_code)
                     else:
                         full_fname = os.path.join(rootdir, subject_code, session_label, fname)
+                        full_foldername = os.path.join(proj_label, subject_code, session_label)
                     # Upload session file
                     context['file'] = upload_session_file(fw, context, full_fname)
                     # Update the context for this file
@@ -483,7 +488,7 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
                     # Identify the templates for the file and return file object
                     context['file'] = bidsify_flywheel.process_matching_templates(context)
                     # Update the meta info files w/ BIDS info from the filename...
-                    meta_info = fill_in_properties(context, session_label)
+                    meta_info = fill_in_properties(context, full_foldername)
                     # Upload the meta info onto the project file
                     fw.set_session_file_info(context['session']['_id'], fname, meta_info)
 
@@ -514,8 +519,10 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
                         #       is not actually present within the original directory structure
                         if session_label == subject_code:
                             full_fname = os.path.join(rootdir, subject_code, foldername, fname)
+                            full_foldername = os.path.join(proj_label, subject_code, foldername)
                         else:
                             full_fname = os.path.join(rootdir, subject_code, session_label, foldername, fname)
+                            full_foldername = os.path.join(proj_label, subject_code, session_label, foldername)
                         # Place filename in context
                         context['file'] = {u'name': fname}
                         # Upload acquisition file
@@ -527,7 +534,7 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
                         # Identify the templates for the file and return file object
                         context['file'] = bidsify_flywheel.process_matching_templates(context)
                         # Update the meta info files w/ BIDS info from the filename and foldername...
-                        meta_info = fill_in_properties(context, foldername)
+                        meta_info = fill_in_properties(context, full_foldername)
                         # Upload the meta info onto the project file
                         fw.set_acquisition_file_info(context['acquisition']['_id'], fname, meta_info)
 
