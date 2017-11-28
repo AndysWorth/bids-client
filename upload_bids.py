@@ -444,7 +444,7 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
                     # Identify the templates for the file and return file object
                     context['file'] = bidsify_flywheel.process_matching_templates(context)
                     # Update the meta info files w/ BIDS info from the filename...
-                    meta_info = fill_in_properties(context, proj_label)
+                    meta_info = fill_in_properties(context, subject_code)
                     # Upload the meta info onto the project file
                     fw.set_project_file_info(context['project']['_id'], fname, meta_info)
 
