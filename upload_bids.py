@@ -583,15 +583,17 @@ def convert_dtype(contents):
 
         # Check if column only contains 'F'/'M'
         #   if so, convert to 'Female'/'Male'
-        if set(col).issubset({'F', 'M'}):
+        if set(col).issubset({'F', 'M', 'O'}):
             # Convert from array to list
             col = col.tolist()
             # Iterate over column, replace
             for idxxx, item in enumerate(col):
                 if item == 'F':
-                    col[idxxx] = 'Female'
+                    col[idxxx] = 'female'
                 elif item == 'M':
-                    col[idxxx] = 'Male'
+                    col[idxxx] = 'male'
+                elif item == 'O':
+                    col[idxxx] = 'other'
                 else:
                     continue
         ### Take converted column and place back into the content list
@@ -642,7 +644,17 @@ def attach_tsv(fw, file_info):
                     session_info = {'info': info_object}
                 # If it is a subject code
                 elif row[0] == ('sub-%s' % ses['subject']['code']):
-                    session_info = {'subject': {'info': info_object}}
+                    session_info = {'subject': {'info': {}}}
+                    # Iterate over subject info object
+                    #   if a known field, (age, sex, etc) do not place in 'info' object
+                    for key in info_object:
+                        # If key is age, convert from years to seconds
+                        if key == 'age':
+                            session_info['subject'][key] = info_object[key] * 31536000
+                        elif key in ['first name', 'last name', 'sex', 'race', 'ethnicity']:
+                            session_info['subject'][key] = info_object[key]
+                        else:
+                            session_info['subject']['info'][key] = info_object[key]
                 else:
                     continue
                 # Modify session
@@ -689,7 +701,7 @@ def parse_meta_files(fw, files_of_interest):
             }
     }
 
-    Interested these files within the project:
+    Interested in these files within the project:
         data_description.json
         participants.tsv
         sub-YYY_sessions.tsv
