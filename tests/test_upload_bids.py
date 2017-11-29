@@ -594,9 +594,9 @@ class BidsUploadTestCases(unittest.TestCase):
         # Define expected contents
         contents_expected = [
                 ['participant_id', 'sex', 'age_at_first_scan_years', 'number_of_scans_before', 'handedness'],
-                ['sub-01', 'Female', 29, 17, 100],
-                ['sub-02', 'Female', 23, 6, 100],
-                ['sub-03', 'Male', 25, 18, 86],
+                ['sub-01', 'female', 29, 17, 100],
+                ['sub-02', 'female', 23, 6, 100],
+                ['sub-03', 'male', 25, 18, 86],
                 ]
         # Assert equal
         self.assertEqual(contents_converted,
@@ -613,7 +613,7 @@ class BidsUploadTestCases(unittest.TestCase):
         # Define expected contents
         contents_expected = [
                 ['session', 'sex', 'test1', 'test2'],
-                ['ses-1', 'Female', 1, 1.2]
+                ['ses-1', 'female', 1, 1.2]
                 ]
         # Assert equal
         self.assertEqual(contents_converted,
@@ -655,11 +655,11 @@ class BidsUploadTestCases(unittest.TestCase):
         # Define expected contents
         contents_expected = [
                 ['session', 'sex'],
-                ['ses-1', 'Female'],
-                ['ses-2', 'Male'],
-                ['ses-3', 'Female'],
-                ['ses-4', 'Female'],
-                ['ses-5', 'Male'],
+                ['ses-1', 'female'],
+                ['ses-2', 'male'],
+                ['ses-3', 'female'],
+                ['ses-4', 'female'],
+                ['ses-5', 'male'],
                 ]
 
         # Assert equal
