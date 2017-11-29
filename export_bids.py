@@ -7,6 +7,7 @@ import zipfile
 
 import flywheel
 
+from supporting_files import utils
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('bids-exporter')
@@ -149,5 +150,8 @@ if __name__ == '__main__':
     ### Download BIDS project
     download_bids_dir(fw, project_id, args.bids_dir)
 
-    # TODO: Validate the downloaded directory?
-
+    # Validate the downloaded directory
+    #   Go one more step into the hierarchy to pass to the validator...
+    dirs = os.listdir(args.bids_dir)
+    rootdir = os.path.join(args.bids_dir, dirs[0])
+    utils.validate_bids(rootdir)
