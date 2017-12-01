@@ -18,4 +18,5 @@ def validate_bids(dirname):
 
     # TODO: Determine if an error should be raised or just a warning
     logger.info('returncode: %d' % returncode)
-    logger.info('\n' + stdout)
+    logger.info('stderr: ' + stderr)
+    logger.info('stdout: ' + stdout)
