@@ -72,40 +72,45 @@ def handle_project_label(bids_hierarchy, project_label_cli, rootdir):
          structure AND not passed through the command line
 
     """
-    # Initialize if subdirectories are found
-    subdirs_found = False
+    # Initialize sub
+    top_level = False
+    second_level = False
     # Define sub directory pattern
     subdir_pattern = re.compile('sub-[a-zA-Z0-9]+')
 
-    # Iterate over keys in bids hierarchy
+    # Iterate over top level keys in bids hierarchy
     for k in bids_hierarchy:
         # If sub-YY pattern found at topmost level, project label is not defined
         if subdir_pattern.search(k):
             # subdirs found
-            subdirs_found = True
-            # Project label is not defined therefore project_label_cli must be defined
-            if project_label_cli:
-                bids_hierarchy = {project_label_cli: bids_hierarchy}
-                bids_hierarchy[project_label_cli]['files'] = []
-                rootdir = os.path.dirname(rootdir)
-            # If not, raise an error!
-            else:
-                logger.error('Project label cannot be determined')
-                sys.exit(1)
+            top_level = True
             break
-
-        # If not found within top directory, look at next level
+        # Iterate over second level keys in bids hierarchy
         for kk in bids_hierarchy[k]:
-            # If sub-YYY pattern found, then project_label is defined
+            # If sub-YY pattern found, then project_label is defined
             if subdir_pattern.search(kk):
                 # subdirs found
-                subdirs_found = True
-                # If project_label_cli is defined, we use that instead and adjust the bids_hierarchy
-                if project_label_cli:
-                    bids_hierarchy[project_label_cli] = bids_hierarchy.pop(k)
+                second_level = True
 
-    # If sub-YYY directories are not found
-    if not subdirs_found:
+    # If sub-YY directories found at top level,
+    #   project_label_cli must be defined
+    if top_level:
+        if project_label_cli:
+            bids_hierarchy = {project_label_cli: bids_hierarchy}
+            bids_hierarchy[project_label_cli]['files'] = []
+            rootdir = os.path.dirname(rootdir)
+        # If not defined, raise an error! project label is not defined
+        else:
+            logger.error('Project label cannot be determined')
+            sys.exit(1)
+
+    # If sub-YY directories found at second level
+    #   project_label_cli does not NEED to be defined (no error raised)
+    if second_level and project_label_cli:
+        bids_hierarchy[project_label_cli] = bids_hierarchy.pop(k)
+
+    # If sub-YY directories are not found
+    if not (top_level or second_level):
         logger.error('Did not find subject directories within hierarchy')
         sys.exit(1)
 

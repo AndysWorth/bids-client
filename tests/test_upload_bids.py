@@ -193,6 +193,40 @@ class BidsUploadTestCases(unittest.TestCase):
             bids_hierarchy_returned = upload_bids.handle_project_label(
                 bids_hierarchy, project_label_cli, rootdir)
 
+    def test_handle_project_label_failure(self):
+        """ """
+        # Define inputs
+        bids_hierarchy = {
+                '7t_trt_reduced': {
+                    'files': ['dataset_description.json'],
+                    'sub-01': {
+                        'files': ['sub-01_sessions.tsv'],
+                        'ses-1': {
+                            'files': ['sub-01_ses-1_scans.tsv'],
+                            'fmap': {'files': ['sub-01_ses-1_run-1_magnitude1.nii.gz']},
+                            'anat': {'files': ['sub-01_ses-1_T1map.nii.gz']},
+                            'func': {'files': ['sub-01_ses-1_task-rest_acq-fullbrain_run-1_bold.nii.gz']}},
+                        'ses-2': {
+                            'files': ['sub-01_ses-2_scans.tsv'],
+                            'fmap': {'files': ['sub-01_ses-2_run-1_magnitude1.nii.gz']},
+                            'func': {'files': ['sub-01_ses-2_task-rest_acq-fullbrain_run-1_bold.nii.gz']}}},
+                    'sub-02': {
+                        'files': ['sub-02_sessions.tsv'],
+                        'ses-1': {
+                            'files': ['sub-02_ses-1_scans.tsv'],
+                            'fmap': {'files': ['sub-02_ses-1_run-1_magnitude1.nii.gz']},
+                            'anat': {'files': ['sub-02_ses-1_T1map.nii.gz']},
+                            'func': {'files': ['sub-02_ses-1_task-rest_acq-fullbrain_run-1_bold.nii.gz']}},
+                        'ses-2': {
+                            'files': ['sub-02_ses-2_scans.tsv'],
+                            'fmap': {'files': ['sub-02_ses-2_run-1_magnitude1.nii.gz']},
+                            'func': {'files': ['sub-02_ses-2_task-rest_acq-fullbrain_run-1_bold.nii.gz']}}}}}
+        project_label_cli = 'new_project_label'
+        rootdir = '/root'
+        # Call function
+        bids_hierarchy_returned, rootdir_returned = upload_bids.handle_project_label(
+                bids_hierarchy, project_label_cli, rootdir)
+
     def test_determine_acquisition_label_bids(self):
         """ """
         foldername = 'anat'
@@ -337,14 +371,12 @@ class BidsUploadTestCases(unittest.TestCase):
         """ Assert T1w image classified as anatomy_t1w """
         full_fname = '/sub-01/ses-123/anat/sub-01_ses-123_T1w.nii.gz'
         classification = upload_bids.classify_acquisition(full_fname)
-        print(classification)
         self.assertEqual('anatomy_t1w', classification)
 
     def test_classify_acquisition_T2w(self):
         """ Assert T2w image classified as anatomy_t2w """
         full_fname = '/sub-01/anat/sub-01_T2w.nii.gz'
         classification = upload_bids.classify_acquisition(full_fname)
-        print(classification)
         self.assertEqual('anatomy_t2w', classification)
 
     def test_get_extension_nii(self):
