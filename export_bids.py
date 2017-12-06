@@ -19,7 +19,7 @@ def validate_dirname(dirname):
         - dirname is a directory
     If criteria not met, raise an error
     """
-    logger.info('Validating download directory')
+    logger.info('Verify download directory exists')
 
     # Check dirname is a directory
     if not os.path.isdir(dirname):
