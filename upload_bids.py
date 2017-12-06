@@ -368,6 +368,10 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
 
         ### Iterate over project files - upload file and add meta data
         for fname in bids_hierarchy[proj_label].get('files'):
+            # Exclude filenames that begin with .
+            if fname.startswith('.'):
+                continue
+            print 'BOO2'
             ### Upload file
             # define full filename
             full_fname = os.path.join(rootdir, fname)
@@ -439,6 +443,9 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
             subject_files = bids_hierarchy[proj_label][subject_code].get('files')
             if subject_files:
                 for fname in bids_hierarchy[proj_label][subject_code].get('files'):
+                    # Exclude filenames that begin with .
+                    if fname.startswith('.'):
+                        continue
                     ### Upload file
                     # define full filename
                     full_fname = os.path.join(rootdir, subject_code, fname)
@@ -474,6 +481,9 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
 
                 ## Iterate over session files - upload file and add meta data
                 for fname in bids_hierarchy[proj_label][subject_code][session_label].get('files'):
+                    # Exclude filenames that begin with .
+                    if fname.startswith('.'):
+                        continue
                     ### Upload file
                     # define full filename
                     #   NOTE: If session_label and subject_code are the same, session label
@@ -514,6 +524,9 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
 
                     # Iterate over acquisition files -- upload file and add meta data
                     for fname in bids_hierarchy[proj_label][subject_code][session_label][foldername].get('files'):
+                        # Exclude filenames that begin with .
+                        if fname.startswith('.'):
+                            continue
                         # Determine acquisition label -- it can either be the folder name OR the basename of the file...
                         acq_label = determine_acquisition_label(foldername, fname, hierarchy_type)
                         # Create acquisition
