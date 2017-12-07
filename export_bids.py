@@ -128,7 +128,7 @@ def download_bids_dir(fw, project_id, outdir):
 
 if __name__ == '__main__':
     ### Read in arguments
-    parser = argparse.ArgumentParser(description='BIDS Directory Upload')
+    parser = argparse.ArgumentParser(description='BIDS Directory Export')
     parser.add_argument('--bids-dir', dest='bids_dir', action='store',
             required=True, help='Name of directory in which to download BIDS hierarchy. \
                     NOTE: Directory must be empty.')
