@@ -55,17 +55,17 @@ def validate_project_label(fw, project_label):
 def define_path(outdir, f, namespace):
     """"""
     # Ensure that the folder exists...
-    foldername = os.path.join(outdir,
-            f['info'][namespace]['Folder'])
-    if not os.path.exists(foldername):
-        os.makedirs(foldername)
+    full_path = os.path.join(outdir,
+            f['info'][namespace]['Path'])
+    if not os.path.exists(full_path):
+        os.makedirs(full_path)
     # Define path to download file to...
-    path = os.path.join(
-            foldername,
+    full_filename = os.path.join(
+            full_path,
             f['info'][namespace]['Filename']
         )
 
-    return path
+    return full_filename
 
 def download_bids_dir(fw, project_id, outdir):
     """
@@ -153,5 +153,5 @@ if __name__ == '__main__':
     # Validate the downloaded directory
     #   Go one more step into the hierarchy to pass to the validator...
     dirs = os.listdir(args.bids_dir)
-    rootdir = os.path.join(args.bids_dir, dirs[0])
-    utils.validate_bids(rootdir)
+    #rootdir = os.path.join(args.bids_dir, dirs[0])
+    #utils.validate_bids(rootdir)

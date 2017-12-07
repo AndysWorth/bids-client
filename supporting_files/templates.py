@@ -20,7 +20,8 @@ file_template = {
     "description": "BIDS base file template",
     "properties": {
         "Filename": {"type": "string", "label": "Filename", "default": ""},
-        "Folder": {"type": "string", "label": "Folder", "default": ""}
+        "Folder": {"type": "string", "label": "Folder", "default": ""},
+        "Path": {"type": "string", "label": "Folder", "default": ""}
     },
     "required": ["Filename", "Folder"]
 }
@@ -37,6 +38,7 @@ anat_file_template = {
         "Filename": {"type": "string", "label": "Filename", "default": "",
             "auto_update": 'sub-<subject.code>[_ses-<session.label>]_T1w{ext}'},
         "Folder": {"type": "string", "label":"Folder", "default": "anat"},
+        "Path": {"type": "string", "label": "Folder", "default": ""},
         "Acq": {"type": "string", "label": "Acq Label", "default": ""},
         "Ce": {"type": "string", "label": "Ce Label", "default": ""},
         "Rec": {"type": "string", "label": "Rec Label", "default": ""},
@@ -76,6 +78,7 @@ func_file_template = {
         "Filename": {"type": "string", "label": "Filename", "default": "",
             "auto_update": 'sub-<subject.code>[_ses-<session.label>]_bold{ext}'},
         "Folder": {"type": "string", "label": "Folder", "default": "func"},
+        "Path": {"type": "string", "label": "Folder", "default": ""},
         "Acq": {"type": "string", "label": "Acq Label", "default": ""},
         "Task": {"type": "string", "label": "Task Label", "default": ""},
         "Rec": {"type": "string", "label": "Rec Label", "default": ""},
@@ -105,6 +108,7 @@ task_events_file_template = {
         "Filename": {"type": "string", "label": "Filename", "default": "",
             "auto_update": 'sub-<subject.code>[_ses-<session.label>]_events.tsv'},
         "Folder": {"type": "string", "label": "Folder", "default": "func"},
+        "Path": {"type": "string", "label": "Folder", "default": ""},
         "Task": {"type": "string", "label": "Task Label", "default": ""},
         "Acq": {"type": "string", "label": "Acq Label", "default": ""},
         "Rec": {"type": "string", "label": "Rec Label", "default": ""},
@@ -125,6 +129,7 @@ physio_events_file_template = {
         "Filename": {"type": "string", "label": "Filename", "default": "",
             "auto_update": 'sub-<subject.code>[_ses-<session.label>]_physio{ext}'},
         "Folder": {"type": "string", "label": "Folder", "default": "func"},
+        "Path": {"type": "string", "label": "Folder", "default": ""},
         "Task": {"type": "string", "label": "Task Label", "default": ""},
         "Acq": {"type": "string", "label": "Acq Label", "default": ""},
         "Rec": {"type": "string", "label": "Rec Label", "default": ""},
@@ -152,6 +157,7 @@ beh_events_file_template = {
         "Filename": {"type": "string", "label": "Filename", "default": "",
             "auto_update": 'sub-<subject.code>[_ses-<session.label>]_beh{ext}'},
         "Folder": {"type": "string", "label": "Folder", "default": "beh"},
+        "Path": {"type": "string", "label": "Folder", "default": ""},
         "Task": {"type": "string", "label": "Task Label", "default": ""},
         "Acq": {"type": "string", "label": "Acq Label", "default": ""},
         "Modality": {"type": "string", "label": "Modality Label", "default": "beh",
@@ -179,6 +185,7 @@ diffusion_file_template = {
         "Filename": {"type": "string", "label": "Filename", "default": "",
             "auto_update":'sub-<subject.code>[_ses-<session.label>]_dwi{ext}'},
         "Folder": {"type": "string", "label": "Folder", "default": "dwi"},
+        "Path": {"type": "string", "label": "Folder", "default": ""},
         "Acq": {"type": "string", "label": "Acq Label", "default": ""},
         "Run": {"type": "string", "label": "Run Index", "default": ""}
     },
@@ -196,6 +203,7 @@ fieldmap_file_template = {
         "Filename": {"type": "string", "label": "Filename", "default": "",
             "auto_update":'sub-<subject.code>[_ses-<session.label>]_phase{ext}'},
         "Folder": {"type": "string", "label": "Folder", "default": "fmap"},
+        "Path": {"type": "string", "label": "Folder", "default": ""},
         "Acq": {"type": "string", "label": "Acq Label", "default": ""},
         "Run": {"type": "string", "label": "Run Index", "default": ""},
         "Dir": {"type": "string", "label": "Dir Label", "default": ""}, # TODO: This is only required for 'epi' fieldmap
