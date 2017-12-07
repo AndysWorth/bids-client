@@ -78,8 +78,15 @@ def process_string_template(template, context):
                     break
             if result:
                 if replace_token[0] == '<':
-                    result = ''.join(x for x in result.replace('_', ' ').replace('-', ' ').title() if x.isalnum())
-                    result = result[0].lower() + result[1:]
+                    # Check if result is already in BIDS format...
+                    #   if so, split and grab only the label
+                    if re.match('(sub|ses)-[a-zA-Z0-9]+', result):
+                        label, result = result.split('-')
+                    # If not, take the entire result and remove underscores and dashes
+                    else:
+                        result = ''.join(x for x in result.replace('_', ' ').replace('-', ' ').title() if x.isalnum())
+                        result = result.lower()
+
                 translated_token = token.replace(replace_token, result).replace('[','').replace(']','')
                 translated_tokens.append(translated_token)
             elif token[0] != '[':

@@ -67,7 +67,7 @@ class BidsifyTestCases(unittest.TestCase):
                         "type": "nifti",
                         },
                     "properties": {
-                        "Task": {"type": "string", "label": "Task Label", "default": ""},
+                        "Task": {"type": "string", "label": "Task Label", "default": ""}
                         },
                     "required": ["Task"]
                     }
@@ -94,7 +94,7 @@ class BidsifyTestCases(unittest.TestCase):
                         "type": "nifti"
                         },
                     "properties": {
-                        "Task": {"type": "string", "label": "Task Label", "default": ""},
+                        "Task": {"type": "string", "label": "Task Label", "default": ""}
                         }
                     }
                 ]
@@ -106,9 +106,8 @@ class BidsifyTestCases(unittest.TestCase):
 
     def test_process_string_template_required(self):
         """  """
-        from supporting_files.templates import namespace
-        # Get project template from the templates file
-        auto_update_str = 'sub-<subject.code>_ses-<session.label>_acq-<acquisition.label>_bold.nii.gz'
+        # Define project template from the templates file
+        auto_update_str = 'sub-<subject.code>_ses-<session.label>_bold.nii.gz'
         # initialize context object
         context = {
             'container_type': 'file',
@@ -125,10 +124,34 @@ class BidsifyTestCases(unittest.TestCase):
         updated_string = bidsify_flywheel.process_string_template(auto_update_str, context)
 
         self.assertEqual(updated_string,
-                'sub-%s_ses-%s_acq-%s_bold.nii.gz' % (
+                'sub-%s_ses-%s_bold.nii.gz' % (
                     context['subject']['code'],
                     context['session']['label'],
-                    context['acquisition']['label']
+                    ))
+
+    def test_process_string_template_bids1(self):
+        """  """
+        # Get project template from the templates file
+        auto_update_str = 'sub-<subject.code>_ses-<session.label>_bold.nii.gz'
+        # initialize context object
+        context = {
+            'container_type': 'file',
+            'parent_container_type': 'project',
+            'project': {u'label': u'project123'},
+            'subject': {u'code': u'sub-01'},
+            'session': {u'label': u'ses-001'},
+            'acquisition': {u'label': u'acq222'},
+            'file': None,
+            'ext': None
+        }
+
+        # Call function
+        updated_string = bidsify_flywheel.process_string_template(auto_update_str, context)
+
+        self.assertEqual(updated_string,
+                '%s_%s_bold.nii.gz' % (
+                    context['subject']['code'],
+                    context['session']['label']
                     ))
 
     def test_process_string_template_optional(self):
@@ -339,8 +362,8 @@ class BidsifyTestCases(unittest.TestCase):
         container_expected = {
             'info': {
                 'BIDS': {
-                    'Filename': u'sub-001_ses-sestest_acq-acqtest_T1w.nii.gz',
-                    'Run': '', 'Ce': '', 'Rec': '', 'Folder': 'anat',
+                    'Filename': u'sub-001_ses-sestest_T1w.nii.gz', 'Path': '',
+                    'Run': '', 'Acq': '', 'Ce': '', 'Rec': '', 'Folder': 'anat',
                     'Modality': 'T1w', 'Mod': ''
                     }
                 },
@@ -367,9 +390,9 @@ class BidsifyTestCases(unittest.TestCase):
         container_expected = {
             'info': {
                 'BIDS': {
-                    'Filename': u'sub-001_ses-sestest_acq-acqtest_bold.nii.gz',
-                    'Folder': 'func', 'Task': '', 'Modality': 'bold',
-                    'Rec': '', 'Run': '', 'Echo': ''
+                    'Filename': u'sub-001_ses-sestest_bold.nii.gz',
+                    'Folder': 'func', 'Path': '', 'Acq': '', 'Task': '',
+                    'Modality': 'bold', 'Rec': '', 'Run': '', 'Echo': ''
                     }
                 },
             u'measurements': [u'functional'], u'type': u'nifti'}
@@ -395,8 +418,8 @@ class BidsifyTestCases(unittest.TestCase):
         container_expected = {
             'info': {
                 'BIDS': {
-                    'Filename': u'sub-001_ses-sestest_acq-acqtest_dwi.nii.gz',
-                    'Folder': 'dwi', 'Run': ''
+                    'Filename': u'sub-001_ses-sestest_dwi.nii.gz',
+                    'Folder': 'dwi', 'Path': '', 'Acq': '', 'Run': ''
                     }
                 },
             u'measurements': [u'diffusion'], u'type': u'nifti'}
@@ -422,7 +445,7 @@ class BidsifyTestCases(unittest.TestCase):
         container_expected = {
             'info': {
                 'BIDS': {
-                    'Filename': '', 'Folder': ''
+                    'Filename': '', 'Folder': '', 'Path': ''
                     }
                 },
             u'measurements': [u'unknown'], u'type': u'archive'}

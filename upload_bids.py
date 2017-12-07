@@ -149,27 +149,22 @@ def handle_session(fw, project_id, session_name, subject_name):
      else session will be created
 
     """
-    # Extract label from session label, only want YYY from ses-YYY
-    session_label = session_name.split('-')[-1]
-    # Extract label from subject label, only want ZZ from sub-ZZ
-    subject_code = subject_name.split('-')[-1]
-
     # Get all sessions
     existing_sessions = fw.get_project_sessions(project_id)
-    # Determine if session_label within project project_id already exists, with same subject_code...
+    # Determine if session_name within project project_id already exists, with same subject_name...
     found = False
     for es in existing_sessions:
-        if (es['label'] == session_label) and (es['subject']['code'] == subject_code):
-            logger.info('Session (%s) for subject (%s) was found. Adding data to existing session.' % (session_label, subject_code))
+        if (es['label'] == session_name) and (es['subject']['code'] == subject_name):
+            logger.info('Session (%s) for subject (%s) was found. Adding data to existing session.' % (session_name, subject_name))
             # Session exists
             session = es
             found = True
             break
     # If session does not exist, create new session
     if not found:
-        logger.info('Session (%s) not found. Creating new session for project %s.' % (session_label, project_id))
-        session_id = fw.add_session({'label': session_label, 'project': project_id,
-                                    'subject': {'code': subject_code}})
+        logger.info('Session (%s) not found. Creating new session for project %s.' % (session_name, project_id))
+        session_id = fw.add_session({'label': session_name, 'project': project_id,
+                                    'subject': {'code': subject_name}})
         session = fw.get_session(session_id)
 
     return session
@@ -436,8 +431,8 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
             sessions = [key for key in bids_hierarchy[proj_label][subject_code] if 'ses' in key]
             # If no sessions, add session layer, just subject_label will be the subject_code
             if not sessions:
-                sessions = [subject_code]
-                bids_hierarchy[proj_label][subject_code] = {subject_code: bids_hierarchy[proj_label][subject_code]}
+                sessions = ['ses-']
+                bids_hierarchy[proj_label][subject_code] = {'ses-': bids_hierarchy[proj_label][subject_code]}
 
             ## Iterate over subject files
             # NOTE: Attaching files to project instead of subject....
@@ -487,9 +482,9 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
                         continue
                     ### Upload file
                     # define full filename
-                    #   NOTE: If session_label and subject_code are the same, session label
-                    #       is not actually present within the original directory structure
-                    if session_label == subject_code:
+                    #   NOTE: If session_label equals 'ses-', session label is not
+                    #       actually present within the original directory structure
+                    if session_label == 'ses-':
                         full_fname = os.path.join(rootdir, subject_code, fname)
                         full_path = subject_code
                     else:
@@ -534,9 +529,9 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
                         context['acquisition'] = handle_acquisition(fw, context['session']['_id'], acq_label)
                         ### Upload file
                         # define full filename
-                        #   NOTE: If session_label and subject_code are the same, session label
-                        #       is not actually present within the original directory structure
-                        if session_label == subject_code:
+                        #   NOTE: If session_label equals 'ses-', session label is not
+                        #       actually present within the original directory structure
+                        if session_label == 'ses-':
                             full_fname = os.path.join(rootdir, subject_code, foldername, fname)
                             full_path = os.path.join(subject_code, foldername)
                         else:
