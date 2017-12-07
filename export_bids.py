@@ -152,6 +152,4 @@ if __name__ == '__main__':
 
     # Validate the downloaded directory
     #   Go one more step into the hierarchy to pass to the validator...
-    dirs = os.listdir(args.bids_dir)
-    #rootdir = os.path.join(args.bids_dir, dirs[0])
-    #utils.validate_bids(rootdir)
+    utils.validate_bids(args.bids_dir)
