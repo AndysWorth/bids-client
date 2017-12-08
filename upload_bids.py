@@ -654,10 +654,10 @@ def attach_tsv(fw, file_info):
                 # Create dict
                 info_object = dict(zip(keys, values))
                 # If it is a session label
-                if row[0] == ('ses-%s' % ses['label']):
+                if row[0] == ses['label']:
                     session_info = {'info': info_object}
                 # If it is a subject code
-                elif row[0] == ('sub-%s' % ses['subject']['code']):
+                elif row[0] == ses['subject']['code']:
                     session_info = {'subject': {'info': {}}}
                     # Iterate over subject info object
                     #   if a known field, (age, sex, etc) do not place in 'info' object
