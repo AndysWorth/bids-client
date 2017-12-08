@@ -36,22 +36,6 @@ def validate_dirname(dirname):
             logger.error('Directory (%s) is not empty. Exporter will not run.' % dirname)
             sys.exit(1)
 
-def validate_project_label(fw, project_label):
-    """ """
-    # Find project id
-    projects = fw.get_all_projects()
-    project_found = False
-    for p in projects:
-        if p['label'] == project_label:
-            project_id = p['_id']
-            project_found = True
-
-    if not project_found:
-        logger.error('Cannot find project %s.' % project_label)
-        sys.exit(1)
-
-    return project_id
-
 def define_path(outdir, f, namespace):
     """"""
     # Ensure that the folder exists...
@@ -71,7 +55,7 @@ def download_bids_dir(fw, project_id, outdir):
     """
 
     fw: Flywheel client
-    project_label: Label of the project to download
+    project_id: Label of the project to download
     outdir: path to directory to download files to, string
 
     """
@@ -117,7 +101,7 @@ def download_bids_dir(fw, project_id, outdir):
         # Get acquisitions
         session_acqs = fw.get_session_acquisitions(proj_ses['_id'])
         for ses_acq in session_acqs:
-            # Get true session, in order to access file info
+            # Get true acquisition, in order to access file info
             acq = fw.get_acquisition(ses_acq['_id'])
             # Iterate over acquistion files
             for f in acq.get('files', []):
@@ -145,7 +129,7 @@ if __name__ == '__main__':
     fw = flywheel.Flywheel(args.api_key)
 
     # Get project Id from label
-    project_id = validate_project_label(fw, args.project_label)
+    project_id = utils.validate_project_label(fw, args.project_label)
 
     ### Download BIDS project
     download_bids_dir(fw, project_id, args.bids_dir)

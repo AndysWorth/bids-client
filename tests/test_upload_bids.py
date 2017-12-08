@@ -379,29 +379,6 @@ class BidsUploadTestCases(unittest.TestCase):
         classification = upload_bids.classify_acquisition(full_fname)
         self.assertEqual('anatomy_t2w', classification)
 
-    def test_get_extension_nii(self):
-        """ Get extension if .nii """
-        fname = 'T1w.nii'
-        ext = upload_bids.get_extension(fname)
-        self.assertEqual('.nii', ext)
-
-    def test_get_extension_niigz(self):
-        """ Get extension if .nii.gz """
-        fname = 'T1w.nii.gz'
-        ext = upload_bids.get_extension(fname)
-        self.assertEqual('.nii.gz', ext)
-
-    def test_get_extension_tsv(self):
-        """ Get extension if .tsv """
-        fname = 'T1w.tsv'
-        ext = upload_bids.get_extension(fname)
-        self.assertEqual('.tsv', ext)
-
-    def test_get_extension_none(self):
-        """ Assert function returns None if no extension present """
-        fname = 'sub-01_T1w'
-        ext = upload_bids.get_extension(fname)
-        self.assertIsNone(ext)
 
     def test_fill_in_properties_anat(self):
         """ """

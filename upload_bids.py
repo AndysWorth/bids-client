@@ -267,16 +267,7 @@ def classify_acquisition(full_fname):
 
     return classifications.classifications.get(folder).get(modality)
 
-def get_extension(fname):
-    """ Get extension
 
-    If search returns a result, get value
-    else, ext is None
-
-    """
-    ext = re.search('\.[A-Za-z0-9\._-]+',fname)
-    if ext: ext = ext.group()
-    return ext
 
 def fill_in_properties(context, path):
     """ """
@@ -376,7 +367,7 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
             # Update the context for this file
             context['container_type'] = 'file'
             context['parent_container_type'] = 'project'
-            context['ext'] = get_extension(fname)
+            context['ext'] = utils.get_extension(fname)
             # Identify the templates for the file and return file object
             context['file'] = bidsify_flywheel.process_matching_templates(context)
             # Update the meta info files w/ BIDS info from the filename...
@@ -415,7 +406,7 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
             # Update the context for this file
             context['container_type'] = 'file'
             context['parent_container_type'] = 'project'
-            context['ext'] = get_extension(full_zname)
+            context['ext'] = utils.get_extension(full_zname)
             # Identify the templates for the file and return file object
             context['file'] = bidsify_flywheel.process_matching_templates(context)
             # Update the meta info files w/ BIDS info from the filename...
@@ -450,7 +441,7 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
                     # Update the context for this file
                     context['container_type'] = 'file'
                     context['parent_container_type'] = 'project' # TODO: once subjects are containers, change this to 'subject'
-                    context['ext'] = get_extension(fname)
+                    context['ext'] = utils.get_extension(fname)
                     # Identify the templates for the file and return file object
                     context['file'] = bidsify_flywheel.process_matching_templates(context)
                     # Update the meta info files w/ BIDS info from the filename...
@@ -495,7 +486,7 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
                     # Update the context for this file
                     context['container_type'] = 'file'
                     context['parent_container_type'] = 'session'
-                    context['ext'] = get_extension(fname)
+                    context['ext'] = utils.get_extension(fname)
                     # Identify the templates for the file and return file object
                     context['file'] = bidsify_flywheel.process_matching_templates(context)
                     # Update the meta info files w/ BIDS info from the filename...
@@ -544,7 +535,7 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
                         # Update the context for this file
                         context['container_type'] = 'file'
                         context['parent_container_type'] = 'acquisition'
-                        context['ext'] = get_extension(fname)
+                        context['ext'] = utils.get_extension(fname)
                         # Identify the templates for the file and return file object
                         context['file'] = bidsify_flywheel.process_matching_templates(context)
                         # Update the meta info files w/ BIDS info from the filename and foldername...
