@@ -10,7 +10,7 @@ project_template = {
         "Ackowledgements": {"type": "string", "label": "Acknowledgements", "default": ""},
         "HowToAcknowledge": {"type": "string", "label": "How To Acknowledge", "default": ""},
         "Funding": {"type": "string", "label": "Funding Sources", "default": ""},
-        "ReferencesAndLinks": {"type": "string", "label":"Reference snd Links", "default": ""},
+        "ReferencesAndLinks": {"type": "string", "label":"Reference and Links", "default": ""},
         "DatasetDOI": {"type": "string", "label": "Dataset DOI", "default": ""}
     }
 }
@@ -36,9 +36,10 @@ anat_file_template = {
     },
     "properties": {
         "Filename": {"type": "string", "label": "Filename", "default": "",
-            "auto_update": 'sub-<subject.code>[_ses-<session.label>]_T1w{ext}'},
+            "auto_update": 'sub-<subject.code>[_ses-<session.label>]_{file.info.BIDS.Modality}{ext}'},
         "Folder": {"type": "string", "label":"Folder", "default": "anat"},
-        "Path": {"type": "string", "label": "Folder", "default": ""},
+        "Path": {"type": "string", "label": "Folder", "default": "",
+            "auto_update": 'sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}'},
         "Acq": {"type": "string", "label": "Acq Label", "default": ""},
         "Ce": {"type": "string", "label": "Ce Label", "default": ""},
         "Rec": {"type": "string", "label": "Rec Label", "default": ""},
@@ -76,9 +77,10 @@ func_file_template = {
     },
     "properties": {
         "Filename": {"type": "string", "label": "Filename", "default": "",
-            "auto_update": 'sub-<subject.code>[_ses-<session.label>]_bold{ext}'},
+            "auto_update": 'sub-<subject.code>[_ses-<session.label>]_task-{file.info.BIDS.Task}_{file.info.BIDS.Modality}{ext}'},
         "Folder": {"type": "string", "label": "Folder", "default": "func"},
-        "Path": {"type": "string", "label": "Folder", "default": ""},
+        "Path": {"type": "string", "label": "Folder", "default": "",
+            "auto_update": 'sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}'},
         "Acq": {"type": "string", "label": "Acq Label", "default": ""},
         "Task": {"type": "string", "label": "Task Label", "default": ""},
         "Rec": {"type": "string", "label": "Rec Label", "default": ""},
@@ -108,7 +110,8 @@ task_events_file_template = {
         "Filename": {"type": "string", "label": "Filename", "default": "",
             "auto_update": 'sub-<subject.code>[_ses-<session.label>]_events.tsv'},
         "Folder": {"type": "string", "label": "Folder", "default": "func"},
-        "Path": {"type": "string", "label": "Folder", "default": ""},
+        "Path": {"type": "string", "label": "Folder", "default": "",
+            "auto_update": 'sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}'},
         "Task": {"type": "string", "label": "Task Label", "default": ""},
         "Acq": {"type": "string", "label": "Acq Label", "default": ""},
         "Rec": {"type": "string", "label": "Rec Label", "default": ""},
@@ -127,9 +130,10 @@ physio_events_file_template = {
     },
     "properties": {
         "Filename": {"type": "string", "label": "Filename", "default": "",
-            "auto_update": 'sub-<subject.code>[_ses-<session.label>]_physio{ext}'},
+            "auto_update": 'sub-<subject.code>[_ses-<session.label>]_{file.info.BIDS.Modality}{ext}'},
         "Folder": {"type": "string", "label": "Folder", "default": "func"},
-        "Path": {"type": "string", "label": "Folder", "default": ""},
+        "Path": {"type": "string", "label": "Folder", "default": "",
+            "auto_update": 'sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}'},
         "Task": {"type": "string", "label": "Task Label", "default": ""},
         "Acq": {"type": "string", "label": "Acq Label", "default": ""},
         "Rec": {"type": "string", "label": "Rec Label", "default": ""},
@@ -155,9 +159,10 @@ beh_events_file_template = {
     },
     "properties": {
         "Filename": {"type": "string", "label": "Filename", "default": "",
-            "auto_update": 'sub-<subject.code>[_ses-<session.label>]_beh{ext}'},
+            "auto_update": 'sub-<subject.code>[_ses-<session.label>]_{file.info.BIDS.Modality}{ext}'},
         "Folder": {"type": "string", "label": "Folder", "default": "beh"},
-        "Path": {"type": "string", "label": "Folder", "default": ""},
+        "Path": {"type": "string", "label": "Folder", "default": "",
+            "auto_update": 'sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}'},
         "Task": {"type": "string", "label": "Task Label", "default": ""},
         "Acq": {"type": "string", "label": "Acq Label", "default": ""},
         "Modality": {"type": "string", "label": "Modality Label", "default": "beh",
@@ -183,11 +188,18 @@ diffusion_file_template = {
     },
     "properties": {
         "Filename": {"type": "string", "label": "Filename", "default": "",
-            "auto_update":'sub-<subject.code>[_ses-<session.label>]_dwi{ext}'},
+            "auto_update":'sub-<subject.code>[_ses-<session.label>]_{file.info.BIDS.Modality}{ext}'},
         "Folder": {"type": "string", "label": "Folder", "default": "dwi"},
-        "Path": {"type": "string", "label": "Folder", "default": ""},
+        "Path": {"type": "string", "label": "Folder", "default": "",
+            "auto_update": 'sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}'},
         "Acq": {"type": "string", "label": "Acq Label", "default": ""},
-        "Run": {"type": "string", "label": "Run Index", "default": ""}
+        "Run": {"type": "string", "label": "Run Index", "default": ""},
+        "Modality": {"type": "string", "label": "Modality Label", "default": "dwi",
+            "enum": [
+                "dwi",
+                "sbref"
+            ]
+        }
     },
     "required": []
 }
@@ -201,9 +213,10 @@ fieldmap_file_template = {
     },
     "properties": {
         "Filename": {"type": "string", "label": "Filename", "default": "",
-            "auto_update":'sub-<subject.code>[_ses-<session.label>]_phase{ext}'},
+            "auto_update":'sub-<subject.code>[_ses-<session.label>]_{file.info.BIDS.Modality}{ext}'},
         "Folder": {"type": "string", "label": "Folder", "default": "fmap"},
-        "Path": {"type": "string", "label": "Folder", "default": ""},
+        "Path": {"type": "string", "label": "Folder", "default": "",
+            "auto_update": 'sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}'},
         "Acq": {"type": "string", "label": "Acq Label", "default": ""},
         "Run": {"type": "string", "label": "Run Index", "default": ""},
         "Dir": {"type": "string", "label": "Dir Label", "default": ""}, # TODO: This is only required for 'epi' fieldmap
@@ -223,8 +236,6 @@ fieldmap_file_template = {
     "required": ["Modality"]
 }
 
-
-
 namespace = {
     "namespace": "BIDS",
     "description": "Namespace for BIDS info objects in Flywheel",
@@ -238,6 +249,4 @@ namespace = {
         fieldmap_file_template
     ]
 }
-
-
 

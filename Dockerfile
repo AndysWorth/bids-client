@@ -39,8 +39,9 @@ RUN pip install https://github.com/flywheel-io/sdk/releases/download/0.2.0/flywh
 # Copy code into place
 ENV ROOTDIR /code
 RUN mkdir -p ${ROOTDIR}
-COPY upload_bids.py ${ROOTDIR}/upload_bids.py
 COPY supporting_files ${ROOTDIR}/supporting_files
+COPY upload_bids.py ${ROOTDIR}/upload_bids.py
 COPY export_bids.py ${ROOTDIR}/export_bids.py
+COPY curate_bids.py ${ROOTDIR}/curate_bids.py
 
 

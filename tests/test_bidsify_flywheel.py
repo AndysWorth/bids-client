@@ -12,6 +12,7 @@ class BidsifyTestCases(unittest.TestCase):
     def setUp(self):
         # Define testdir
         self.testdir = 'testdir'
+        self.maxDiff = None
 
     def tearDown(self):
         # Cleanup 'testdir', if present
@@ -178,6 +179,41 @@ class BidsifyTestCases(unittest.TestCase):
                     context['session']['label'],
                     context['acquisition']['label']
                     ))
+
+
+    def test_process_string_template_func_filename1(self):
+        """  """
+        # Define string to auto update, subject code is optional
+        auto_update_str = 'sub-<subject.code>[_ses-<session.label>]_task-{file.info.BIDS.Task}_bold{ext}'
+        # initialize context object
+        context = {
+            'container_type': 'file',
+            'parent_container_type': 'project',
+            'project': {u'label': u'project123'},
+            'subject': {u'code': '001'},
+            'session': {u'label': u'session444'},
+            'acquisition': {u'label': u'acq222'},
+            'file': {'name': 'bold.nii.gz',
+                'info': {'BIDS': {'Task': 'test123', 'Modality': 'bold'}}},
+            'ext': '.nii.gz'
+        }
+
+        # Call function
+        updated_string = bidsify_flywheel.process_string_template(auto_update_str, context)
+        # Assert string as expected
+        self.assertEqual(updated_string,
+                'sub-%s_ses-%s_task-%s_%s%s' % (
+                    context['subject']['code'],
+                    context['session']['label'],
+                    context['file']['info']['BIDS']['Task'],
+                    context['file']['info']['BIDS']['Modality'],
+                    context['ext']
+                    ))
+
+
+
+
+
 
 
     def test_process_string_template_subject_none(self):
@@ -353,7 +389,8 @@ class BidsifyTestCases(unittest.TestCase):
             'session': {u'label': u'sesTEST'},
             'acquisition': {u'label': u'acqTEST'},
             'file': {u'measurements': [u'anatomy_t1w'],
-                    u'type': u'nifti'},
+                    u'type': u'nifti'
+                        },
             'ext': '.nii.gz'
         }
         # Call function
@@ -362,8 +399,9 @@ class BidsifyTestCases(unittest.TestCase):
         container_expected = {
             'info': {
                 'BIDS': {
-                    'Filename': u'sub-001_ses-sestest_T1w.nii.gz', 'Path': '',
-                    'Run': '', 'Acq': '', 'Ce': '', 'Rec': '', 'Folder': 'anat',
+                    'Filename': u'sub-001_ses-sestest_T1w.nii.gz',
+                    'Path': u'sub-001/ses-sestest/anat', 'Folder': 'anat',
+                    'Run': '', 'Acq': '', 'Ce': '', 'Rec': '',
                     'Modality': 'T1w', 'Mod': ''
                     }
                 },
@@ -381,7 +419,8 @@ class BidsifyTestCases(unittest.TestCase):
             'session': {u'label': u'sesTEST'},
             'acquisition': {u'label': u'acqTEST'},
             'file': {u'measurements': [u'functional'],
-                    u'type': u'nifti'},
+                    u'type': u'nifti',
+                        },
             'ext': '.nii.gz'
         }
         # Call function
@@ -390,9 +429,10 @@ class BidsifyTestCases(unittest.TestCase):
         container_expected = {
             'info': {
                 'BIDS': {
-                    'Filename': u'sub-001_ses-sestest_bold.nii.gz',
-                    'Folder': 'func', 'Path': '', 'Acq': '', 'Task': '',
-                    'Modality': 'bold', 'Rec': '', 'Run': '', 'Echo': ''
+                    'Filename': u'sub-001_ses-sestest_task-{file.info.BIDS.Task}_bold.nii.gz',
+                    'Folder': 'func', 'Path': u'sub-001/ses-sestest/func',
+                    'Acq': '', 'Task': '', 'Modality': 'bold',
+                    'Rec': '', 'Run': '', 'Echo': ''
                     }
                 },
             u'measurements': [u'functional'], u'type': u'nifti'}
@@ -409,7 +449,8 @@ class BidsifyTestCases(unittest.TestCase):
             'session': {u'label': u'sesTEST'},
             'acquisition': {u'label': u'acqTEST'},
             'file': {u'measurements': [u'diffusion'],
-                    u'type': u'nifti'},
+                    u'type': u'nifti'
+                        },
             'ext': '.nii.gz'
         }
         # Call function
@@ -419,7 +460,8 @@ class BidsifyTestCases(unittest.TestCase):
             'info': {
                 'BIDS': {
                     'Filename': u'sub-001_ses-sestest_dwi.nii.gz',
-                    'Folder': 'dwi', 'Path': '', 'Acq': '', 'Run': ''
+                    'Path': u'sub-001/ses-sestest/dwi', 'Folder': 'dwi',
+                     'Modality': 'dwi', 'Acq': '', 'Run': ''
                     }
                 },
             u'measurements': [u'diffusion'], u'type': u'nifti'}

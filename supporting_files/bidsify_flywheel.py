@@ -60,42 +60,58 @@ def valid_namespace(namespace):
 def process_string_template(template, context):
     tokens = re.compile('[^\[][A-Za-z0-9\.><}{-]+|\[[A-Za-z0-9><}{_\.-]+\]')
     values = re.compile('[{<][A-Za-z0-9\.-]+[>}]')
-    translated_tokens = []
+
     for token in tokens.findall(template):
-        #
-        # improve this to handle multiple value tokens in the same token (ie. modality type and ext)
-        #
         if values.search(token):
-            replace_token = values.search(token).group()
-            path = replace_token[1:len(values.search(token).group())-1]
-            keys = path.split(".")
-            result = context
-            for key in keys:
-                if key in result:
-                    result = result[key]
-                else:
-                    result = None
-                    break
-            if result:
-                if replace_token[0] == '<':
-                    # Check if result is already in BIDS format...
-                    #   if so, split and grab only the label
-                    if re.match('(sub|ses)-[a-zA-Z0-9]+', result):
-                        label, result = result.split('-')
-                    # If not, take the entire result and remove underscores and dashes
+            replace_tokens = values.findall(token)
+            for replace_token in replace_tokens:
+                # Remove the {} or <> surrounding the replace_token
+                path = replace_token[1:-1]
+                # Get keys, if replace token has a . in it
+                keys = path.split(".")
+                result = context
+                for key in keys:
+                    if key in result:
+                        result = result[key]
                     else:
-                        result = ''.join(x for x in result.replace('_', ' ').replace('-', ' ').title() if x.isalnum())
-                        result = result.lower()
+                        result = None
+                        break
+                # If value found replace it
+                if result:
+                    print token
+                    print result
+                    # If replace token is <>, need to check if in BIDS
+                    if replace_token[0] == '<':
+                        # Check if result is already in BIDS format...
+                        #   if so, split and grab only the label
+                        if re.match('(sub|ses)-[a-zA-Z0-9]+', result):
+                            label, result = result.split('-')
+                        # If not, take the entire result and remove underscores and dashes
+                        else:
+                            result = ''.join(x for x in result.replace('_', ' ').replace('-', ' ').title() if x.isalnum())
+                            result = result.lower()
 
-                translated_token = token.replace(replace_token, result).replace('[','').replace(']','')
-                translated_tokens.append(translated_token)
-            elif token[0] != '[':
-                translated_tokens.append(token)
+                    # Replace the token with the result
+                    template = template.replace(replace_token, result)
+                # If result not found, but the token is option, remove the token from the template
+                elif token[0] == '[':
+                    template = template.replace(token, '')
+
+                # TODO: Determine approach
+                # Else the value hasn't been found AND field is required, and so let's replace with 'UNKNOWN'
+                #elif token[0] != '[':
+                #    result = 'UNKNOWN'
+                #    template = template.replace(replace_token, result)
         else:
-            translated_tokens.append(token)
+            print 'I AM HERE?'
+            print token
 
-    processed_template = ''.join(translated_tokens)
-    return(processed_template)
+    # Replace any [] from the string
+    processed_template = re.sub('\[|\]', '', template)
+
+    return processed_template
+
+
 
 # add_properties(properties, obj)
 # Populates obj with properties defined in a namespace template
@@ -144,7 +160,7 @@ def process_matching_templates(context):
     container_type = context['container_type']
     container = context[container_type]
     # add objects based on template if they don't already exist
-    if ("info" in container and templates.namespace["namespace"] not in container["info"]) or "info" not in container:
+    if ("info" not in container) or (templates.namespace["namespace"] not in container["info"]):
         for template in templates.namespace["datatypes"]:
             if ((template["container_type"] == context["container_type"] and 'parent_container_type' not in template)
                 or
@@ -165,8 +181,8 @@ def process_matching_templates(context):
                     obj = {}
                     namespacekey = templates.namespace["namespace"]
                     if "info" not in container:
-                        container["info"] = {}
-                    if namespacekey not in container["info"]:
+                        container["info"] = {namespacekey: {}}
+                    elif namespacekey not in container["info"]:
                         container["info"][namespacekey] = {}
                     else:
                         obj = container["info"][namespacekey]
@@ -198,7 +214,6 @@ def process_matching_templates(context):
                     # Update container with auto-updated values
                     container["info"][namespacekey].update(obj)
                     print('updated info.namespace properties:', obj)
-                    print('\n')
 
     return container
 
