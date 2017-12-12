@@ -5,7 +5,9 @@ import re
 
 import flywheel
 
+from supporting_files import classifications
 import templates
+
 
 # get project by label
 def get_project_by_label(client, label):
@@ -78,8 +80,6 @@ def process_string_template(template, context):
                         break
                 # If value found replace it
                 if result:
-                    print token
-                    print result
                     # If replace token is <>, need to check if in BIDS
                     if replace_token[0] == '<':
                         # Check if result is already in BIDS format...
@@ -112,23 +112,49 @@ def process_string_template(template, context):
     return processed_template
 
 
+def determine_enum(theproperty, key, measurements):
+    """
 
-# add_properties(properties, obj)
+    obj:  {'Task': '', 'Run': '', 'Filename': '', 'Acq': '', 'Rec': '', 'Path': '', 'Folder': 'func', 'Echo': ''}
+    property: {'default': 'bold', 'enum': ['bold', 'sbref', 'stim', 'physio'], 'type': 'string', 'label': 'Modality Label'}
+    measurements:  [u'functional']
+
+    """
+    # Use the default value
+    enum_value = theproperty.get('default', '')
+    # If the default value is '', try and determine if from 'enum' list
+    if not enum_value:
+        # If key is modality, iterate over classifications dict
+        if key == 'Modality':
+            for k1 in classifications.classifications:
+                for k2 in classifications.classifications[k1]:
+                    if measurements[0] == classifications.classifications[k1][k2]:
+                        enum_value = k2
+                        break
+
+    return enum_value
+
+# add_properties(properties, obj, measurements)
 # Populates obj with properties defined in a namespace template
 # Adds each key in the properties list and sets the value to the value specified in 'default' attribute
 # Properties may be of type string or object. Will add other types later.
+# Measurements passed through function so that Modality value can be determined
 
-def add_properties(properties, obj):
+def add_properties(properties, obj, measurements):
     for key in properties:
         proptype = properties[key]["type"]
         if proptype == "string":
-            if "default" in properties[key]:
+            # If 'enum' in properties, seek to determine the value from enum list
+            if "enum" in properties[key]:
+                obj[key] = determine_enum(properties[key], key, measurements)
+            elif "default" in properties[key]:
                 obj[key] = properties[key]["default"]
             else:
                 obj[key] = "default"
         elif proptype == "object":
+            print 'WHY AM I HERE?!?'
             obj[key] = {}
-            obj[key] = add_properties(properties[key]["properties"], obj[key])
+            obj[key] = add_properties(properties[key]["properties"], obj[key], measurements)
     return(obj)
 
 
@@ -167,12 +193,39 @@ def process_matching_templates(context):
                 ('parent_container_type' in template and template["container_type"] == context["container_type"] and
                  template['parent_container_type'] == context['parent_container_type'])):
                 match = True
+                # Check black list of attributes
+                if "not" in template:
+                    for key in template["not"]:
+                        if key in container:
+                            # If container is a list --- get the first entry
+                            if type(container[key]) == list:
+                                value = container[key][0]
+                            # Otherwise, don't need to get the first entry
+                            else:
+                                value = container[key]
+                            # If container[key] matches one of the values in list
+                            if value in template["not"][key]:
+                                match = False
+                                break
+
+                # Check white list of attributes
                 if "where" in template:
                     for key in template["where"]:
+                        # If the key is in the container, check if it matches the 'where' conditions
                         if key in container:
-                            match = template["where"][key] == container[key]
-                            if match == False:
+                            # If container is a list --- get the first entry
+                            if type(container[key]) == list:
+                                value = container[key][0]
+                            # Otherwise, don't need to get the first entry
+                            else:
+                                value = container[key]
+                            # If container[key] matches one of the values in list
+                            if value in template["where"][key]:
+                                match = True
+                            else:
+                                match = False
                                 break
+                        # If key is not in the container, does not match the template
                         else:
                             match = False
                             break
@@ -186,7 +239,7 @@ def process_matching_templates(context):
                         container["info"][namespacekey] = {}
                     else:
                         obj = container["info"][namespacekey]
-                    obj = add_properties(template["properties"], obj)
+                    obj = add_properties(template["properties"], obj, container.get('measurements'))
                     container["info"][namespacekey] = obj
 
     # update info object values for matching templates that contain 'auto_update' rules
@@ -197,12 +250,40 @@ def process_matching_templates(context):
                 ('parent_container_type' in template and template["container_type"] == context["container_type"] and
                  template['parent_container_type'] == context['parent_container_type'])):
                 match = True
+                # Check black list of attributes
+                if "not" in template:
+                    for key in template["not"]:
+                        if key in container:
+                            # If container is a list --- get the first entry
+                            if type(container[key]) == list:
+                                value = container[key][0]
+                            # Otherwise, don't need to get the first entry
+                            else:
+                                value = container[key]
+                            # If container[key] matches one of the values in list
+                            if value in template["not"][key]:
+                                match = False
+                                break
+
+                # Check white list of attributes
                 if "where" in template:
                     for key in template["where"]:
+                        # If the key is in the container, check if it matches the 'where' conditions
                         if key in container:
-                            match = template["where"][key] == container[key]
-                            if match == False:
+                            # If container is a list --- get the first entry
+                            if type(container[key]) == list:
+                                value = container[key][0]
+                            # Otherwise, don't need to get the first entry
+                            else:
+                                value = container[key]
+
+                            # If container[key] matches one of the values in list
+                            if value in template["where"][key]:
+                                match = True
+                            else:
+                                match = False
                                 break
+                        # If key is not in the container, does not match the template
                         else:
                             match = False
                             break
@@ -213,7 +294,6 @@ def process_matching_templates(context):
                     obj = update_properties(template["properties"], context, obj)
                     # Update container with auto-updated values
                     container["info"][namespacekey].update(obj)
-                    print('updated info.namespace properties:', obj)
 
     return container
 

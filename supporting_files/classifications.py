@@ -11,8 +11,8 @@ classifications = {
             'PD': 'anatomy_pd',
             'PDmap': 'map_pd',
             'PDT2': 'anatomy_pdt2',
-            'inplaneT1': 'anatomy_inplane',
-            'inplaneT2': 'anatomy_inplane',
+            'inplaneT1': 'anatomy_t1w_inplane',
+            'inplaneT2': 'anatomy_t2w_inplane',
             'angio': 'angio',
             'defacemask': 'defacemask',
             'SWImagandphase': 'swi'

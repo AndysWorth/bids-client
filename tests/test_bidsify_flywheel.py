@@ -82,7 +82,7 @@ class BidsifyTestCases(unittest.TestCase):
     def test_valid_namespace_invalid2(self):
         """ Assert function returns False when a INVALID namespace passed.
 
-        Namespace is invalid because it does not contain the property "container_type"
+        Namespace is invalid because it does not contain the property 'container_type'
 
         """
         invalid_namespace = {
@@ -210,12 +210,6 @@ class BidsifyTestCases(unittest.TestCase):
                     context['ext']
                     ))
 
-
-
-
-
-
-
     def test_process_string_template_subject_none(self):
         """ """
 
@@ -264,8 +258,6 @@ class BidsifyTestCases(unittest.TestCase):
         }
 
 
-
-    """
     def test_process_string_template_required_notpresent(self):
         """ """
         # TODO: Determine the expected behavior of this...
@@ -287,13 +279,10 @@ class BidsifyTestCases(unittest.TestCase):
         updated_string = bidsify_flywheel.process_string_template(auto_update_str, context)
         # Assert function honors the optional 'sub-<subject.code>'
         self.assertEqual(updated_string,
-                'sub-%s_ses-%s' % (
-                    context['subject']['code'],
+                'sub-<subject.code>_ses-%s' % (
                     context['session']['label']
                     ))
-        """
 
-    """
     def test_process_string_template_required_None(self):
         """ """
         # TODO: Determine the expected behavior of this...
@@ -315,11 +304,9 @@ class BidsifyTestCases(unittest.TestCase):
         updated_string = bidsify_flywheel.process_string_template(auto_update_str, context)
         # Assert function honors the optional 'sub-<subject.code>'
         self.assertEqual(updated_string,
-                'sub-%s_ses-%s' % (
-                    context['subject']['code'],
+                'sub-<subject.code>_ses-%s' % (
                     context['session']['label']
                     ))
-    """
 
     def test_add_properties_valid(self):
         """ """
@@ -340,7 +327,7 @@ class BidsifyTestCases(unittest.TestCase):
                 }
         project_obj = {u'label': u'Project Name'}
         # Call function
-        info_obj = bidsify_flywheel.add_properties(properties, project_obj)
+        info_obj = bidsify_flywheel.add_properties(properties, project_obj, [u'anatomy_t1w'])
         # Expected info object
         for key in properties:
             project_obj[key] = properties[key]['default']
@@ -378,7 +365,7 @@ class BidsifyTestCases(unittest.TestCase):
                 )
         self.assertEqual(project_obj, info_obj)
 
-    def test_process_matching_templates_anat(self):
+    def test_process_matching_templates_anat_t1w(self):
         """ """
         # Define context
         context = {
@@ -406,6 +393,36 @@ class BidsifyTestCases(unittest.TestCase):
                     }
                 },
             u'measurements': [u'anatomy_t1w'], u'type': u'nifti'}
+        self.assertEqual(container, container_expected)
+
+    def test_process_matching_templates_anat_t2w(self):
+        """ """
+        # Define context
+        context = {
+            'container_type': 'file',
+            'parent_container_type': 'acquisition',
+            'project': None,
+            'subject': {u'code': u'001'},
+            'session': {u'label': u'sesTEST'},
+            'acquisition': {u'label': u'acqTEST'},
+            'file': {u'measurements': [u'anatomy_t2w'],
+                    u'type': u'nifti'
+                        },
+            'ext': '.nii.gz'
+        }
+        # Call function
+        container = bidsify_flywheel.process_matching_templates(context)
+        # Define expected container
+        container_expected = {
+            'info': {
+                'BIDS': {
+                    'Filename': u'sub-001_ses-sestest_T2w.nii.gz',
+                    'Path': u'sub-001/ses-sestest/anat', 'Folder': 'anat',
+                    'Run': '', 'Acq': '', 'Ce': '', 'Rec': '',
+                    'Modality': 'T2w', 'Mod': ''
+                    }
+                },
+            u'measurements': [u'anatomy_t2w'], u'type': u'nifti'}
         self.assertEqual(container, container_expected)
 
     def test_process_matching_templates_func(self):
@@ -438,7 +455,7 @@ class BidsifyTestCases(unittest.TestCase):
             u'measurements': [u'functional'], u'type': u'nifti'}
         self.assertEqual(container, container_expected)
 
-    def test_process_matching_templates_diff(self):
+    def test_process_matching_templates_dwi_nifti(self):
         """ """
         # Define context
         context = {
@@ -467,6 +484,112 @@ class BidsifyTestCases(unittest.TestCase):
             u'measurements': [u'diffusion'], u'type': u'nifti'}
         self.assertEqual(container, container_expected)
 
+    def test_process_matching_templates_dwi_bval(self):
+        """ """
+        # Define context
+        context = {
+            'container_type': 'file',
+            'parent_container_type': 'acquisition',
+            'project': None,
+            'subject': {u'code': u'001'},
+            'session': {u'label': u'sesTEST'},
+            'acquisition': {u'label': u'acqTEST'},
+            'file': {u'measurements': [u'diffusion'],
+                    u'type': u'bval'
+                        },
+            'ext': '.bval'
+        }
+        # Call function
+        container = bidsify_flywheel.process_matching_templates(context)
+        # Define expected container
+        container_expected = {
+            'info': {
+                'BIDS': {
+                    'Filename': u'sub-001_ses-sestest_dwi.bval',
+                    'Path': u'sub-001/ses-sestest/dwi', 'Folder': 'dwi',
+                     'Modality': 'dwi', 'Acq': '', 'Run': ''
+                    }
+                },
+            u'measurements': [u'diffusion'], u'type': u'bval'}
+        self.assertEqual(container, container_expected)
+
+    def test_process_matching_templates_dwi_bvec(self):
+        """ """
+        # Define context
+        context = {
+            'container_type': 'file',
+            'parent_container_type': 'acquisition',
+            'project': None,
+            'subject': {u'code': u'001'},
+            'session': {u'label': u'sesTEST'},
+            'acquisition': {u'label': u'acqTEST'},
+            'file': {u'measurements': [u'diffusion'],
+                    u'type': u'bvec'
+                        },
+            'ext': '.bvec'
+        }
+        # Call function
+        container = bidsify_flywheel.process_matching_templates(context)
+        # Define expected container
+        container_expected = {
+            'info': {
+                'BIDS': {
+                    'Filename': u'sub-001_ses-sestest_dwi.bvec',
+                    'Path': u'sub-001/ses-sestest/dwi', 'Folder': 'dwi',
+                     'Modality': 'dwi', 'Acq': '', 'Run': ''
+                    }
+                },
+            u'measurements': [u'diffusion'], u'type': u'bvec'}
+        self.assertEqual(container, container_expected)
+
+    def test_process_matching_templates_dicom(self):
+        """ Asserts DICOM files are ignored """
+        # Define context
+        context = {
+            'container_type': 'file',
+            'parent_container_type': 'acquisition',
+            'project': {u'label': 'hello'},
+            'subject': {u'code': u'001'},
+            'session': {u'label': u'sesTEST'},
+            'acquisition': {u'label': u'acqTEST'},
+            'file': {
+                u'measurements': [u'diffusion'],
+                u'type': u'dicom'
+                },
+            'ext': '.dcm.zip'
+        }
+        # Call function
+        container = bidsify_flywheel.process_matching_templates(context)
+        # Define expected container
+        container_expected = {
+            u'measurements': [u'diffusion'], u'type': u'dicom'}
+        self.assertEqual(container, container_expected)
+
+    def test_process_matching_templates_session_file(self):
+        """ """
+        # Define context
+        context = {
+            'container_type': 'file',
+            'parent_container_type': 'session',
+            'project': {'label': 'testproject'},
+            'subject': {'code': '12345'},
+            'session': {'label': 'haha'},
+            'acquisition': None,
+            'file': {u'type': u'tabular'},
+            'ext': '.tsv'
+        }
+        # Call function
+        container = bidsify_flywheel.process_matching_templates(context)
+        # Define expected container
+        container_expected = {
+            'info': {
+                'BIDS': {
+                    'Filename': '', 'Folder': 'ses-haha', 'Path': 'sub-12345/ses-haha'
+                    }
+                },
+            u'type': u'tabular'}
+        self.assertEqual(container, container_expected)
+
     def test_process_matching_templates_project_file(self):
         """ """
         # Define context
@@ -493,12 +616,8 @@ class BidsifyTestCases(unittest.TestCase):
             u'measurements': [u'unknown'], u'type': u'archive'}
         self.assertEqual(container, container_expected)
 
-
-
-    """
     def test_process_matching_templates_project_file_multiple_measurements(self):
         """ """
-        # TODO: figure out how to navigate this
         # Define context
         context = {
             'container_type': 'file',
@@ -515,9 +634,19 @@ class BidsifyTestCases(unittest.TestCase):
         }
         # Call function
         container = bidsify_flywheel.process_matching_templates(context)
-        self.assertTrue(False)
-        self.assertTrue('info' in container)
-    """
+        # Define expected container
+        container_expected = {
+            'info': {
+                'BIDS': {
+                    'Filename': u'sub-001_ses-sestest_T1w.nii.gz',
+                    'Path': u'sub-001/ses-sestest/anat', 'Folder': 'anat',
+                    'Run': '', 'Acq': '', 'Ce': '', 'Rec': '',
+                    'Modality': 'T1w', 'Mod': ''
+                    }
+                },
+            u'measurements': [u'anatomy_t1w', u'anatomy_t2w'], u'type': u'nifti'}
+        print container
+        self.assertEqual(container, container_expected)
 
 
 
