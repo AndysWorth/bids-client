@@ -180,6 +180,26 @@ class BidsifyTestCases(unittest.TestCase):
                     context['acquisition']['label']
                     ))
 
+    def test_process_string_template_full_optional(self):
+        """ """
+        auto_update_str = 'sub-<subject.code>[_ses-<session.label>][_acq-{file.info.BIDS.Acq}][_ce-{file.info.BIDS.Ce}][_rec-{file.info.BIDS.Rec}][_run-{file.info.BIDS.Run}][_mod-{file.info.BIDS.Mod}]'
+        # initialize context object
+        context = {
+            'container_type': 'file',
+            'parent_container_type': 'project',
+            'project': {u'label': u'project123'},
+            'subject': {u'code': u'123'},
+            'session': {u'label': u'456'},
+            'acquisition': {u'label': u'acq222'},
+            'file': {u'measurements': [u'anatomy_t1w']},
+            'ext': '.nii.gz'
+        }
+
+        # Call function
+        updated_string = bidsify_flywheel.process_string_template(auto_update_str, context)
+        # Assert function honors the optional labels
+        self.assertEqual(updated_string,
+                'sub-123_ses-456')
 
     def test_process_string_template_func_filename1(self):
         """  """
@@ -209,54 +229,6 @@ class BidsifyTestCases(unittest.TestCase):
                     context['file']['info']['BIDS']['Modality'],
                     context['ext']
                     ))
-
-    def test_process_string_template_subject_none(self):
-        """ """
-
-        context = {
-            'project': {
-                'info': {'BIDS': {'Ackowledgements': '',
-                    'Funding': '', 'Name': '', 'License': '',
-                    'HowToAcknowledge': '', 'Authors': '', 
-                    'ReferencesAndLinks': '','DatasetDOI': '', 'BIDSVersion': ''}
-                    },
-                u'group': u'jr',
-                u'label': u'ds001_reduced',
-                u'_id': u'5a0b656b9b89b7001a1f309e'
-                },
-            'parent_container_type': 'acquisition',
-            'session': {
-                u'group': u'jr',
-                u'label': u'sub-01', u'project': u'5a0b656b9b89b7001a1f309e',
-                u'_id': u'5a0b656e9b89b7001d1f3140',
-                u'subject': {u'code': u'sub-01', u'_id': u'5a0b656e9b89b7001d1f313f'}},
-            'acquisition': {
-                u'files': [
-                    {u'origin': {u'type': u'user', u'id': u'jenniferreiter@invenshure.com'},
-                        u'mimetype': u'application/octet-stream', u'name': u'sub-01_T1w.nii.gz',
-                        u'created': u'2017-11-14T21:51:54.287Z', u'measurements': [u'anatomy_t1w'],
-                        u'modified': u'2017-11-14T21:51:54.287Z',
-                        u'type': u'nifti', u'size': 5663237}
-                    ],
-                u'created': u'2017-11-14T21:51:42.971Z',
-                u'modified': u'2017-11-14T21:59:08.922Z',
-                u'label': u'anat', u'session': u'5a0b656e9b89b7001d1f3140',
-                u'_id': u'5a0b656e9b89b7001a1f30a0'
-                },
-            'file': {
-                u'origin': {u'type': u'user',
-                u'id': u'jenniferreiter@invenshure.com'},
-                u'mimetype': u'application/octet-stream',
-                u'name': u'sub-01_T1w.nii.gz', u'created': u'2017-11-14T21:51:54.287Z',
-                u'measurements': [u'anatomy_t1w'],
-                u'modified': u'2017-11-14T21:51:54.287Z',
-                'info': {
-                    'BIDS': {'Run': '', 'Ce': '', 'Filename': '',
-                    'Rec': '', 'Folder': 'anat', 'Modality': 'T1w', 'Mod': ''}},
-                    u'type': u'nifti', u'size': 5663237},
-            'ext': '.nii.gz', 'container_type': 'file', 'subject': None
-        }
-
 
     def test_process_string_template_required_notpresent(self):
         """ """

@@ -69,7 +69,7 @@ anat_file_template = {
     },
     "properties": {
         "Filename": {"type": "string", "label": "Filename", "default": "",
-            "auto_update": 'sub-<subject.code>[_ses-<session.label>]_{file.info.BIDS.Modality}{ext}'},
+            "auto_update": 'sub-<subject.code>[_ses-<session.label>][_acq-{file.info.BIDS.Acq}][_ce-{file.info.BIDS.Ce}][_rec-{file.info.BIDS.Rec}][_run-{file.info.BIDS.Run}][_mod-{file.info.BIDS.Mod}]_{file.info.BIDS.Modality}{ext}'},
         "Folder": {"type": "string", "label": "Folder", "default": "anat"},
         "Path": {"type": "string", "label": "Path", "default": "",
             "auto_update": 'sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}'},
@@ -110,7 +110,7 @@ func_file_template = {
     },
     "properties": {
         "Filename": {"type": "string", "label": "Filename", "default": "",
-            "auto_update": 'sub-<subject.code>[_ses-<session.label>]_task-{file.info.BIDS.Task}_{file.info.BIDS.Modality}{ext}'},
+            "auto_update": 'sub-<subject.code>[_ses-<session.label>]_task-{file.info.BIDS.Task}[_acq-{file.info.BIDS.Acq}][_rec-{file.info.BIDS.Rec}][_run-{file.info.BIDS.Run}][_echo-{file.info.BIDS.Echo}]_{file.info.BIDS.Modality}{ext}'},
         "Folder": {"type": "string", "label": "Folder", "default": "func"},
         "Path": {"type": "string", "label": "Path", "default": "",
             "auto_update": 'sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}'},
@@ -141,7 +141,7 @@ task_events_file_template = {
     },
     "properties": {
         "Filename": {"type": "string", "label": "Filename", "default": "",
-            "auto_update": 'sub-<subject.code>[_ses-<session.label>]_events.tsv'},
+            "auto_update": 'sub-<subject.code>[_ses-<session.label>]_task-{file.info.BIDS.Task}[_acq-{file.info.BIDS.Acq}][_rec-{file.info.BIDS.Rec}][_run-{file.info.BIDS.Run}][_echo-{file.info.BIDS.Echo}]_events.tsv'},
         "Folder": {"type": "string", "label": "Folder", "default": "func"},
         "Path": {"type": "string", "label": "Path", "default": "",
             "auto_update": 'sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}'},
@@ -163,7 +163,7 @@ physio_events_file_template = {
     },
     "properties": {
         "Filename": {"type": "string", "label": "Filename", "default": "",
-            "auto_update": 'sub-<subject.code>[_ses-<session.label>]_{file.info.BIDS.Modality}{ext}'},
+            "auto_update": 'sub-<subject.code>[_ses-<session.label>]_task-{file.info.BIDS.Task}[_acq-{file.info.BIDS.Acq}][_rec-{file.info.BIDS.Rec}][_run-{file.info.BIDS.Run}][_echo-{file.info.BIDS.Echo}][_recording-{file.info.BIDS.Recording}]_{file.info.BIDS.Modality}{ext}'},
         "Folder": {"type": "string", "label": "Folder", "default": "func"},
         "Path": {"type": "string", "label": "Path", "default": "",
             "auto_update": 'sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}'},
@@ -192,12 +192,11 @@ beh_events_file_template = {
     },
     "properties": {
         "Filename": {"type": "string", "label": "Filename", "default": "",
-            "auto_update": 'sub-<subject.code>[_ses-<session.label>]_{file.info.BIDS.Modality}{ext}'},
+            "auto_update": 'sub-<subject.code>[_ses-<session.label>]_task-{file.info.BIDS.Task}_{file.info.BIDS.Modality}{ext}'},
         "Folder": {"type": "string", "label": "Folder", "default": "beh"},
         "Path": {"type": "string", "label": "Path", "default": "",
             "auto_update": 'sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}'},
         "Task": {"type": "string", "label": "Task Label", "default": ""},
-        "Acq": {"type": "string", "label": "Acq Label", "default": ""},
         "Modality": {"type": "string", "label": "Modality Label", "default": "beh",
             "enum": [
                 "beh",
@@ -221,7 +220,7 @@ diffusion_file_template = {
     },
     "properties": {
         "Filename": {"type": "string", "label": "Filename", "default": "",
-            "auto_update":'sub-<subject.code>[_ses-<session.label>]_{file.info.BIDS.Modality}{ext}'},
+            "auto_update":'sub-<subject.code>[_ses-<session.label>][_acq-{file.info.BIDS.Acq}][_run-{file.info.BIDS.Run}]_{file.info.BIDS.Modality}{ext}'},
         "Folder": {"type": "string", "label": "Folder", "default": "dwi"},
         "Path": {"type": "string", "label": "Path", "default": "",
             "auto_update": 'sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}'},
@@ -246,7 +245,7 @@ fieldmap_file_template = {
     },
     "properties": {
         "Filename": {"type": "string", "label": "Filename", "default": "",
-            "auto_update":'sub-<subject.code>[_ses-<session.label>]_{file.info.BIDS.Modality}{ext}'},
+            "auto_update":'sub-<subject.code>[_ses-<session.label>][_acq-{file.info.BIDS.Acq}][_run-{file.info.BIDS.Run}][_dir-{file.info.BIDS.Dir}]_{file.info.BIDS.Modality}{ext}'},
         "Folder": {"type": "string", "label": "Folder", "default": "fmap"},
         "Path": {"type": "string", "label": "Path", "default": "",
             "auto_update": 'sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}'},
