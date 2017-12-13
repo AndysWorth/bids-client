@@ -14,56 +14,38 @@ def update_meta_info(fw, context):
     """
     # Modify file
     if context['container_type'] == 'file':
-        # Acquisition file
+        # Modify acquisition file
         if context['parent_container_type'] == 'acquisition':
-            print 'acquisition'
-            print context['file']['name']
-            print context['file']['info']['BIDS']
-
-            """fw.modify_acquisition_file(
+            fw.set_acquisition_file_info(
                     context['acquisition']['_id'],
                     context['file']['name'],
                     context['file']['info']
-                    )"""
-        # Project file
+                    )
+        # Modify project file
         elif context['parent_container_type'] == 'project':
-            print 'project'
-            print context['file']['name']
-            print context['file']['info']['BIDS']
-
-            """fw.modify_project_file(
+            fw.set_project_file_info(
                     context['project']['_id'],
                     context['file']['name'],
                     context['file']['info']
-                    )"""
+                    )
         # Modify session file
         elif context['parent_container_type'] == 'session':
-            print 'session'
-            print context['file']['name']
-            print context['file']['info']['BIDS']
-
-            """fw.modify_session_file(
+            fw.set_session_file_info(
                     context['session']['_id'],
                     context['file']['name'],
                     context['file']['info']
-                    )"""
+                    )
         else:
             logger.info('Cannot determine file parent container type')
     # Modify project
     elif context['container_type'] == 'project':
-        print 'project // project'
-        print context['project']
-
-        """fw.modify_project(
+        fw.modify_project(
                 context['project']['_id'],
-                context['project'] # TODO: Determine what exactly to put here - really hte whole proejct?
-                )"""
+                {'info': context['project']['info']}
+                )
     # Cannot determine container type
     else:
         logger.info('Cannot determine container type')
-
-    print('\n\n')
-
 
 def curate_bids_dir(fw, project_id):
     """
