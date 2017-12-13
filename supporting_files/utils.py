@@ -1,5 +1,6 @@
 import logging
 import re
+import sys
 import subprocess
 import jsonschema
 
