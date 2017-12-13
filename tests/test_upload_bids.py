@@ -568,6 +568,83 @@ class BidsUploadTestCases(unittest.TestCase):
         # Assert parsed is the same as original contents
         self.assertEqual(parsed_contents, contents)
 
+    def test_compare_json_to_file_match1(self):
+        """ """
+        json_filename = 'task-rest_acq-fullbrain_bold.json'
+        filename = 'sub-01_ses-1_task-rest_acq-fullbrain_run-1_bold.nii.gz'
+        match = upload_bids.compare_json_to_file(json_filename, filename)
+        self.assertTrue(match)
+
+    def test_compare_json_to_file_match2(self):
+        """ """
+        json_filename = 'task-rest_acq-fullbrain_bold.json'
+        filename = 'sub-01_ses-1_task-rest_acq-fullbrain_run-2_bold.nii.gz'
+        match = upload_bids.compare_json_to_file(json_filename, filename)
+        self.assertTrue(match)
+
+    def test_compare_json_to_file_match3(self):
+        """ """
+        json_filename = 'task-rest_acq-fullbrain_bold.json'
+        filename = 'sub-01_ses-2_task-rest_acq-fullbrain_run-1_bold.nii.gz'
+        match = upload_bids.compare_json_to_file(json_filename, filename)
+        self.assertTrue(match)
+
+    def test_compare_json_to_file_match4(self):
+        """ """
+        json_filename = 'task-rest_acq-fullbrain_bold.json'
+        filename = 'sub-01_ses-2_task-rest_acq-fullbrain_run-2_bold.nii.gz'
+        match = upload_bids.compare_json_to_file(json_filename, filename)
+        self.assertTrue(match)
+
+    def test_compare_json_to_file_match5(self):
+        """ """
+        json_filename = 'sub-01_ses-1_run-2_phasediff.json'
+        filename = 'sub-01_ses-1_run-2_phasediff.nii.gz'
+        match = upload_bids.compare_json_to_file(json_filename, filename)
+        self.assertTrue(match)
+
+    def test_compare_json_to_file_nomatch1(self):
+        """ """
+        json_filename = 'task-rest_acq-fullbrain_run-1_physio.json'
+        filename = 'sub-01_ses-2_task-rest_acq-fullbrain_run-2_bold.nii.gz'
+        match = upload_bids.compare_json_to_file(json_filename, filename)
+        self.assertFalse(match)
+
+    def test_compare_json_to_file_nomatch2(self):
+        """ """
+        json_filename = 'task-rest_acq-prefrontal_bold.json'
+        filename = 'sub-01_ses-2_task-rest_acq-fullbrain_run-2_bold.nii.gz'
+        match = upload_bids.compare_json_to_file(json_filename, filename)
+        self.assertFalse(match)
+
+    def test_compare_json_to_file_nomatch3(self):
+        """ """
+        json_filename = 'task-rest_acq-fullbrain_run-2_physio.json'
+        filename = 'sub-01_ses-2_task-rest_acq-fullbrain_run-2_bold.nii.gz'
+        match = upload_bids.compare_json_to_file(json_filename, filename)
+        self.assertFalse(match)
+
+    def test_compare_json_to_file_nomatch4(self):
+        """ """
+        json_filename = 'task-rest_acq-prefrontal_physio.json'
+        filename = 'sub-01_ses-2_task-rest_acq-fullbrain_run-2_bold.nii.gz'
+        match = upload_bids.compare_json_to_file(json_filename, filename)
+        self.assertFalse(match)
+
+    def test_compare_json_to_file_nomatch5(self):
+        """ """
+        json_filename = 'sub-01_ses-1_run-1_phasediff.json'
+        filename = 'sub-01_ses-1_run-2_phasediff.nii.gz'
+        match = upload_bids.compare_json_to_file(json_filename, filename)
+        self.assertFalse(match)
+
+    def test_compare_json_to_file_nomatch_notnifti(self):
+        """ """
+        json_filename = 'sub-01_ses-1_run-1_phasediff.json'
+        filename = 'sub-01_ses-1_run-1_phasediff.tsv'
+        match = upload_bids.compare_json_to_file(json_filename, filename)
+        self.assertFalse(match)
+
     def test_parse_tsv_valid(self):
         """ """
         # Create tsv file

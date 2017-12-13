@@ -376,14 +376,14 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
             # Upload the meta info onto the project file
             fw.set_project_file_info(context['project']['_id'], fname, meta_info)
 
-            # Check if any project files are of interest (to be parsed later)
-            for val in ['dataset_description.json', 'participants.tsv']:
-                if fname == val:
-                    files_of_interest[val] = {
-                            '_id': context['project']['_id'],
-                            'id_type': 'project',
-                            'full_filename': full_fname
-                            }
+            # Check if project files are of interest (to be parsed later)
+            #    Interested in participants.tsv or any JSON file
+            if (fname == 'participants.tsv') or ('.json' in fname):
+                files_of_interest[fname] = {
+                        '_id': context['project']['_id'],
+                        'id_type': 'project',
+                        'full_filename': full_fname
+                        }
 
         ### Figure out which directories are subjects, and which are directories
         #       that should be zipped up and add to project
@@ -451,9 +451,10 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
                     fw.set_project_file_info(context['project']['_id'], fname, meta_info)
 
                     # Check if any subject files are of interest (to be parsed later)
+                    #   interested in _sessions files and JSON files
                     val = '%s_sessions.tsv' % subject_code
-                    if fname == val:
-                        files_of_interest[val] = {
+                    if (fname == val) or ('.json' in fname):
+                        files_of_interest[fname] = {
                                 '_id': context['project']['_id'],
                                 'id_type': 'project',
                                 'full_filename': full_fname
@@ -494,10 +495,11 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
                     # Upload the meta info onto the project file
                     fw.set_session_file_info(context['session']['_id'], fname, meta_info)
 
-                    # Check if any subject files are of interest (to be parsed later)
+                    # Check if any session files are of interest (to be parsed later)
+                    #   interested in _scans.tsv and JSON files
                     val = '%s_%s_scans.tsv' % (subject_code, session_label)
-                    if fname == val:
-                        files_of_interest[val] = {
+                    if (fname == val) or ('.json' in fname):
+                        files_of_interest[fname] = {
                                     '_id': context['session']['_id'],
                                     'id_type': 'session',
                                     'full_filename': full_fname
@@ -543,6 +545,15 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
                         # Upload the meta info onto the project file
                         fw.set_acquisition_file_info(context['acquisition']['_id'], fname, meta_info)
 
+                        # Check if any acquisition files are of interest (to be parsed later)
+                        #   interested in JSON files
+                        if '.json' in fname:
+                            files_of_interest[val] = {
+                                    '_id': context['acquisition']['_id'],
+                                    'id_type': 'acquisition',
+                                    'full_filename': full_fname
+                                    }
+
     return files_of_interest
 
 def parse_json(filename):
@@ -551,12 +562,99 @@ def parse_json(filename):
         contents = json.load(json_data)
     return contents
 
+
+def compare_json_to_file(json_filename, filename):
+    """
+
+    Determine if a JSON file's contents apply to a filename
+
+    json_filename: Name of the json filename
+    filename: Name of the file in question, does
+        the json file contents apply to this file?
+
+    i.e.
+        The following json_filename...
+
+            'task-rest_acq-fullbrain_bold.json'
+
+        ...applies to the following filenames:
+
+        'sub-01_ses-1_task-rest_acq-fullbrain_run-1_bold.nii.gz'
+        'sub-01_ses-1_task-rest_acq-fullbrain_run-2_bold.nii.gz'
+        'sub-01_ses-2_task-rest_acq-fullbrain_run-1_bold.nii.gz'
+        'sub-01_ses-2_task-rest_acq-fullbrain_run-2_bold.nii.gz'
+
+    NOTE: files must be a nifti file...
+
+    """
+    # First check if file is a nifti file...
+    if '.nii' not in filename:
+        match = False
+    else:
+        # Remove .json extension from filename
+        json_filename = re.sub('.json', '', json_filename)
+        # Split json filename up into components
+        components = json_filename.split('_')
+        # Iterate over all components within JSON file,
+        #   if any of them are missing, match is False
+        match = True
+        for c in components:
+            if c not in filename:
+                match = False
+
+    return match
+
 def attach_json(fw, file_info):
-    # parse JSON file
+    # Parse JSON file
     contents = parse_json(file_info['full_filename'])
     # Attach parsed JSON to project
-    if file_info['id_type'] == 'project':
+    if 'dataset_description.json' in file_info['full_filename']:
         fw.modify_project(file_info['_id'], {'info': {templates.namespace['namespace']: contents}})
+    # Otherwise... it's a JSON file that should be assigned to acquisition file(s)
+    else:
+        # Figure out which acquisition files within PROJECT should have JSON info attached...
+        if (file_info['id_type'] == 'project'):
+            # Get sessions within project
+            proj_sess = fw.get_project_sessions(file_info['_id'])
+            for proj_ses in proj_sess:
+                # Get acquisitions within session
+                ses_acqs = fw.get_session_acquisitions(proj_ses['_id'])
+                for ses_acq in ses_acqs:
+                    # Iterate over every acquisition file
+                    for f in ses_acq['files']:
+                        # Determine if json file components are all within the acq filename
+                        if compare_json_to_file(os.path.basename(file_info['full_filename']), f['name']):
+                            # JSON matches to file - assign json contents as file meta info
+                            fw.set_acquisition_file_info(
+                                    ses_acq['_id'],
+                                    f['name'],
+                                    {templates.namespace['namespace']: contents})
+
+        # Figure out which acquisition files within SESSION should have JSON info attached...
+        elif (file_info['id_type'] == 'session'):
+            # Get session and iterate over every acquisition file
+            ses_acqs = fw.get_session_acquisitions(file_info['_id'])
+            for ses_acq in ses_acqs:
+                for f in ses_acq['files']:
+                    # Determine if json file components are all within the acq filename
+                    if compare_json_to_file(os.path.basename(file_info['full_filename']), f['name']):
+                        # JSON matches to file - assign json contents as file meta info
+                        fw.set_acquisition_file_info(
+                                ses_acq['_id'],
+                                f['name'],
+                                {templates.namespace['namespace']: contents})
+
+        # Figure out which acquisition files within ACQUISITION should have JSON info attached...
+        elif (file_info['id_type'] == 'acquisition'):
+            acq = fw.get_acquisition(file_info['_id'])
+            for f in acq['files']:
+                # Determine if json file components are all within the acq filename
+                if compare_json_to_file(os.path.basename(file_info['full_filename']), f['name']):
+                    # JSON matches to file - assign json contents as file meta info
+                    fw.set_acquisition_file_info(
+                            acq['_id'],
+                            f['name'],
+                            {templates.namespace['namespace']: contents})
 
 def convert_dtype(contents):
     """
@@ -696,12 +794,12 @@ def parse_meta_files(fw, files_of_interest):
     files_of_interest = {
         'dataset_description.json': {
             '_id': u'5a1364af9b89b7001d1f357f',
-            'container_type': 'project',
+            'id_type': 'project',
             'full_filename': '/7t_trt_reduced/dataset_description.json'
             },
         'participants.tsv': {
             '_id': u'5a1364af9b89b7001d1f357f',
-            'container_type': 'project',
+            'id_type': 'project',
             'full_filename': '/7t_trt_reduced/participants.tsv'
             }
     }
@@ -713,6 +811,7 @@ def parse_meta_files(fw, files_of_interest):
         sub-YYY_ses-YYY_scans.tsv
 
     """
+    logger.info('Parsing meta files')
 
     # Handle files
     for f in files_of_interest:
@@ -759,7 +858,7 @@ if __name__ == '__main__':
     utils.validate_bids(rootdir)
 
     ### Upload BIDS directory
-    # upload bids dir (and get files of interest)
+    # upload bids dir (and get files of interest and project id)
     files_of_interest = upload_bids_dir(
             fw, bids_hierarchy, args.group_id,
             rootdir, args.hierarchy_type
