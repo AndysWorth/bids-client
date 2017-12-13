@@ -4,7 +4,7 @@ project_template = {
     "description": "BIDS project template",
     "properties": {
         "Name": {"type": "string", "label": "Name", "default": ""},
-        "BIDSVersion": {"type": "string", "label": "BIDS Version", "default": ""},
+        "BIDSVersion": {"type": "string", "label": "BIDS Version", "default": "1.0.2"},
         "License": {"type": "string", "label": "License", "default": ""},
         "Authors": {"type": "string", "label": "Authors", "default": ""},
         "Ackowledgements": {"type": "string", "label": "Acknowledgements", "default": ""},
