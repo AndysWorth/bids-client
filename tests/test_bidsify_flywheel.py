@@ -1,9 +1,6 @@
 import os
 import shutil
 import unittest
-import jsonschema
-
-import flywheel
 
 from supporting_files import bidsify_flywheel
 
@@ -18,92 +15,6 @@ class BidsifyTestCases(unittest.TestCase):
         # Cleanup 'testdir', if present
         if os.path.exists(self.testdir):
             shutil.rmtree(self.testdir)
-
-    def test_project_by_label_invalidproject(self):
-        """ Get project that does not exist. Assert function returns None.
-
-        NOTE: the environment variable $APIKEY needs to be defined with users API key
-        """
-        client = flywheel.Flywheel(os.environ['APIKEY'])
-        label = 'doesnotexistdoesnotexistdoesnotexist89479587349'
-        project = bidsify_flywheel.get_project_by_label(client, label)
-        self.assertEqual(project, [])
-
-    def test_project_by_label_validproject(self):
-        """ Get project that DOES exist. Assert function returns the project.
-
-        NOTE: the environment variable $APIKEY needs to be defined with users API key
-
-        """
-        client = flywheel.Flywheel(os.environ['APIKEY'])
-        label = 'Project Name'
-        project = bidsify_flywheel.get_project_by_label(client, label)
-        project_expected = {u'group': u'adni', u'created': u'2016-10-31T14:53:07.378Z',
-                u'modified': u'2017-06-30T16:26:45.731Z', u'label': u'Project Name',
-                u'_id': u'58175ad3de26e00012c69306',
-                u'permissions': [{u'access': u'admin',
-                    u'_id': u'jenniferreiter@invenshure.com'}]}
-        self.assertEqual(project[0], project_expected)
-
-    def test_valid_namespace_valid(self):
-        """ Assert function does not raise error when a VALID namespace passed """
-        from supporting_files.templates import namespace
-        bidsify_flywheel.valid_namespace(namespace)
-
-    def test_valid_namespace_invalid1(self):
-        """ Assert function returns False when a INVALID namespace passed.
-
-        Namespace is invalid because 'namespace' key should have a string but it's value is 0
-
-        """
-
-        invalid_namespace = {
-            "namespace": 0,
-            "description": "Namespace for BIDS info objects in Flywheel",
-            "datatypes": [
-                {
-                    "container_type": "file",
-                    "description": "BIDS template for diffusion files",
-                    "where": {
-                        "type": "nifti",
-                        },
-                    "properties": {
-                        "Task": {"type": "string", "label": "Task Label", "default": ""}
-                        },
-                    "required": ["Task"]
-                    }
-                ]
-            }
-
-        # Assert ValidationError raised
-        with self.assertRaises(jsonschema.ValidationError) as err:
-            bidsify_flywheel.valid_namespace(invalid_namespace)
-
-    def test_valid_namespace_invalid2(self):
-        """ Assert function returns False when a INVALID namespace passed.
-
-        Namespace is invalid because it does not contain the property 'container_type'
-
-        """
-        invalid_namespace = {
-            "namespace": "BIDS",
-            "description": "Namespace for BIDS info objects in Flywheel",
-            "datatypes": [
-                {
-                    "description": "BIDS template for diffusion files",
-                    "where": {
-                        "type": "nifti"
-                        },
-                    "properties": {
-                        "Task": {"type": "string", "label": "Task Label", "default": ""}
-                        }
-                    }
-                ]
-            }
-
-        # Assert ValidationError raised
-        with self.assertRaises(jsonschema.ValidationError) as err:
-            bidsify_flywheel.valid_namespace(invalid_namespace)
 
     def test_process_string_template_required(self):
         """  """
