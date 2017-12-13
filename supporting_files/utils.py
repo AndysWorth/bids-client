@@ -1,6 +1,8 @@
 import logging
 import re
 import subprocess
+import jsonschema
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('utils')
@@ -49,3 +51,40 @@ def get_extension(fname):
     if ext:
         ext = ext.group()
     return ext
+
+def valid_namespace(namespace):
+    """ Validate the namespace against the template schema
+
+    To use...
+        import templates
+        valid_namespace(templates.namespace)
+
+    If namespace is not valid, a jsonschema.ValidationError will be raised,
+        otherwise, no error raised
+
+    """
+    template_schema = {
+        "type": "object",
+        "properties": {
+            "namespace": {"type": "string"},
+            "description": {"type": "string"},
+            "datatypes": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "description": "string",
+                    "properties": {
+                        "container_type": {"type": "string"},
+                        "parent_container_type": {"type": "string"},
+                        "where": {"type": "object"},
+                        "properties": {"type": "object"},
+                        "required": {"type": "array"}
+                    },
+                    "required": ["container_type","properties"]
+                }
+            }
+        },
+        "required": ["namespace"]
+    }
+    jsonschema.validate(namespace, template_schema)
+

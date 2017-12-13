@@ -1,5 +1,4 @@
 import json
-import jsonschema
 import pprint
 import re
 
@@ -9,44 +8,6 @@ from supporting_files import classifications
 import templates
 
 
-# get project by label
-def get_project_by_label(client, label):
-    projects = client.get_all_projects()
-    project = [project for project in projects if project['label'] == label]
-    return(project)
-
-# validate namespace template against the template schema
-def valid_namespace(namespace):
-    """ Validate the namespace
-
-    If namespace is not valid, a jsonschema.ValidationError will be raised,
-        otherwise, no error raised
-
-    """
-    template_schema = {
-        "type": "object",
-        "properties": {
-            "namespace": {"type": "string"},
-            "description": {"type": "string"},
-            "datatypes": {
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "description": "string",
-                    "properties": {
-                        "container_type": {"type": "string"},
-                        "parent_container_type": {"type": "string"},
-                        "where": {"type": "object"},
-                        "properties": {"type": "object"},
-                        "required": {"type": "array"}
-                    },
-                    "required": ["container_type","properties"]
-                }
-            }
-        },
-        "required": ["namespace"]
-    }
-    jsonschema.validate(namespace,template_schema)
 
 # process_string_template(template, context)
 # finds values in the context object and substitutes them into the string template
@@ -297,99 +258,3 @@ def process_matching_templates(context):
 
     return container
 
-# apply_namespace_templates(project)
-
-def apply_namespace_templates(project):
-
-    # initialize context object
-    context = {
-        'container_type': None,
-        'parent_container_type': None,
-        'project': None,
-        'subject': None,
-        'session': None,
-        'acquisition': None,
-        'file': None,
-        'ext': None
-    }
-
-    # Validate the namespace and related templates
-    valid_namespace(templates.namespace)
-
-    # process project
-    print(project["label"])
-    context['container_type'] = 'project'
-    context['project'] = project
-    process_matching_templates(context)
-
-    # process project files
-    print("\tFiles:")
-    if 'files' in project:
-        for f in project["files"]:
-            print("\t\t" + f["name"])
-            context['parent_container_type'] = 'project'
-            context['container_type'] = 'file'
-            context['file'] = f
-            context['ext'] = re.search('\.[A-Za-z0-9\._-]+',f['name']).group()
-            process_matching_templates(context)
-
-    # process project subjects
-    # until we formalize subject, this section will group sessions by subject code
-    print("\tSubjects:")
-    sessions = fw.get_project_sessions(project["_id"])
-    subjects = {}
-    for session in sessions:
-        subjects.setdefault(session["subject"]["code"], []).append(session)
-
-    for subject_code in subjects:
-        print("\t\t" + subject_code)
-        context['container_type'] = 'subject'
-        context['parent_container_type'] = 'project'
-        context['subject'] = {'code': subject_code }
-        context['session'] = None
-        context['acquisition'] = None
-        context['file'] = None
-        context['ext'] = None
-        process_matching_templates(context)
-
-        # process subject sessions
-        for session in subjects[subject_code]:
-            print("\t\t\t" + session["label"])
-            context['container_type'] = 'session'
-            context['parent_container_type'] = 'subject'
-            context['session'] = session
-            context['acquisition'] = None
-            context['file'] = None
-            context['ext'] = None
-            process_matching_templates(context)
-
-            # process session files
-            if 'files' in session:
-                for f in session["files"]:
-                    print("\t\t\t\t" + f["name"])
-                    context['container_type'] = 'file'
-                    context['parent_container_type'] = 'session'
-                    context['file'] = f
-                    context['ext'] = re.search('\.[A-Za-z0-9\._-]+',f['name']).group()
-                    process_matching_templates(context)
-
-            # process session acquisitions
-            for acquisition in fw.get_session_acquisitions(session["_id"]):
-                print("\t\t\t\t" + acquisition["label"])
-                context['container_type'] = 'acquisition'
-                context['parent_container_type'] = 'session'
-                context['acquisition'] = acquisition
-                context['file'] = None
-                context['ext'] = None
-                process_matching_templates(context)
-
-                # process acquisition files
-                if 'files' in acquisition:
-                    for f in acquisition["files"]:
-                        print("\t\t\t\t\t" + f["name"])
-                        context['container_type'] = 'file'
-                        context['parent_container_type'] = 'acquisition'
-                        context['acquisition'] = acquisition
-                        context['file'] = f
-                        context['ext'] = re.search('\.[A-Za-z0-9\._-]+',f['name']).group()
-                        process_matching_templates(context)
