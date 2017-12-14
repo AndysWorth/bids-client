@@ -603,6 +603,13 @@ class BidsUploadTestCases(unittest.TestCase):
         match = upload_bids.compare_json_to_file(json_filename, filename)
         self.assertTrue(match)
 
+    def test_compare_json_to_file_match6(self):
+        """ """
+        json_filename = 'task-rest_acq-prefrontal_physio.json'
+        filename = 'sub-02_ses-2_task-rest_acq-prefrontal_physio.tsv.gz'
+        match = upload_bids.compare_json_to_file(json_filename, filename)
+        self.assertTrue(match)
+
     def test_compare_json_to_file_nomatch1(self):
         """ """
         json_filename = 'task-rest_acq-fullbrain_run-1_physio.json'
@@ -635,6 +642,13 @@ class BidsUploadTestCases(unittest.TestCase):
         """ """
         json_filename = 'sub-01_ses-1_run-1_phasediff.json'
         filename = 'sub-01_ses-1_run-2_phasediff.nii.gz'
+        match = upload_bids.compare_json_to_file(json_filename, filename)
+        self.assertFalse(match)
+
+    def test_compare_json_to_file_nomatch6(self):
+        """ """
+        json_filename = 'task-rest_acq-prefrontal_physio.json'
+        filename = 'sub-02_ses-2_task-rest_acq-fullbrain_run-2_physio.tsv.gz'
         match = upload_bids.compare_json_to_file(json_filename, filename)
         self.assertFalse(match)
 

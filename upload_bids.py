@@ -588,7 +588,7 @@ def compare_json_to_file(json_filename, filename):
 
     """
     # First check if file is a nifti file...
-    if '.nii' not in filename:
+    if ('.nii' not in filename) and ('.tsv.gz' not in filename):
         match = False
     else:
         # Remove .json extension from filename
