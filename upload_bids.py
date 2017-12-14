@@ -584,7 +584,7 @@ def compare_json_to_file(json_filename, filename):
         'sub-01_ses-2_task-rest_acq-fullbrain_run-1_bold.nii.gz'
         'sub-01_ses-2_task-rest_acq-fullbrain_run-2_bold.nii.gz'
 
-    NOTE: files must be a nifti file...
+    NOTE: files must be a nifti or tsv.gz file...
 
     """
     # First check if file is a nifti file...
@@ -601,6 +601,7 @@ def compare_json_to_file(json_filename, filename):
         for c in components:
             if c not in filename:
                 match = False
+                break
 
     return match
 
