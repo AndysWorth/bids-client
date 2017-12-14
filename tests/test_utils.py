@@ -41,6 +41,42 @@ class UtilsTestCases(unittest.TestCase):
         ext = utils.get_extension(fname)
         self.assertIsNone(ext)
 
+    def test_get_extension_fix1(self):
+        """ """
+        fname = '1.2.3.4.5.6.nii.gz'
+        ext = utils.get_extension(fname)
+        self.assertEqual('.nii.gz', ext)
+
+    def test_get_extension_fix2(self):
+        """ """
+        fname = '1.2.3.4.5.json'
+        ext = utils.get_extension(fname)
+        self.assertEqual('.json', ext)
+
+    def test_get_extension_fix3(self):
+        """ """
+        fname = 'test.tar.gz'
+        ext = utils.get_extension(fname)
+        self.assertEqual('.tar.gz', ext)
+
+    def test_get_extension_fix4(self):
+        """ """
+        fname = 'test.tsv'
+        ext = utils.get_extension(fname)
+        self.assertEqual('.tsv', ext)
+
+    def test_get_extension_fix5(self):
+        """ """
+        fname = 'T1w.nii'
+        ext = utils.get_extension(fname)
+        self.assertEqual('.nii', ext)
+
+    def test_get_extension_fix6(self):
+        """ """
+        fname = '{T1w.info}kajsdfk.nii.gz'
+        ext = utils.get_extension(fname)
+        self.assertEqual('.nii.gz', ext)
+
     def test_valid_namespace_valid(self):
         """ Assert function does not raise error when a VALID namespace passed """
         from supporting_files.templates import namespace

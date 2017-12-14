@@ -1,5 +1,6 @@
 import argparse
 import logging
+import json
 import os
 import re
 import sys
@@ -38,18 +39,44 @@ def validate_dirname(dirname):
 
 def define_path(outdir, f, namespace):
     """"""
-    # Ensure that the folder exists...
-    full_path = os.path.join(outdir,
-            f['info'][namespace]['Path'])
-    if not os.path.exists(full_path):
-        os.makedirs(full_path)
-    # Define path to download file to...
-    full_filename = os.path.join(
-            full_path,
-            f['info'][namespace]['Filename']
-        )
+    # Check if namespace is in info and 'Filename' has a value
+    if (namespace in f['info']) and (f['info'][namespace].get('Filename')):
+        # Ensure that the folder exists...
+        full_path = os.path.join(outdir,
+                f['info'][namespace]['Path'])
+        if not os.path.exists(full_path):
+            os.makedirs(full_path)
+        # Define path to download file to...
+        full_filename = os.path.join(
+                full_path,
+                f['info'][namespace]['Filename']
+            )
+    else:
+        full_filename = ''
 
     return full_filename
+
+def create_json(meta_info, path, namespace):
+    """
+    Given a dictionary of the meta info
+        and the path, creates a JSON file
+        with the bids info
+
+    namespace in the template namespace,
+        in this case it is 'BIDS'
+
+    """
+    # Remove the 'BIDS' value from info
+    meta_info.pop(namespace)
+
+    # Remove extension of path and replace with .json
+    ext = utils.get_extension(path)
+    new_path = re.sub(ext, '.json', path)
+
+    # Write out contents to JSON file
+    with open(new_path, 'w') as outfile:
+        json.dump(meta_info, outfile,
+                sort_keys=True, indent=4)
 
 def download_bids_dir(fw, project_id, outdir):
     """
@@ -69,8 +96,11 @@ def download_bids_dir(fw, project_id, outdir):
     logger.info('Downloading project files')
     # Iterate over any project files
     for f in project.get('files', []):
-        # Define the folder name
+        # Define path - ensure that the folder exists...
         path = define_path(outdir, f, namespace)
+        # If path is not defined (an empty string) move onto next file
+        if not path:
+            continue
         # Download the file
         fw.download_file_from_project(project['_id'], f['name'], path)
         # If zipfile is attached to project, unzip...
@@ -92,8 +122,11 @@ def download_bids_dir(fw, project_id, outdir):
         # Check if session contains files
         # Iterate over any session files
         for f in session.get('files', []):
-            # Ensure that the folder exists...
+            # Define path - ensure that the folder exists...
             path = define_path(outdir, f, namespace)
+            # If path is not defined (an empty string) move onto next file
+            if not path:
+                continue
             # Download the file
             fw.download_file_from_session(session['_id'], f['name'], path)
 
@@ -105,10 +138,15 @@ def download_bids_dir(fw, project_id, outdir):
             acq = fw.get_acquisition(ses_acq['_id'])
             # Iterate over acquistion files
             for f in acq.get('files', []):
-                # Ensure that the folder exists...
+                # Define path - ensure that the folder exists...
                 path = define_path(outdir, f, namespace)
+                # If path is not defined (an empty string) move onto next file
+                if not path:
+                    continue
                 # Download the file
                 fw.download_file_from_acquisition(acq['_id'], f['name'], path)
+                # Create the sidecar JSON file
+                create_json(f['info'], path, namespace)
 
 if __name__ == '__main__':
     ### Read in arguments

@@ -73,6 +73,38 @@ class BidsExportTestCases(unittest.TestCase):
                 '/test/test.json'
                 )
 
+    def test_define_path_empty_filename(self):
+        """ """
+        # Define inputs
+        outdir = '/test/'
+        namespace = 'BIDS'
+        f = {
+                'info': {
+                    namespace: {
+                        'Path': '/this/is/the/path',
+                        'Folder': 'path',
+                        'Filename': ''
+                        }
+                    }
+                }
+        # Call function
+        path = export_bids.define_path(outdir, f, namespace)
+        # Assert path is empty string
+        self.assertEqual(path, '')
+
+    def test_create_json_valid(self):
+        """ """
+        # Define inputs
+        bids_info = {
+                'test1': 'abc',
+                'test2': 'def'
+                }
+        os.mkdir(self.testdir)
+        path = os.path.join(self.testdir, 'test.json')
+        # Call function
+        export_bids.create_json(bids_info, path)
+        # Ensure JSON file is created
+        self.assertTrue(os.path.exists(path))
 
 
 if __name__ == "__main__":

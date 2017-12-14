@@ -48,7 +48,7 @@ def get_extension(fname):
     else, ext is None
 
     """
-    ext = re.search('\.[A-Za-z0-9\._-]+',fname)
+    ext = re.search('\.[a-zA-Z]*[\.]?[A-Za-z0-9]+$',fname)
     if ext:
         ext = ext.group()
     return ext
