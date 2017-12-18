@@ -268,6 +268,23 @@ fieldmap_file_template = {
     "required": ["Filename", "Folder", "Modality"]
 }
 
+dicom_file_template = {
+    "container_type": "file",
+    "description": "BIDS template for DICOM files",
+    "where": {
+        "type": [u"dicom", u"DICOM"]
+    },
+    "properties": {
+        "Filename": {"type": "string", "label": "Filename", "default": ""},
+        "Folder": {"type": "string", "label": "Folder", "default": "other"},
+        "Path": {"type": "string", "label": "Path", "default": "",
+            "auto_update": 'sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}'},
+    },
+    "required": ["Filename", "Folder", "Path"]
+}
+
+
+
 namespace = {
     "namespace": "BIDS",
     "description": "Namespace for BIDS info objects in Flywheel",
@@ -280,7 +297,8 @@ namespace = {
         func_file_template,
         task_events_file_template,
         diffusion_file_template,
-        fieldmap_file_template
+        fieldmap_file_template,
+        dicom_file_template
     ]
 }
 
