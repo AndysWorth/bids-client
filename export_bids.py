@@ -121,6 +121,10 @@ def download_bids_dir(fw, project_id, outdir):
             # Remove the zipfile
             os.remove(path)
 
+    ## Create dataset_description.json file
+    path = os.path.join(outdir, 'dataset_description.json')
+    create_json(project['info'][namespace], path, namespace)
+
     logger.info('Downloading session files')
     # Get project sessions
     project_sessions = fw.get_project_sessions(project_id)
