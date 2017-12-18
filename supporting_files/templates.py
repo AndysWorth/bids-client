@@ -7,7 +7,7 @@ project_template = {
         "BIDSVersion": {"type": "string", "label": "BIDS Version", "default": "1.0.2"},
         "License": {"type": "string", "label": "License", "default": ""},
         "Authors": {"type": "string", "label": "Authors", "default": ""},
-        "Ackowledgements": {"type": "string", "label": "Acknowledgements", "default": ""},
+        "Acknowledgements": {"type": "string", "label": "Acknowledgements", "default": ""},
         "HowToAcknowledge": {"type": "string", "label": "How To Acknowledge", "default": ""},
         "Funding": {"type": "string", "label": "Funding Sources", "default": ""},
         "ReferencesAndLinks": {"type": "string", "label":"Reference and Links", "default": ""},
@@ -60,7 +60,7 @@ anat_file_template = {
     "parent_container_type": "acquisition",
     "description": "BIDS template for anat files",
     "where": {
-        "type": [u"nifti"],
+        "type": [u"nifti", u"NIfTI"],
         "measurements": [u"anatomy_t1w", u"anatomy_t2w", u"anatomy_t1wrho",
             u"map_t1w", u"map_t2w", u"anatomy_t2star", u"anatomy_flair",
             u"anatomy_flash", u"anatomy_pd", u"map_pd", u"anatomy_pdt2",
@@ -105,7 +105,7 @@ func_file_template = {
     "container_type": "file",
     "description": "BIDS template for func files",
     "where": {
-        "type": [u"nifti"],
+        "type": [u"nifti", u"NIfTI"],
         "measurements": [u"functional"]
     },
     "properties": {
@@ -136,7 +136,7 @@ task_events_file_template = {
     "container_type": "file",
     "description": "BIDS template for task files",
     "where": {
-        "type": [u"tsv"],
+        "type": [u"tabular data", u"Tabular Data"],
         "measurements": [u"functional"]
     },
     "properties": {
@@ -181,7 +181,7 @@ physio_events_file_template = {
         }
 
     },
-    "required": ["Filename", "Folder", "Task"]
+    "required": ["Filename", "Folder", "Task", "Modality"]
 }
 
 beh_events_file_template = {
@@ -207,7 +207,7 @@ beh_events_file_template = {
         }
 
     },
-    "required": ["Filename", "Folder", "Task"]
+    "required": ["Filename", "Folder", "Task", "Modality"]
 }
 
 
@@ -215,7 +215,7 @@ diffusion_file_template = {
     "container_type": "file",
     "description": "BIDS template for diffusion files",
     "where": {
-        "type": [u"nifti", u"bvec", u"bval"],
+        "type": [u"nifti", u"bvec", u"bval", u"NIfTI", u"BVEC", u"BVAL"],
         "measurements": [u"diffusion"]
     },
     "properties": {
@@ -233,14 +233,14 @@ diffusion_file_template = {
             ]
         }
     },
-    "required": []
+    "required": ["Filename", "Folder", "Modality"]
 }
 
 fieldmap_file_template = {
     "container_type": "file",
     "description": "BIDS template for field map files",
     "where": {
-        "type": [u"nifti"],
+        "type": [u"nifti", u"NIfTI"],
         "measurements": [u"field_map"]
     },
     "properties": {
@@ -265,7 +265,7 @@ fieldmap_file_template = {
                 ]
         }
     },
-    "required": ["Modality"]
+    "required": ["Filename", "Folder", "Modality"]
 }
 
 namespace = {
