@@ -92,7 +92,25 @@ class BidsExportTestCases(unittest.TestCase):
         # Assert path is empty string
         self.assertEqual(path, '')
 
-    def test_create_json_valid(self):
+    def test_create_json_BIDS_present(self):
+        """ """
+        # Define inputs
+        bids_info = {
+                'BIDS': {
+                    'test1': 'abc',
+                    'test2': 'def'
+                    },
+                'test1': 'abc',
+                'test2': 'def'
+                }
+        os.mkdir(self.testdir)
+        path = os.path.join(self.testdir, 'test.json')
+        # Call function
+        export_bids.create_json(bids_info, path, 'BIDS')
+        # Ensure JSON file is created
+        self.assertTrue(os.path.exists(path))
+
+    def test_create_json_BIDS_notpresent(self):
         """ """
         # Define inputs
         bids_info = {
@@ -102,10 +120,32 @@ class BidsExportTestCases(unittest.TestCase):
         os.mkdir(self.testdir)
         path = os.path.join(self.testdir, 'test.json')
         # Call function
-        export_bids.create_json(bids_info, path)
+        export_bids.create_json(bids_info, path, 'BIDS')
         # Ensure JSON file is created
         self.assertTrue(os.path.exists(path))
 
+    def test_create_json_func_taskname(self):
+        """ """
+        # Define inputs
+        bids_info = {
+                'BIDS': {'Task': 'testtaskname'},
+                'test1': 'abc',
+                'test2': 'def'
+                }
+        os.mkdir(self.testdir)
+        dirname = os.path.join(self.testdir, 'func')
+        os.mkdir(dirname)
+        path = os.path.join(dirname, 'test.json')
+        # Call function
+        export_bids.create_json(bids_info, path, 'BIDS')
+        # Ensure JSON file is created
+        self.assertTrue(os.path.exists(path))
+        # Read in the JSON file, and assert
+        with open(path, 'r') as jsonfile:
+            json_contents = json.load(jsonfile)
+        # Check 'TaskName' is in JSON and correct
+        self.assertEqual(json_contents['TaskName'],
+                'testtaskname')
 
 if __name__ == "__main__":
 

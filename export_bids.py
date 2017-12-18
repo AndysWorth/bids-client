@@ -66,8 +66,16 @@ def create_json(meta_info, path, namespace):
         in this case it is 'BIDS'
 
     """
+    # If the file is functional,
+    #   move the 'TaskName' from 'BIDS'
+    #   to the top level
+    if '/func/' in path:
+         meta_info['TaskName'] = meta_info[namespace]['Task']
     # Remove the 'BIDS' value from info
-    meta_info.pop(namespace)
+    try:
+        meta_info.pop(namespace)
+    except:
+        pass
 
     # Remove extension of path and replace with .json
     ext = utils.get_extension(path)
