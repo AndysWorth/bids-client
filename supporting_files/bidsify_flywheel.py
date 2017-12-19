@@ -50,7 +50,7 @@ def process_string_template(template, context):
                         # If not, take the entire result and remove underscores and dashes
                         else:
                             result = ''.join(x for x in result.replace('_', ' ').replace('-', ' ').title() if x.isalnum())
-                            result = result.lower()
+                            result = result[0].lower() + result[1:]
 
                     # Replace the token with the result
                     template = template.replace(replace_token, result)
@@ -64,8 +64,7 @@ def process_string_template(template, context):
                 #    result = 'UNKNOWN'
                 #    template = template.replace(replace_token, result)
         else:
-            print 'I AM HERE?'
-            print token
+            pass
 
     # Replace any [] from the string
     processed_template = re.sub('\[|\]', '', template)
