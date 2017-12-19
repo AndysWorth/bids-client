@@ -444,8 +444,13 @@ class BidsifyTestCases(unittest.TestCase):
         # Call function
         container = bidsify_flywheel.process_matching_templates(context)
         # Define expected container
-        container_expected = {
-            u'measurements': [u'diffusion'], u'type': u'dicom'}
+        container_expected = {'info': {'BIDS': {
+                'Filename': '',
+                'Folder': 'other',
+                'Path': u'sub-001/ses-sestest/other'
+                }},
+            u'measurements': [u'diffusion'],
+            u'type': u'dicom'}
         self.assertEqual(container, container_expected)
 
     def test_process_matching_templates_session_file(self):

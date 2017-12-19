@@ -16,20 +16,6 @@ project_template = {
     "required": []
 }
 
-file_template = {
-    "container_type": "file",
-    "description": "BIDS base file template",
-    "not": {
-        "type": [u"dicom"],
-    },
-    "properties": {
-        "Filename": {"type": "string", "label": "Filename", "default": ""},
-        "Folder": {"type": "string", "label": "Folder", "default": ""},
-        "Path": {"type": "string", "label": "Path", "default": ""}
-    },
-    "required": ["Filename", "Folder", "Path"]
-}
-
 project_file_template = {
     "container_type": "file",
     "parent_container_type": "project",
@@ -189,7 +175,7 @@ beh_events_file_template = {
     "container_type": "file",
     "description": "BIDS template for task files",
     "where": {
-        "measurements": [""] # TODO: determine this... what is the measurement name of behavioral experiments?
+        "measurements": ["behavioral"] # TODO: determine this... what is the measurement name of behavioral experiments?
     },
     "properties": {
         "Filename": {"type": "string", "label": "Filename", "default": "",
@@ -291,7 +277,6 @@ namespace = {
     "description": "Namespace for BIDS info objects in Flywheel",
     "datatypes": [
         project_template,
-        file_template,
         project_file_template,
         session_file_template,
         anat_file_template,
