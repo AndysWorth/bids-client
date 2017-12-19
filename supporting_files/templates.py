@@ -12,7 +12,8 @@ project_template = {
         "Funding": {"type": "string", "label": "Funding Sources", "default": ""},
         "ReferencesAndLinks": {"type": "string", "label":"Reference and Links", "default": ""},
         "DatasetDOI": {"type": "string", "label": "Dataset DOI", "default": ""}
-    }
+    },
+    "required": []
 }
 
 file_template = {
@@ -98,7 +99,7 @@ anat_file_template = {
             ]
         }
     },
-    "required": ["Filename", "Folder", "Modality"]
+    "required": ["Filename", "Folder", "Path", "Modality"]
 }
 
 func_file_template = {
@@ -128,7 +129,7 @@ func_file_template = {
             ]
         }
     },
-    "required": ["Filename", "Folder", "Task", "Modality"]
+    "required": ["Filename", "Folder", "Path", "Task", "Modality"]
 }
 
 # Matches to functional
@@ -151,7 +152,7 @@ task_events_file_template = {
         "Run": {"type": "string", "label": "Run Index", "default": ""},
         "Echo": {"type": "string", "label": "Echo Index", "default": ""},
     },
-    "required": ["Filename", "Folder", "Task"]
+    "required": ["Filename", "Folder", "Path", "Task"]
 }
 
 # Matches to functional
@@ -181,7 +182,7 @@ physio_events_file_template = {
         }
 
     },
-    "required": ["Filename", "Folder", "Task", "Modality"]
+    "required": ["Filename", "Folder", "Path", "Task", "Modality"]
 }
 
 beh_events_file_template = {
@@ -207,7 +208,7 @@ beh_events_file_template = {
         }
 
     },
-    "required": ["Filename", "Folder", "Task", "Modality"]
+    "required": ["Filename", "Folder", "Path", "Task", "Modality"]
 }
 
 
@@ -233,7 +234,7 @@ diffusion_file_template = {
             ]
         }
     },
-    "required": ["Filename", "Folder", "Modality"]
+    "required": ["Filename", "Folder", "Path", "Modality"]
 }
 
 fieldmap_file_template = {
@@ -265,7 +266,7 @@ fieldmap_file_template = {
                 ]
         }
     },
-    "required": ["Filename", "Folder", "Modality"]
+    "required": ["Filename", "Folder", "Path", "Modality"]
 }
 
 dicom_file_template = {

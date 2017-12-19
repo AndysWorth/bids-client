@@ -1,0 +1,186 @@
+import os
+import shutil
+import unittest
+
+import flywheel
+
+import curate_bids
+
+class BidsCurateTestCases(unittest.TestCase):
+
+    def setUp(self):
+        # Define testdir
+        self.testdir = 'testdir'
+
+    def tearDown(self):
+        # Cleanup 'testdir', if present
+        if os.path.exists(self.testdir):
+            shutil.rmtree(self.testdir)
+
+    def test_validate_meta_info_valid1(self):
+        """ """
+        # Define meta information
+        meta_info = {'BIDS': {}}
+        # Call function
+        curate_bids.validate_meta_info(meta_info)
+        # Assert 'BIDS.valid' == True
+        self.assertTrue(meta_info['BIDS']['valid'])
+        # Assert error message is empty string
+        self.assertEqual(meta_info['BIDS']['error_message'], '')
+
+    def test_validate_meta_info_valid2(self):
+        """ """
+        # Define meta information - Path is empty string - this is ok!!
+        meta_info = {'BIDS': {'Path': '', 'extra': 'test'}}
+        # Call function
+        curate_bids.validate_meta_info(meta_info)
+        # Assert 'BIDS.valid' == True
+        self.assertTrue(meta_info['BIDS']['valid'])
+        # Assert error message is empty string
+        self.assertEqual(meta_info['BIDS']['error_message'], '')
+
+    def test_validate_meta_info_valid3(self):
+        """ """
+        # Define meta information - Folder is empty string - this is ok!!
+        meta_info = {'BIDS': {'Folder': '', 'extra': 'test'}}
+        # Call function
+        curate_bids.validate_meta_info(meta_info)
+        # Assert 'BIDS.valid' == True
+        self.assertTrue(meta_info['BIDS']['valid'])
+        # Assert error message is empty string
+        self.assertEqual(meta_info['BIDS']['error_message'], '')
+
+    def test_validate_meta_info_valid4(self):
+        """ """
+        # Define meta information - not required fields...
+        meta_info = {'BIDS': {
+            'Run': '', 'Ce': '',
+            'Mod': '', 'Acq': '', 'Rec': ''}}
+        # Call function
+        curate_bids.validate_meta_info(meta_info)
+        # Assert 'BIDS.valid' == True
+        self.assertTrue(meta_info['BIDS']['valid'])
+        # Assert error message is empty string
+        self.assertEqual(meta_info['BIDS']['error_message'], '')
+
+    def test_validate_meta_info_valid5(self):
+        """ """
+        # Define meta information - not required fields...
+        meta_info = {'BIDS': {'Run': 1}}
+        # Call function
+        curate_bids.validate_meta_info(meta_info)
+        # Assert 'BIDS.valid' == True
+        self.assertTrue(meta_info['BIDS']['valid'])
+        # Assert error message is empty string
+        self.assertEqual(meta_info['BIDS']['error_message'], '')
+        # Assert run numebr is still an integer
+        self.assertEqual(meta_info['BIDS']['Run'], 1)
+
+    def test_validate_meta_info_invalid1(self):
+        """ """
+        # Define meta information - Task value is missing
+        meta_info = {'BIDS': {'Task': '', 'Modality': 'bold'}}
+        # Call function
+        curate_bids.validate_meta_info(meta_info)
+        # Assert 'BIDS.valid' == False
+        self.assertFalse(meta_info['BIDS']['valid'])
+        # Assert error message is correct
+        self.assertEqual(meta_info['BIDS']['error_message'],
+                'Missing required property: Task. ')
+
+    def test_validate_meta_info_invalid2(self):
+        """ """
+        # Define meta information - Filename is missing
+        meta_info = {'BIDS': {'Filename': '', 'extra': 'test'}}
+        # Call function
+        curate_bids.validate_meta_info(meta_info)
+        # Assert 'BIDS.valid' == False
+        self.assertFalse(meta_info['BIDS']['valid'])
+        # Assert error message is correct
+        self.assertEqual(meta_info['BIDS']['error_message'],
+                'Missing required property: Filename. ')
+
+    def test_validate_meta_info_invalid3(self):
+        """ """
+        # Define meta information - Modality value is missing
+        meta_info = {'BIDS': {'Modality': ''}}
+        # Call function
+        curate_bids.validate_meta_info(meta_info)
+        # Assert 'BIDS.valid' == False
+        self.assertFalse(meta_info['BIDS']['valid'])
+        # Assert error message is correct
+        self.assertEqual(meta_info['BIDS']['error_message'],
+                'Missing required property: Modality. ')
+
+    def test_validate_meta_info_invalid_characters1(self):
+        """ """
+        # Define meta information - invalid characters in multiple keys
+        meta_info = {'BIDS': {
+            'Modality': 'invalid._#$*%',
+            'Ce': 'invalid2.',
+            'Mod': '_invalid2',
+            'Filename': ''
+            }}
+        # Call function
+        curate_bids.validate_meta_info(meta_info)
+        # Assert 'BIDS.valid' == False
+        self.assertFalse(meta_info['BIDS']['valid'])
+        # Assert error message is correct
+        self.assertEqual(meta_info['BIDS']['error_message'],
+                'Missing required property: Filename. ' +\
+                'Invalid characters in property: Modality. '+\
+                'Invalid characters in property: Ce. '+\
+                'Invalid characters in property: Mod. '
+                )
+
+    def test_validate_meta_info_no_BIDS(self):
+        """ """
+        # Define meta information w/o BIDS info
+        meta_info = {'test1' : 'abc', 'test2': 'def'}
+        # Call function
+        curate_bids.validate_meta_info(meta_info)
+        # Assert 'BIDS': 'NA' is in meta_info
+        self.assertEqual(meta_info['BIDS'], 'NA')
+
+    def test_validate_meta_info_already_valid(self):
+        """ """
+        # Define meta information - not required fields...
+        meta_info = {'BIDS': {
+            'Filename': 'sub-01_ses-02_T1w.nii.gz',
+            'Modality': 'T1w',
+            'valid': True,
+            'error_message': ''}}
+        print 'test_validate_meta_info_already_valid'
+        # Call function
+        curate_bids.validate_meta_info(meta_info)
+        # Assert 'BIDS.valid' == True
+        self.assertTrue(meta_info['BIDS']['valid'])
+        # Assert error message is empty string
+        self.assertEqual(meta_info['BIDS']['error_message'], '')
+
+    def test_validate_meta_info_was_invalid(self):
+        """ """
+        # Define meta information - not required fields...
+        meta_info = {'BIDS': {
+            'Task': 'testtask', 'Modality': 'bold',
+            'Filename': 'sub-01_ses-02_task-testtask_bold.nii.gz',
+            'valid': False,
+            'error_message': 'Missing required property: Task. ',
+            }}
+        print 'test_validate_meta_info_was_invalid'
+        # Call function
+        curate_bids.validate_meta_info(meta_info)
+        # Assert 'BIDS.valid' == True
+        self.assertTrue(meta_info['BIDS']['valid'])
+        # Assert error message is empty string
+        self.assertEqual(meta_info['BIDS']['error_message'], '')
+
+
+
+
+
+
+if __name__ == "__main__":
+
+    unittest.main()
+    run_module_suite()

@@ -3,10 +3,71 @@ import logging
 
 import flywheel
 
-from supporting_files import bidsify_flywheel, utils
+from supporting_files import bidsify_flywheel, utils, templates
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('curate-bids')
+
+# Get list of mandatory properties from templates
+mandatory_properties = []
+for dt in templates.namespace["datatypes"]:
+    mandatory_properties.extend(
+            dt["required"]
+            )
+# Make the list a set
+mandatory_properties = set(mandatory_properties)
+
+def validate_meta_info(meta_info):
+    """ Validate meta information
+
+    Adds 'BIDS.NA' if no BIDS info present
+    Adds 'BIDS.valid' and 'BIDS.error_message'
+        to communicate to user if values are valid
+
+    Currently, validation is only checking if
+        mandatory properties are non-empty strings
+
+    Could add the following checks:
+        Are the values alpha numeric?
+
+
+    """
+    # Get namespace
+    namespace = templates.namespace["namespace"]
+
+    # if the namespace ('BIDS') is NOT in meta info,
+    #   then must not have matched to a template,
+    #   add  {'BIDS': 'NA'} to the meta info
+    if namespace not in meta_info:
+        meta_info[namespace] = 'NA'
+    # Otherwise, iterate over keys within meta_info
+    else:
+        valid = True
+        error_message = ''
+        for key in meta_info[namespace]:
+            # Skip over Path, Folder (it's ok that they are empty strings
+            #   and/or have non alphanumeric values)
+            if key in ['Path', 'Folder']:
+                continue
+            # If key is an empty string, and is
+            #   considered a mandatory property,
+            #   then it's missing and BIDS is not valid
+            if meta_info[namespace][key] == '':
+                if (key in mandatory_properties):
+                    valid = False
+                    error_message += 'Missing required property: %s. ' % key
+            # If not an empty string, ensure the values are alphanumeric...
+            else:
+                # 'Filename', 'valid' and 'error_message' don't need to be alphanumeric
+                if key in ['Filename', 'valid', 'error_message']:
+                    continue
+                # Otherwise, check if alphanumerica
+                if not str(meta_info[namespace][key]).isalnum():
+                    valid = False
+                    error_message += 'Invalid characters in property: %s. ' % key
+        # Assign 'valid' and 'error_message' values
+        meta_info[namespace]['valid'] = valid
+        meta_info[namespace]['error_message'] = error_message
 
 def update_meta_info(fw, context):
     """ Update file information
@@ -73,6 +134,8 @@ def curate_bids_dir(fw, project_id):
     # Curate Project
     context['container_type'] = 'project'
     bidsify_flywheel.process_matching_templates(context)
+    # Validate meta information
+    validate_meta_info(context['project']['info'])
     # Update project meta information
     update_meta_info(fw, context)
 
@@ -86,6 +149,8 @@ def curate_bids_dir(fw, project_id):
         context['ext'] = utils.get_extension(f['name'])
         # Identify the templates for the file and return file object
         context['file'] = bidsify_flywheel.process_matching_templates(context)
+        # Validate meta information
+        validate_meta_info(context['file']['info'])
         # Update file meta information
         update_meta_info(fw, context)
 
@@ -106,6 +171,8 @@ def curate_bids_dir(fw, project_id):
             context['ext'] = utils.get_extension(f['name'])
             # Identify the templates for the file and return file object
             context['file'] = bidsify_flywheel.process_matching_templates(context)
+            # Validate meta information
+            validate_meta_info(context['file']['info'])
             # Update file meta information
             update_meta_info(fw, context)
 
@@ -125,6 +192,8 @@ def curate_bids_dir(fw, project_id):
                 context['ext'] = utils.get_extension(f['name'])
                 # Identify the templates for the file and return file object
                 context['file'] = bidsify_flywheel.process_matching_templates(context)
+                # Validate meta information
+                validate_meta_info(context['file']['info'])
                 # Update file meta info
                 update_meta_info(fw, context)
 
