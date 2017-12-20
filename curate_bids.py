@@ -143,7 +143,8 @@ def curate_bids_dir(fw, project_id):
     context['container_type'] = 'project'
     bidsify_flywheel.process_matching_templates(context)
     # Validate meta information
-    validate_meta_info(context['project'])
+    # TODO: Improve the validator to understand what is valid for dataset_description file...
+    #validate_meta_info(context['project'])
     # Update project meta information
     update_meta_info(fw, context)
 
