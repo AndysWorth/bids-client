@@ -45,6 +45,9 @@ def validate_meta_info(container):
     #   add  {'BIDS': 'NA'} to the meta info
     elif namespace not in container['info']:
         container['info'][namespace] = 'NA'
+    # If already assigned BIDS 'NA', then break
+    elif container['info'][namespace] == 'NA':
+        pass
     # Otherwise, iterate over keys within container
     else:
         valid = True

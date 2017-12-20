@@ -92,6 +92,39 @@ class BidsExportTestCases(unittest.TestCase):
         # Assert path is empty string
         self.assertEqual(path, '')
 
+    def test_define_path_no_info(self):
+        """ """
+        # Define inputs
+        outdir = '/test/'
+        namespace = 'BIDS'
+        f = {'test': {'test2': 'abcdef'}}
+        # Call function
+        path = export_bids.define_path(outdir, f, namespace)
+        # Assert path is empty string
+        self.assertEqual(path, '')
+
+    def test_define_path_no_namespace(self):
+        """ """
+        # Define inputs
+        outdir = '/test/'
+        namespace = 'BIDS'
+        f = {'info': {'test2': 'abcdef'}}
+        # Call function
+        path = export_bids.define_path(outdir, f, namespace)
+        # Assert path is empty string
+        self.assertEqual(path, '')
+
+    def test_define_path_namespace_is_NA(self):
+        """ """
+        # Define inputs
+        outdir = '/test/'
+        namespace = 'BIDS'
+        f = {'info': {namespace: 'NA'}}
+        # Call function
+        path = export_bids.define_path(outdir, f, namespace)
+        # Assert path is empty string
+        self.assertEqual(path, '')
+
     def test_create_json_BIDS_present(self):
         """ """
         # Define inputs

@@ -39,8 +39,17 @@ def validate_dirname(dirname):
 
 def define_path(outdir, f, namespace):
     """"""
-    # Check if namespace is in info and 'Filename' has a value
-    if (namespace in f['info']) and (f['info'][namespace].get('Filename')):
+    # Check if 'info' in f object
+    if 'info' not in f:
+        full_filename = ''
+    # Check if namespace ('BIDS') in f object
+    elif namespace not in f['info']:
+        full_filename = ''
+    # Check if 'info.BIDS' == 'NA'
+    elif (f['info'][namespace] == 'NA'):
+        full_filename = ''
+    # Check if 'Filename' has a value
+    elif f['info'][namespace].get('Filename'):
         # Ensure that the folder exists...
         full_path = os.path.join(outdir,
                 f['info'][namespace]['Path'])

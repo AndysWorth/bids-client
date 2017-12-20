@@ -151,6 +151,15 @@ class BidsCurateTestCases(unittest.TestCase):
         # Assert 'BIDS': 'NA' is in meta_info
         self.assertEqual(meta_info['info']['BIDS'], 'NA')
 
+    def test_validate_meta_info_BIDS_NA(self):
+        """ """
+        # Define meta information w/ BIDS NA
+        meta_info = {'info': {'BIDS': 'NA'}}
+        # Call function
+        curate_bids.validate_meta_info(meta_info)
+        # Assert 'BIDS': 'NA' is in meta_info
+        self.assertEqual(meta_info['info']['BIDS'], 'NA')
+
     def test_validate_meta_info_already_valid(self):
         """ """
         # Define meta information - not required fields...
@@ -181,10 +190,6 @@ class BidsCurateTestCases(unittest.TestCase):
         self.assertTrue(meta_info['info']['BIDS']['valid'])
         # Assert error message is empty string
         self.assertEqual(meta_info['info']['BIDS']['error_message'], '')
-
-
-
-
 
 
 if __name__ == "__main__":
