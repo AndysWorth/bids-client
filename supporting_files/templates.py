@@ -270,7 +270,19 @@ dicom_file_template = {
     "required": ["Filename", "Folder", "Path"]
 }
 
-
+json_file_template = {
+    "container_type": "file",
+    "description": "BIDS template for JSON files",
+    "where": {
+        "type": [u"source code", u"JSON"]
+    },
+    "properties": {
+        "Filename": {"type": "string", "label": "Filename", "default": ""},
+        "Folder": {"type": "string", "label": "Folder", "default": ""},
+        "Path": {"type": "string", "label": "Path", "default": ""}
+    },
+    "required": ["Filename", "Folder", "Path"]
+}
 
 namespace = {
     "namespace": "BIDS",
@@ -282,9 +294,11 @@ namespace = {
         anat_file_template,
         func_file_template,
         task_events_file_template,
+        physio_events_file_template,
         diffusion_file_template,
         fieldmap_file_template,
-        dicom_file_template
+        dicom_file_template,
+        json_file_template
     ]
 }
 

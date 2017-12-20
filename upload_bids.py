@@ -281,6 +281,7 @@ def fill_in_properties(context, path):
         'Task': '_task-[a-zA-Z0-9]+',
         'Echo': '_echo-[0-9]+',
         'Dir': '_dir-[a-zA-Z0-9]+',
+        'Recording': '_recording-[a-zA-Z0-9]+',
         'Modality': '_[a-zA-Z0-9]+%s' % context['ext']
     }
 
