@@ -6,7 +6,7 @@ project_template = {
         "Name": {"type": "string", "label": "Name", "default": ""},
         "BIDSVersion": {"type": "string", "label": "BIDS Version", "default": "1.0.2"},
         "License": {"type": "string", "label": "License", "default": ""},
-        "Authors": {"type": "string", "label": "Authors", "default": ""},
+        "Authors": {"type": "string", "label": "Authors", "default": []},
         "Acknowledgements": {"type": "string", "label": "Acknowledgements", "default": ""},
         "HowToAcknowledge": {"type": "string", "label": "How To Acknowledge", "default": ""},
         "Funding": {"type": "string", "label": "Funding Sources", "default": ""},
