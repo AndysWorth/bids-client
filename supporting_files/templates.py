@@ -263,7 +263,7 @@ dicom_file_template = {
     },
     "properties": {
         "Filename": {"type": "string", "label": "Filename", "default": ""},
-        "Folder": {"type": "string", "label": "Folder", "default": "other"},
+        "Folder": {"type": "string", "label": "Folder", "default": "sourcedata"},
         "Path": {"type": "string", "label": "Path", "default": "",
             "auto_update": 'sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}'},
     },
