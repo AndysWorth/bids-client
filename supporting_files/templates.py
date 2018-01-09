@@ -123,8 +123,7 @@ task_events_file_template = {
     "container_type": "file",
     "description": "BIDS template for task files",
     "where": {
-        "type": [u"tabular data", u"Tabular Data"],
-        "measurements": [u"functional"]
+        "type": [u"tabular data", u"Tabular Data"]
     },
     "properties": {
         "Filename": {"type": "string", "label": "Filename", "default": "",
