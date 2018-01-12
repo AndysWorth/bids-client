@@ -28,8 +28,7 @@ RUN apt-get update && \
 
 ENV SRCDIR /src
 RUN mkdir -p ${SRCDIR}
-ADD https://github.com/INCF/bids-validator/archive/0.24.0.tar.gz ${SRCDIR}
-RUN tar xzf ${SRCDIR}/0.24.0.tar.gz -C ${SRCDIR}
+RUN wget -O - https://github.com/INCF/bids-validator/archive/0.24.0.tar.gz | tar xz -C ${SRCDIR}
 RUN npm install -g /src/bids-validator-0.24.0/
 
 
