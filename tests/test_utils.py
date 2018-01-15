@@ -138,6 +138,7 @@ class UtilsTestCases(unittest.TestCase):
             utils.valid_namespace(invalid_namespace)
 
 
+    @unittest.skip("Integration test")
     def test_validate_project_label_invalidproject(self):
         """ Get project that does not exist. Assert function returns None.
 
@@ -148,6 +149,7 @@ class UtilsTestCases(unittest.TestCase):
         with self.assertRaises(SystemExit):
             utils.validate_project_label(client, label)
 
+    @unittest.skip("Integration test")
     def test_validate_project_label_validproject(self):
         """ Get project that DOES exist. Assert function returns the project.
 
