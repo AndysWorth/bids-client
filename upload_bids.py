@@ -220,11 +220,20 @@ def upload_acquisition_file(fw, context, full_fname):
     ### Classify acquisition
     # Get classification based on filename
     classification = classify_acquisition(full_fname)
-    # Assign classification
+
+    update = {}
+    
     if classification:
+        update['measurements'] = [classification]
+
+    # Workaround for tsv tabular data (remove with mongo-filetypes branch)
+    if context['file']['name'].endswith('.tsv') or context['file']['name'].endswith('.tsv.gz'):
+        update['type'] = 'tabular data'
+
+    # Assign classification
+    if update:
         fw.modify_acquisition_file(context['acquisition']['_id'],
-              context['file']['name'],
-           {'measurements': [classification]})
+              context['file']['name'], update)
 
     # Get acquisition
     acq = fw.get_acquisition(context['acquisition']['_id'])

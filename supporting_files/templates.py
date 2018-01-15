@@ -121,7 +121,7 @@ func_file_template = {
 # Matches to functional
 task_events_file_template = {
     "container_type": "file",
-    "description": "BIDS template for task files",
+    "description": "BIDS template for task events files",
     "where": {
         "type": [u"tabular data", u"Tabular Data"],
         "measurements": [u"functional"]
@@ -141,60 +141,22 @@ task_events_file_template = {
     "required": ["Filename", "Folder", "Path", "Task"]
 }
 
-# Matches to functional
-physio_events_file_template = {
-    "container_type": "file",
-    "description": "BIDS template for task files",
-    "where": {
-        "measurements": [u"physio"] # TODO: determine this... what is the measurement name of physio data?
-    },
-    "properties": {
-        "Filename": {"type": "string", "label": "Filename", "default": "",
-            "auto_update": 'sub-<subject.code>[_ses-<session.label>]_task-{file.info.BIDS.Task}[_acq-{file.info.BIDS.Acq}][_rec-{file.info.BIDS.Rec}][_run-{file.info.BIDS.Run}][_echo-{file.info.BIDS.Echo}][_recording-{file.info.BIDS.Recording}]_{file.info.BIDS.Modality}{ext}'},
-        "Folder": {"type": "string", "label": "Folder", "default": "func"},
-        "Path": {"type": "string", "label": "Path", "default": "",
-            "auto_update": 'sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}'},
-        "Task": {"type": "string", "label": "Task Label", "default": ""},
-        "Acq": {"type": "string", "label": "Acq Label", "default": ""},
-        "Rec": {"type": "string", "label": "Rec Label", "default": ""},
-        "Run": {"type": "string", "label": "Run Index", "default": ""},
-        "Echo": {"type": "string", "label": "Echo Index", "default": ""},
-        "Recording": {"type": "string", "label": "Recording Label", "default": ""},
-        "Modality": {"type": "string", "label": "Modality Label", "default": "physio",
-            "enum": [
-                "physio",
-                "stim"
-            ]
-        }
-
-    },
-    "required": ["Filename", "Folder", "Path", "Task", "Modality"]
-}
-
 beh_events_file_template = {
     "container_type": "file",
-    "description": "BIDS template for task files",
+    "description": "BIDS template for behavioral events files",
     "where": {
+        "type": [u"tabular data", u"Tabular Data"],
         "measurements": ["behavioral"] # TODO: determine this... what is the measurement name of behavioral experiments?
     },
     "properties": {
         "Filename": {"type": "string", "label": "Filename", "default": "",
-            "auto_update": 'sub-<subject.code>[_ses-<session.label>]_task-{file.info.BIDS.Task}_{file.info.BIDS.Modality}{ext}'},
+            "auto_update": 'sub-<subject.code>[_ses-<session.label>]_task-{file.info.BIDS.Task}_events.tsv'},
         "Folder": {"type": "string", "label": "Folder", "default": "beh"},
         "Path": {"type": "string", "label": "Path", "default": "",
             "auto_update": 'sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}'},
-        "Task": {"type": "string", "label": "Task Label", "default": ""},
-        "Modality": {"type": "string", "label": "Modality Label", "default": "beh",
-            "enum": [
-                "beh",
-                "events",
-                "physio",
-                "stim"
-            ]
-        }
-
+        "Task": {"type": "string", "label": "Task Label", "default": ""}
     },
-    "required": ["Filename", "Folder", "Path", "Task", "Modality"]
+    "required": ["Filename", "Folder", "Path", "Task"]
 }
 
 
@@ -294,7 +256,7 @@ namespace = {
         anat_file_template,
         func_file_template,
         task_events_file_template,
-        physio_events_file_template,
+        beh_events_file_template,
         diffusion_file_template,
         fieldmap_file_template,
         dicom_file_template,

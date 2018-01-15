@@ -19,11 +19,13 @@ classifications = {
         },
         'func': {
             'bold': 'functional',
+            'events': 'functional',
             'sbref': 'functional',
             'stim': 'stimulus',    # stimulus
             'physio': 'physio'     # physio
         },
         'beh' : {
+            'events': 'behavioral',
             'stim': 'stimulus',    # stimulus
             'physio': 'physio'     # physio
         },
