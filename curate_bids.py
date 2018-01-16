@@ -17,6 +17,11 @@ for dt in templates.namespace["datatypes"]:
 # Make the list a set
 mandatory_properties = set(mandatory_properties)
 
+def clear_meta_info(info):
+    namespace = templates.namespace['namespace']
+    if namespace in info:
+        del info[namespace]
+
 def validate_meta_info(container):
     """ Validate meta information
 
@@ -116,7 +121,7 @@ def update_meta_info(fw, context):
     else:
         logger.info('Cannot determine container type')
 
-def curate_bids_dir(fw, project_id):
+def curate_bids_dir(fw, project_id, reset=False):
     """
 
     fw: Flywheel client
@@ -141,6 +146,9 @@ def curate_bids_dir(fw, project_id):
 
     # Curate Project
     context['container_type'] = 'project'
+    if reset:
+        clear_meta_info(context['project']['info'])
+
     bidsify_flywheel.process_matching_templates(context)
     # Validate meta information
     # TODO: Improve the validator to understand what is valid for dataset_description file...
@@ -151,6 +159,9 @@ def curate_bids_dir(fw, project_id):
     # Iterate over all files within project
     logger.info('Updating project files...')
     for f in context['project'].get('files', []):
+        # Optionally reset meta info
+        if reset:
+            clear_meta_info(f['info'])
         # Update the context for this file
         context['file'] = f
         context['container_type'] = 'file'
@@ -173,6 +184,9 @@ def curate_bids_dir(fw, project_id):
         context['subject'] = context['session']['subject']
         # Iterate over any session files
         for f in context['session'].get('files', []):
+            # Optionally reset meta info
+            if reset:
+                clear_meta_info(f['info'])
             # Update the context for this file
             context['file'] = f
             context['container_type'] = 'file'
@@ -194,6 +208,9 @@ def curate_bids_dir(fw, project_id):
             context['acquisition'] = fw.get_acquisition(ses_acq['_id'])
             # Iterate over acquistion files
             for f in context['acquisition'].get('files', []):
+                # Optionally reset meta info
+                if reset:
+                    clear_meta_info(f['info'])
                 # Update the context for this file
                 context['file'] = f
                 context['container_type'] = 'file'
@@ -213,6 +230,8 @@ if __name__ == '__main__':
             required=True, help='API key')
     parser.add_argument('-p', dest='project_label', action='store',
             required=False, default=None, help='Project Label on Flywheel instance')
+    parser.add_argument('--reset', dest='reset', action='store_true', 
+            default=False, help='Reset BIDS data before running')
     args = parser.parse_args()
 
     ### Prep
@@ -222,4 +241,4 @@ if __name__ == '__main__':
     project_id = utils.validate_project_label(fw, args.project_label)
 
     ### Curate BIDS project
-    curate_bids_dir(fw, project_id)
+    curate_bids_dir(fw, project_id, reset=args.reset)
