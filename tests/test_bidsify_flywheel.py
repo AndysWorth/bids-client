@@ -446,8 +446,8 @@ class BidsifyTestCases(unittest.TestCase):
         # Define expected container
         container_expected = {'info': {'BIDS': {
                 'Filename': '',
-                'Folder': 'other',
-                'Path': u'sub-001/ses-sestest/other'
+                'Folder': 'sourcedata',
+                'Path': u'sub-001/ses-sestest/sourcedata'
                 }},
             u'measurements': [u'diffusion'],
             u'type': u'dicom'}
