@@ -37,6 +37,17 @@ def validate_dirname(dirname):
             logger.error('Directory (%s) is not empty. Exporter will not run.' % dirname)
             sys.exit(1)
 
+def is_source_data(f, namespace):
+    if 'info' not in f: 
+        return False
+    if namespace not in f['info']:
+        return False
+    if f['info'][namespace] == 'NA':
+        return False
+    
+    path = f['info'][namespace]['Path']
+    return path.startswith('sourcedata')
+
 def define_path(outdir, f, namespace):
     """"""
     # Check if 'info' in f object
@@ -95,12 +106,13 @@ def create_json(meta_info, path, namespace):
         json.dump(meta_info, outfile,
                 sort_keys=True, indent=4)
 
-def download_bids_dir(fw, project_id, outdir):
+def download_bids_dir(fw, project_id, outdir, src_data=False):
     """
 
     fw: Flywheel client
     project_id: Label of the project to download
     outdir: path to directory to download files to, string
+    src_data: Option to include sourcedata when downloading
 
     """
 
@@ -113,12 +125,18 @@ def download_bids_dir(fw, project_id, outdir):
     logger.info('Downloading project files')
     # Iterate over any project files
     for f in project.get('files', []):
+        # Don't include source data by default
+        if is_source_data(f, namespace) and not src_data:
+            logger.info('Skipping source data file: {0}'.format(f['name']))
+            continue
+
         # Define path - ensure that the folder exists...
         path = define_path(outdir, f, namespace)
         # If path is not defined (an empty string) move onto next file
         if not path:
             continue
         # Download the file
+        logger.info('Downloading project file: {0}'.format(f['name']))
         fw.download_file_from_project(project['_id'], f['name'], path)
         # If zipfile is attached to project, unzip...
         zip_pattern = re.compile('[a-zA-Z0-9]+(.zip)')
@@ -143,12 +161,18 @@ def download_bids_dir(fw, project_id, outdir):
         # Check if session contains files
         # Iterate over any session files
         for f in session.get('files', []):
+            # Don't include source data by default
+            if is_source_data(f, namespace) and not src_data:
+                logger.info('Skipping source data file: {0}'.format(f['name']))
+                continue
+
             # Define path - ensure that the folder exists...
             path = define_path(outdir, f, namespace)
             # If path is not defined (an empty string) move onto next file
             if not path:
                 continue
             # Download the file
+            logger.info('Downloading session file: {0}'.format(f['name']))
             fw.download_file_from_session(session['_id'], f['name'], path)
 
         logger.info('Downloading acquisition files')
@@ -159,12 +183,19 @@ def download_bids_dir(fw, project_id, outdir):
             acq = fw.get_acquisition(ses_acq['_id'])
             # Iterate over acquistion files
             for f in acq.get('files', []):
+                # Don't include source data by default
+                if is_source_data(f, namespace) and not src_data:
+                    logger.info('Skipping source data file: {0}'.format(f['name']))
+                    continue
+
+
                 # Define path - ensure that the folder exists...
                 path = define_path(outdir, f, namespace)
                 # If path is not defined (an empty string) move onto next file
                 if not path:
                     continue
                 # Download the file
+                logger.info('Downloading acquisition file: {0}'.format(f['name']))
                 fw.download_file_from_acquisition(acq['_id'], f['name'], path)
                 # Create the sidecar JSON file
                 create_json(f['info'], path, namespace)
@@ -177,6 +208,8 @@ if __name__ == '__main__':
                     NOTE: Directory must be empty.')
     parser.add_argument('--api-key', dest='api_key', action='store',
             required=True, help='API key')
+    parser.add_argument('--source-data', dest='source_data', action='store_true',
+            default=False, required=False, help='Include source data in BIDS export')
     parser.add_argument('-p', dest='project_label', action='store',
             required=False, default=None, help='Project Label on Flywheel instance')
     args = parser.parse_args()
