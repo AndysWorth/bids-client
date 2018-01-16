@@ -33,14 +33,16 @@ jobs:
       - deploy: 
           name: Deploy Docker Image
           command: |
-            docker login -u $DOCKER_USER -p $DOCKER_PASS
-            if [ "$CIRCLE_TAG" ]; then
-              docker tag bids-client flywheel/bids-client:${CIRCLE_TAG}
-              docker push flywheel/bids-client:${CIRCLE_TAG}
-            fi
-            if [ "$CIRCLE_BRANCH" == "master"]; then
-              docker tag bids-client flywheel/bids-client:latest
-              docker push flywheel/bids-client:latest
+            if [ "$DOCKER_USER" ]; then
+              docker login -u $DOCKER_USER -p $DOCKER_PASS
+              if [ "$CIRCLE_TAG" ]; then
+                docker tag bids-client flywheel/bids-client:${CIRCLE_TAG}
+                docker push flywheel/bids-client:${CIRCLE_TAG}
+              fi
+              if [ "$CIRCLE_BRANCH" == "master"]; then
+                docker tag bids-client flywheel/bids-client:latest
+                docker push flywheel/bids-client:latest
+              fi
             fi
         
 
