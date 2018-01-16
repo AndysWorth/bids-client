@@ -427,7 +427,6 @@ class BidsifyTestCases(unittest.TestCase):
         self.assertEqual(container, container_expected)
 
     def test_process_matching_templates_dicom(self):
-        """ Asserts DICOM files are ignored """
         # Define context
         context = {
             'container_type': 'file',
@@ -439,7 +438,7 @@ class BidsifyTestCases(unittest.TestCase):
             'file': {
                 u'measurements': [u'diffusion'],
                 u'type': u'dicom'
-                },
+            },
             'ext': '.dcm.zip'
         }
         # Call function
@@ -447,12 +446,42 @@ class BidsifyTestCases(unittest.TestCase):
         # Define expected container
         container_expected = {'info': {'BIDS': {
                 'Filename': '',
-                'Folder': 'sourcedata',
-                'Path': u'sub-001/ses-sestest/sourcedata'
+                'Folder': '',
+                'Path': u'sourcedata/sub-001/ses-sestest'
                 }},
             u'measurements': [u'diffusion'],
             u'type': u'dicom'}
         self.assertEqual(container, container_expected)
+
+    def test_resolve_initial_dicom_field_values_from_filename(self):
+        # Define context
+        context = {
+            'container_type': 'file',
+            'parent_container_type': 'acquisition',
+            'project': {u'label': 'hello'},
+            'subject': {u'code': u'001'},
+            'session': {u'label': u'sesTEST'},
+            'acquisition': {u'label': u'acqTEST'},
+            'file': {
+                u'name': u'09 cmrr_mbepi_task-spatialfrequency_s6_2mm_66sl_PA_TR1.0.dcm.zip',
+                u'measurements': [u'diffusion'],
+                u'type': u'dicom'
+            },
+            'ext': '.dcm.zip'
+        }
+        # Call function
+        container = bidsify_flywheel.process_matching_templates(context)
+        # Define expected container
+        container_expected = {'info': {'BIDS': {
+                'Filename': u'09 cmrr_mbepi_task-spatialfrequency_s6_2mm_66sl_PA_TR1.0.dcm.zip',
+                'Folder': '',
+                'Path': u'sourcedata/sub-001/ses-sestest'
+                }},
+            u'name': u'09 cmrr_mbepi_task-spatialfrequency_s6_2mm_66sl_PA_TR1.0.dcm.zip',
+            u'measurements': [u'diffusion'],
+            u'type': u'dicom'}
+        self.assertEqual(container, container_expected)
+
 
     def test_process_matching_templates_session_file(self):
         """ """
@@ -590,7 +619,7 @@ class BidsifyTestCases(unittest.TestCase):
             'subject': {u'code': u'001'},
             'session': {u'label': u'sesTEST'},
             'acquisition': {
-                u'label': u'10 cmrr_mbepi_task-spatialfrequency_s6_2mm_66sl_PA_TR1.0.nii.gz'
+                u'label': u'10 cmrr_mbepi_task-spatialfrequency_s6_2mm_66sl_PA_TR1.0'
             },
             'file': {
                 u'measurements': [u'functional'],

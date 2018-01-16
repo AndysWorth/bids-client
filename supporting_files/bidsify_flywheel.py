@@ -22,7 +22,7 @@ import utils
 #       'sub-<subject.code>_ses-<session.label>_acq-<acquisition.label>_{file.info.BIDS.Modality}.nii.gz'
 
 def process_string_template(template, context):
-    tokens = re.compile('[^\[][A-Za-z0-9\.><}{-]+|\[[A-Za-z0-9><}{_\.-]+\]')
+    tokens = re.compile('[^\[][A-Za-z0-9\.><}{-]+|\[[/A-Za-z0-9><}{_\.-]+\]')
     values = re.compile('[{<][A-Za-z0-9\.-]+[>}]')
 
     for token in tokens.findall(template):
@@ -268,7 +268,8 @@ def process_matching_templates(context):
 # Template properties can now include an "initialize" field that gives instructions on how to attempt to
 # initialize a field based on context. Within the initialize object, there are a list of keys to extract
 # from the context, and currently regular expressions to match against the extracted fields. If the regex
-# matches, then the "value" group will be extracted and assigned.
+# matches, then the "value" group will be extracted and assigned. Otherwise if 'take' is True for an initialization
+# spec, we will copy that value into the field.
 def resolve_initial_field_values(template, context, info):
     # Walk properties, looking for "initialize" specifications
     for propName, propDef in template['properties'].iteritems():
@@ -278,11 +279,14 @@ def resolve_initial_field_values(template, context, info):
                 # Lookup the value of the key
                 value = utils.dict_lookup(context, key)
                 if value is not None:
-                    # Currently only regex matching is supported, must provide a 'value' group
+                    # Regex matching must provide a 'value' group
                     if 'regex' in valueSpec:
                         m = re.search(valueSpec['regex'], value)
                         if m is not None:
                             resolvedValue = m.group('value')
+                    # 'take' will just copy the value
+                    elif 'take' in valueSpec and valueSpec['take']:
+                        resolvedValue = value
                     if resolvedValue:
                         break
             if resolvedValue:

@@ -231,12 +231,16 @@ dicom_file_template = {
         "type": [u"dicom", u"DICOM"]
     },
     "properties": {
-        "Filename": {"type": "string", "label": "Filename", "default": ""},
-        "Folder": {"type": "string", "label": "Folder", "default": "sourcedata"},
+        "Filename": {"type": "string", "label": "Filename", "default": "", "initialize": {
+            "file.name": {
+                "take": True
+            }
+        }},
+        "Folder": {"type": "string", "label": "Folder", "default": ""},
         "Path": {"type": "string", "label": "Path", "default": "",
-            "auto_update": 'sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}'},
+            "auto_update": 'sourcedata/sub-<subject.code>[/ses-<session.label>][/{file.info.BIDS.Folder}]'},
     },
-    "required": ["Filename", "Folder", "Path"]
+    "required": ["Filename", "Path"]
 }
 
 json_file_template = {
