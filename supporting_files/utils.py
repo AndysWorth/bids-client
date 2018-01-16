@@ -89,3 +89,16 @@ def valid_namespace(namespace):
     }
     jsonschema.validate(namespace, template_schema)
 
+def dict_lookup(obj, value):
+    # For now, we don't support escaping of dots
+    parts = value.split('.')
+    curr = obj
+    for part in parts:
+        if isinstance(curr, dict) and part in curr:
+            curr = curr[part]
+        else:
+            curr = None
+            break
+    return curr
+
+

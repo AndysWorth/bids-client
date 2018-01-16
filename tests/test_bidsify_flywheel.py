@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 import unittest
 
@@ -536,6 +537,83 @@ class BidsifyTestCases(unittest.TestCase):
         print container
         self.assertEqual(container, container_expected)
 
+    def test_resolve_func_field_regex(self):
+        filename = u'10 cmrr_mbepi_task-spatialfrequency_s6_2mm_66sl_PA_TR1.0.nii.gz'
+        regex = r'(^|[-_])task[-_](?P<value>[^-_]+)($|[-_])'
+        m = re.search(regex, filename)
+        self.assertIsNotNone(m)
+        result = m.group('value')
+        self.assertEqual(result, 'spatialfrequency')
+
+    def test_resolve_initial_func_field_values_from_filename(self):
+        """ """
+        # Define context
+        context = {
+            'container_type': 'file',
+            'parent_container_type': 'acquisition',
+            'project': None,
+            'subject': {u'code': u'001'},
+            'session': {u'label': u'sesTEST'},
+            'acquisition': {u'label': u'acqTEST'},
+            'file': {
+                u'name': u'10 cmrr_mbepi_task-spatialfrequency_s6_2mm_66sl_PA_TR1.0.nii.gz',
+                u'measurements': [u'functional'],
+                u'type': u'nifti',
+            },
+            'ext': '.nii.gz'
+        }
+        # Call function
+        container = bidsify_flywheel.process_matching_templates(context)
+        # Define expected container
+        container_expected = {
+            'info': {
+                'BIDS': {
+                    'Filename': u'sub-001_ses-sestest_task-spatialfrequency_bold.nii.gz',
+                    'Folder': 'func', 'Path': u'sub-001/ses-sestest/func',
+                    'Acq': '', 'Task': u'spatialfrequency', 'Modality': 'bold',
+                    'Rec': '', 'Run': '', 'Echo': ''
+                }
+            },
+            u'name': u'10 cmrr_mbepi_task-spatialfrequency_s6_2mm_66sl_PA_TR1.0.nii.gz',
+            u'measurements': [u'functional'], 
+            u'type': u'nifti'
+        }
+        self.assertEqual(container, container_expected)
+
+    def test_resolve_initial_func_field_values_from_acq_label(self):
+        """ """
+        # Define context
+        context = {
+            'container_type': 'file',
+            'parent_container_type': 'acquisition',
+            'project': None,
+            'subject': {u'code': u'001'},
+            'session': {u'label': u'sesTEST'},
+            'acquisition': {
+                u'label': u'10 cmrr_mbepi_task-spatialfrequency_s6_2mm_66sl_PA_TR1.0.nii.gz'
+            },
+            'file': {
+                u'measurements': [u'functional'],
+                u'type': u'nifti',
+            },
+            'ext': '.nii.gz'
+        }
+        # Call function
+        container = bidsify_flywheel.process_matching_templates(context)
+        # Define expected container
+        container_expected = {
+            'info': {
+                'BIDS': {
+                    'Filename': u'sub-001_ses-sestest_task-spatialfrequency_bold.nii.gz',
+                    'Folder': 'func', 'Path': u'sub-001/ses-sestest/func',
+                    'Acq': '', 'Task': u'spatialfrequency', 'Modality': 'bold',
+                    'Rec': '', 'Run': '', 'Echo': ''
+                }
+            },
+            u'measurements': [u'functional'], 
+            u'type': u'nifti'
+        }
+        self.assertEqual(container, container_expected)
 
 
 if __name__ == "__main__":
