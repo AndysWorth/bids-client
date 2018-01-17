@@ -155,9 +155,11 @@ def process_matching_templates(context, template=templates.DEFAULT_TEMPLATE):
     # add objects based on template if they don't already exist
     if initial:
         # Do initial rule matching
+        match = False
         for rule in template.rules:
             if rule.test(context):
                 print 'matches template={0}'.format(rule.template)
+                match = True
                 templateDef = template.definitions.get(rule.template)
                 if templateDef is None:
                     raise Exception('Unknown template: {0}'.format(rule.template))
@@ -171,6 +173,9 @@ def process_matching_templates(context, template=templates.DEFAULT_TEMPLATE):
                 rule.initializeProperties(obj, context)
                 initial = False
                 break
+        if not match:
+            print 'no template matched for {} in {} {}'.format(container['name'], context['parent_container_type'], context[context['parent_container_type']]['_id'])
+            container['info'] = {namespace: {'template': 'NO_MATCH'}}
 
     if not initial:
         # Do auto_updates
