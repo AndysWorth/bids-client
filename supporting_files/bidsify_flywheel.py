@@ -135,7 +135,7 @@ def update_properties(properties, context, obj):
     return(obj)
 
 
-# process_matching_templates(context)
+# process_matching_templates(context, template)
 # Accepts a context object that represents a Flywheel container and related parent containers
 # and looks for matching templates in namespace.
 # Matching templates define rules for adding objects to the container's info object if they don't already exist
