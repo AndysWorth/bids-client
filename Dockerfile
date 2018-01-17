@@ -8,26 +8,18 @@
 #    bids-uploader /bin/bash
 
 
-FROM python:2.7
+FROM python:2.7-alpine3.7
 MAINTAINER Flywheel <support@flywheel.io>
+
+RUN apk add --no-cache nodejs build-base
 
 # Install jsonschema
 RUN pip install jsonschema==2.6.0 flywheel-sdk>=2.1.1
-
-# Install BIDS validator from INCF
-#     https://github.com/INCF/bids-validator
-RUN apt-get update && \
-    apt-get install -y curl && \
-    curl -sL https://deb.nodesource.com/setup_8.x | bash - && \
-    apt-get remove -y curl && \
-    apt-get install -y nodejs && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 ENV SRCDIR /src
 RUN mkdir -p ${SRCDIR}
 RUN wget -O - https://github.com/INCF/bids-validator/archive/0.25.14.tar.gz | tar xz -C ${SRCDIR}
 RUN npm install -g /src/bids-validator-0.25.14/
-
 
 # Copy code into place
 ENV ROOTDIR /code
