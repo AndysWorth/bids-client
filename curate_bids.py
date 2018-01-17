@@ -1,16 +1,21 @@
 import argparse
 import logging
+import json
+import os
+import tempfile
 
 import flywheel
 
 from supporting_files import bidsify_flywheel, utils, templates
 
+PROJECT_TEMPLATE_FILE_NAME = 'project-template.json'
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('curate-bids')
 
-def clear_meta_info(info, template):
-    if template.namespace in info:
-        del info[template.namespace]
+def clear_meta_info(context, template):
+    if 'info' in context and template.namespace in context['info']:
+        del context['info'][template.namespace]
 
 def validate_meta_info(container, template):
     """ Validate meta information
@@ -124,7 +129,7 @@ def update_meta_info(fw, context):
     else:
         logger.info('Cannot determine container type')
 
-def curate_bids_dir(fw, project_id, reset=False):
+def curate_bids_dir(fw, project_id, reset=False, template_file=None):
     """
 
     fw: Flywheel client
@@ -146,14 +151,29 @@ def curate_bids_dir(fw, project_id, reset=False):
     # Get project
     logger.info('Getting project...')
     context['project'] = fw.get_project(project_id)
+    project_files = context['project'].get('files', [])
 
     # Get template (for now, just use default)
     template = templates.DEFAULT_TEMPLATE
 
+    # Check for project file
+    if not template_file:
+        for f in project_files:
+            if f['name'] == PROJECT_TEMPLATE_FILE_NAME:
+                fd, path = tempfile.mkstemp('.json')
+                os.close(fd)
+
+                logger.info('Using project template: {0}'.format(f['name']))
+                fw.download_file_from_project(project_id, f['name'], path)
+                template_file = path
+
+    if template_file:
+        template = templates.loadTemplate(template_file)
+
     # Curate Project
     context['container_type'] = 'project'
     if reset:
-        clear_meta_info(context['project']['info'], template)
+        clear_meta_info(context['project'], template)
 
     bidsify_flywheel.process_matching_templates(context, template)
     # Validate meta information
@@ -164,10 +184,13 @@ def curate_bids_dir(fw, project_id, reset=False):
 
     # Iterate over all files within project
     logger.info('Updating project files...')
-    for f in context['project'].get('files', []):
+    for f in project_files:
+        if f['name'] == PROJECT_TEMPLATE_FILE_NAME:
+            continue
+
         # Optionally reset meta info
         if reset:
-            clear_meta_info(f['info'], template)
+            clear_meta_info(f, template)
         # Update the context for this file
         context['file'] = f
         context['container_type'] = 'file'
@@ -192,7 +215,7 @@ def curate_bids_dir(fw, project_id, reset=False):
         for f in context['session'].get('files', []):
             # Optionally reset meta info
             if reset:
-                clear_meta_info(f['info'], template)
+                clear_meta_info(f, template)
             # Update the context for this file
             context['file'] = f
             context['container_type'] = 'file'
@@ -216,7 +239,7 @@ def curate_bids_dir(fw, project_id, reset=False):
             for f in context['acquisition'].get('files', []):
                 # Optionally reset meta info
                 if reset:
-                    clear_meta_info(f['info'], template)
+                    clear_meta_info(f, template)
                 # Update the context for this file
                 context['file'] = f
                 context['container_type'] = 'file'
@@ -238,6 +261,8 @@ if __name__ == '__main__':
             required=False, default=None, help='Project Label on Flywheel instance')
     parser.add_argument('--reset', dest='reset', action='store_true', 
             default=False, help='Reset BIDS data before running')
+    parser.add_argument('--template-file', dest='template_file', action='store',
+            default=None, help='Template file to use')
     args = parser.parse_args()
 
     ### Prep
@@ -247,4 +272,4 @@ if __name__ == '__main__':
     project_id = utils.validate_project_label(fw, args.project_label)
 
     ### Curate BIDS project
-    curate_bids_dir(fw, project_id, reset=args.reset)
+    curate_bids_dir(fw, project_id, reset=args.reset, template_file=args.template_file)

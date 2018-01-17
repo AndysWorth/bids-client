@@ -81,14 +81,7 @@
 				"Path": {"type": "string", "label": "Path", "default": "",
 					"auto_update": "sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}"},
 				"Acq": {"type": "string", "label": "Acq Label", "default": ""},
-				"Task": {"type": "string", "label": "Task Label", "default": "", "initialize": {
-					"acquisition.label": {
-						"regex": "(^|[-_])task[-_](?P<value>[^-_]+)($|[-_])"
-					},
-					"file.name": {
-						"regex": "(^|[-_])task[-_](?P<value>[^-_]+)($|[-_])"
-					}
-				}},
+				"Task": {"type": "string", "label": "Task Label", "default": ""},
 				"Rec": {"type": "string", "label": "Rec Label", "default": ""},
 				"Run": {"type": "string", "label": "Run Index", "default": ""},
 				"Echo": {"type": "string", "label": "Echo Index", "default": ""},
@@ -316,7 +309,7 @@
 			},
 			"initialize": {
 				"Filename": { 
-					"file.name": { "take": true }
+					"file.name": { "$take": true }
 				}
 			}
 		},

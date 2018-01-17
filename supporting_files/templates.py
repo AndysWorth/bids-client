@@ -1,8 +1,9 @@
-import os, os.path, json
+import os, os.path, json, re
 import utils
 
 DEFAULT_TEMPLATE_NAME = 'bids-v1'
 BIDS_TEMPLATE_NAME = 'bids-v1'
+DEFAULT_TEMPLATES = {}
 
 class Template:
     def __init__(self, data=None, templates=None):
@@ -36,6 +37,10 @@ class Template:
             raise Exception('Could not find parent template: {0}'.format(self.extends))
 
         parent = templates[self.extends]
+
+        if not self.namespace:
+            self.namespace = parent.namespace
+
         my_rules = self.rules
         my_defs = self.definitions
 
@@ -45,7 +50,7 @@ class Template:
             self.definitions[key] = value
 
         # Extend rules, after filtering excluded rules
-        filtered_rules = filter(lambda x: x.get('id') not in self.exclude_rules, parent.rules)
+        filtered_rules = filter(lambda x: x.id not in self.exclude_rules, parent.rules)
         self.rules = list(filtered_rules) + my_rules
 
     def compile_rules(self):
@@ -56,7 +61,7 @@ class Template:
 
 class Rule:
     def __init__(self, data):
-        self.id = data.get('id')
+        self.id = data.get('id', '')
         self.template = data.get('template')
         self.initialize = data.get('initialize', {})
         if self.template is None:
@@ -101,20 +106,25 @@ class Rule:
     def initializeProperties(self, info, context):
         for propName, propDef in self.initialize.items():
             resolvedValue = None
-            for key, valueSpec in propDef.items():
-                # Lookup the value of the key
-                value = utils.dict_lookup(context, key)
-                if value is not None:
-                    # Regex matching must provide a 'value' group
-                    if 'regex' in valueSpec:
-                        m = re.search(valueSpec['regex'], value)
-                        if m is not None:
-                            resolvedValue = m.group('value')
-                    # 'take' will just copy the value
-                    elif 'take' in valueSpec and valueSpec['take']:
-                        resolvedValue = value
-                    if resolvedValue:
-                        break
+
+            if isinstance(propDef, dict):
+                for key, valueSpec in propDef.items():
+                    # Lookup the value of the key
+                    value = utils.dict_lookup(context, key)
+                    if value is not None:
+                        # Regex matching must provide a 'value' group
+                        if '$regex' in valueSpec:
+                            m = re.search(valueSpec['$regex'], value)
+                            if m is not None:
+                                resolvedValue = m.group('value')
+                        # 'take' will just copy the value
+                        elif '$take' in valueSpec and valueSpec['$take']:
+                            resolvedValue = value
+
+                        if resolvedValue:
+                            break
+            else:
+                resolvedValue = propDef
 
             if resolvedValue:
                 info[propName] = resolvedValue
@@ -136,6 +146,19 @@ def processValueMatch(value, match):
         elif '$not' in match:
             # Negate result of nested match
             return not processMatch(value, match['$not'])
+
+        elif '$regex' in match:
+            regex = re.compile(match['$regex'])
+
+            if isinstance(value, list):
+                for item in value:
+                    if regex.search(item) is not None:
+                        return True
+
+                return False
+            
+            return regex.search(value) is not None 
+
     else:
         # Direct match
         if isinstance(value, list):
@@ -163,16 +186,17 @@ def loadTemplates(templates_dir=None):
 
     return results
 
-def loadTemplate(path):
+def loadTemplate(path, templates=None):
     """Load the template at path"""
     with open(path, 'r') as f:
         data = json.load(f)
 
-    return Template(data)
+    if templates is None:
+        templates = DEFAULT_TEMPLATES
+
+    return Template(data, templates)
 
 DEFAULT_TEMPLATES = loadTemplates()
 DEFAULT_TEMPLATE = DEFAULT_TEMPLATES.get(DEFAULT_TEMPLATE_NAME)
 BIDS_TEMPLATE = DEFAULT_TEMPLATES.get(BIDS_TEMPLATE_NAME)
-
-
 
