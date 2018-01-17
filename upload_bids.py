@@ -308,6 +308,8 @@ def fill_in_properties(context, path):
         elif mi == 'Path':
             meta_info[namespace][mi] = path
             # Search for regex string within BIDS filename and populate meta_info
+        elif mi == 'template':
+            pass
         else:
             tokens = re.compile(properties_regex[mi])
             token = tokens.search(context['file']['name'])
@@ -621,7 +623,7 @@ def attach_json(fw, file_info):
     contents = parse_json(file_info['full_filename'])
     # Attach parsed JSON to project
     if 'dataset_description.json' in file_info['full_filename']:
-        fw.modify_project(file_info['_id'], {'info': {templates.namespace['namespace']: contents}})
+        fw.modify_project(file_info['_id'], {'info': {template.namespace: contents}})
     # Otherwise... it's a JSON file that should be assigned to acquisition file(s)
     else:
         # Figure out which acquisition files within PROJECT should have JSON info attached...
@@ -637,11 +639,11 @@ def attach_json(fw, file_info):
                         # Determine if json file components are all within the acq filename
                         if compare_json_to_file(os.path.basename(file_info['full_filename']), f['name']):
                             # JSON matches to file - assign json contents as file meta info
-                            f["info"].get(templates.namespace['namespace']).update(contents)
+                            f["info"].get(template.namespace).update(contents)
                             fw.set_acquisition_file_info(
                                     ses_acq['_id'],
                                     f['name'],
-                                    {templates.namespace['namespace']: f["info"].get(templates.namespace['namespace'])})
+                                    {template.namespace: f["info"].get(template.namespace)})
 
         # Figure out which acquisition files within SESSION should have JSON info attached...
         elif (file_info['id_type'] == 'session'):
@@ -652,11 +654,11 @@ def attach_json(fw, file_info):
                     # Determine if json file components are all within the acq filename
                     if compare_json_to_file(os.path.basename(file_info['full_filename']), f['name']):
                         # JSON matches to file - assign json contents as file meta info
-                        f["info"].get(templates.namespace['namespace']).update(contents)
+                        f["info"].get(template.namespace).update(contents)
                         fw.set_acquisition_file_info(
                                 ses_acq['_id'],
                                 f['name'],
-                                {templates.namespace['namespace']: f["info"].get(templates.namespace['namespace'])})
+                                {template.namespace: f["info"].get(template.namespace)})
 
         # Figure out which acquisition files within ACQUISITION should have JSON info attached...
         elif (file_info['id_type'] == 'acquisition'):
@@ -665,11 +667,11 @@ def attach_json(fw, file_info):
                 # Determine if json file components are all within the acq filename
                 if compare_json_to_file(os.path.basename(file_info['full_filename']), f['name']):
                     # JSON matches to file - assign json contents as file meta info
-                    f["info"].get(templates.namespace['namespace']).update(contents)
+                    f["info"].get(template.namespace).update(contents)
                     fw.set_acquisition_file_info(
                             acq['_id'],
                             f['name'],
-                            {templates.namespace['namespace']: f["info"].get(templates.namespace['namespace'])})
+                            {template.namespace: f["info"].get(template.namespace)})
 
 def convert_dtype(contents):
     """

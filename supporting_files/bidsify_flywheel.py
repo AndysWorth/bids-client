@@ -52,7 +52,7 @@ def process_string_template(template, context):
                             result = result[0].lower() + result[1:]
 
                     # Replace the token with the result
-                    template = template.replace(replace_token, result)
+                    template = template.replace(replace_token, str(result))
                 # If result not found, but the token is option, remove the token from the template
                 elif token[0] == '[':
                     template = template.replace(token, '')

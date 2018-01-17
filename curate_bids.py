@@ -8,7 +8,7 @@ from supporting_files import bidsify_flywheel, utils, templates
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('curate-bids')
 
-def clear_meta_info(info, itemplate):
+def clear_meta_info(info, template):
     if template.namespace in info:
         del info[template.namespace]
 
@@ -153,7 +153,7 @@ def curate_bids_dir(fw, project_id, reset=False):
     # Curate Project
     context['container_type'] = 'project'
     if reset:
-        clear_meta_info(context['project']['info'])
+        clear_meta_info(context['project']['info'], template)
 
     bidsify_flywheel.process_matching_templates(context, template)
     # Validate meta information
@@ -167,7 +167,7 @@ def curate_bids_dir(fw, project_id, reset=False):
     for f in context['project'].get('files', []):
         # Optionally reset meta info
         if reset:
-            clear_meta_info(f['info'])
+            clear_meta_info(f['info'], template)
         # Update the context for this file
         context['file'] = f
         context['container_type'] = 'file'
@@ -192,7 +192,7 @@ def curate_bids_dir(fw, project_id, reset=False):
         for f in context['session'].get('files', []):
             # Optionally reset meta info
             if reset:
-                clear_meta_info(f['info'])
+                clear_meta_info(f['info'], template)
             # Update the context for this file
             context['file'] = f
             context['container_type'] = 'file'
@@ -216,7 +216,7 @@ def curate_bids_dir(fw, project_id, reset=False):
             for f in context['acquisition'].get('files', []):
                 # Optionally reset meta info
                 if reset:
-                    clear_meta_info(f['info'])
+                    clear_meta_info(f['info'], template)
                 # Update the context for this file
                 context['file'] = f
                 context['container_type'] = 'file'
