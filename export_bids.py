@@ -176,7 +176,7 @@ def download_bids_dir(fw, project_id, outdir, src_data=False, dry_run=False):
     # Get project
     project = fw.get_project(project_id)
 
-    logger.info('Proccessing project files')
+    logger.info('Processing project files')
     # Iterate over any project files
     for f in project.get('files', []):
         # Don't include source data by default
@@ -191,7 +191,7 @@ def download_bids_dir(fw, project_id, outdir, src_data=False, dry_run=False):
 
         # For dry run, don't actually download
         if path in filepath_downloads['project']:
-            logger.error('Multiple files with {} as path'.format(path))
+            logger.error('Multiple files with path {0}:\n\t{1} and\n\t{2}'.format(path, f['name'], filepath_downloads['project'][path][1]))
             sys.exit(1)
 
         filepath_downloads['project'][path] = (project['_id'], f['name'], path)
@@ -200,7 +200,7 @@ def download_bids_dir(fw, project_id, outdir, src_data=False, dry_run=False):
     path = os.path.join(outdir, 'dataset_description.json')
     create_json(project['info'][namespace], path, namespace)
 
-    logger.info('Proccessing session files')
+    logger.info('Processing session files')
     # Get project sessions
     project_sessions = fw.get_project_sessions(project_id)
     for proj_ses in project_sessions:
@@ -220,12 +220,12 @@ def download_bids_dir(fw, project_id, outdir, src_data=False, dry_run=False):
                 continue
 
             if path in filepath_downloads['session']:
-                logger.error('Multiple files wih {} as path'.format(path))
+                logger.error('Multiple files with path {0}:\n\t{1} and\n\t{2}'.format(path, f['name'], filepath_downloads['session'][path][1]))
                 sys.exit(1)
 
             filepath_downloads['session'][path] = (session['_id'], f['name'], path)
 
-        logger.info('Proccessing acquisition files')
+        logger.info('Processing acquisition files')
         # Get acquisitions
         session_acqs = fw.get_session_acquisitions(proj_ses['_id'])
         for ses_acq in session_acqs:
@@ -243,7 +243,7 @@ def download_bids_dir(fw, project_id, outdir, src_data=False, dry_run=False):
                 if not path:
                     continue
                 if path in filepath_downloads['acquisition']:
-                    logger.error('Multiple files wih {} as path'.format(path))
+                    logger.error('Multiple files with path {0}:\n\t{1} and\n\t{2}'.format(path, f['name'], filepath_downloads['acquisition'][path][1]))
                     sys.exit(1)
 
                 filepath_downloads['acquisition'][path] = (acq['_id'], f['name'], path)
