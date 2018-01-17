@@ -124,6 +124,29 @@
 			},
 			"required": ["Filename", "Folder", "Path", "Task"]
 		},
+		"physio_task_file": {	
+			"description": "BIDS template for physio files",
+			"properties": {
+				"Filename": {"type": "string", "label": "Filename", "default": "",
+					"auto_update": "sub-<subject.code>[_ses-<session.label>]_task-{file.info.BIDS.Task}[_acq-{file.info.BIDS.Acq}][_rec-{file.info.BIDS.Rec}][_run-{file.info.BIDS.Run}][_echo-{file.info.BIDS.Echo}][_recording-{file.info.BIDS.recording}]_{file.info.BIDS.Modality}{ext}"},
+				"Folder": {"type": "string", "label": "Folder", "default": "func"},
+				"Path": {"type": "string", "label": "Path", "default": "",
+					"auto_update": "sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}"},
+				"Acq": {"type": "string", "label": "Acq Label", "default": ""},
+				"Task": {"type": "string", "label": "Task Label", "default": ""},
+				"Rec": {"type": "string", "label": "Rec Label", "default": ""},
+				"Run": {"type": "string", "label": "Run Index", "default": ""},
+				"Echo": {"type": "string", "label": "Echo Index", "default": ""},
+				"Recording": {"type": "string", "label": "Recording Label", "default": ""},
+				"Modality": {"type": "string", "label": "Modality Label", "default": "physio",
+					"enum": [
+						"stim",
+						"physio"
+					]
+				}
+			},
+			"required": ["Filename", "Folder", "Path", "Task", "Modality"]
+		},
 		"diffusion_file": {
 			"description": "BIDS template for diffusion files",
 			"properties": {
@@ -269,6 +292,19 @@
 				},
 				"file.measurements": {
 					"$in": ["behavioral"]
+				}
+			}
+		},
+		{
+			"id": "bids_physio_task_file",
+			"template": "physio_task_file",
+			"where": {
+				"container_type": "file",
+				"file.type": {
+					"$in": ["tabular data", "Tabular Data"]
+				},
+				"file.measurements": {
+					"$in": ["physio"]
 				}
 			}
 		},
