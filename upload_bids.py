@@ -636,10 +636,11 @@ def attach_json(fw, file_info):
                         # Determine if json file components are all within the acq filename
                         if compare_json_to_file(os.path.basename(file_info['full_filename']), f['name']):
                             # JSON matches to file - assign json contents as file meta info
+                            f["info"].get(templates.namespace['namespace']).update(contents)
                             fw.set_acquisition_file_info(
                                     ses_acq['_id'],
                                     f['name'],
-                                    {templates.namespace['namespace']: contents})
+                                    {templates.namespace['namespace']: f["info"].get(templates.namespace['namespace'])})
 
         # Figure out which acquisition files within SESSION should have JSON info attached...
         elif (file_info['id_type'] == 'session'):
@@ -650,10 +651,11 @@ def attach_json(fw, file_info):
                     # Determine if json file components are all within the acq filename
                     if compare_json_to_file(os.path.basename(file_info['full_filename']), f['name']):
                         # JSON matches to file - assign json contents as file meta info
+                        f["info"].get(templates.namespace['namespace']).update(contents)
                         fw.set_acquisition_file_info(
                                 ses_acq['_id'],
                                 f['name'],
-                                {templates.namespace['namespace']: contents})
+                                {templates.namespace['namespace']: f["info"].get(templates.namespace['namespace'])})
 
         # Figure out which acquisition files within ACQUISITION should have JSON info attached...
         elif (file_info['id_type'] == 'acquisition'):
@@ -662,10 +664,11 @@ def attach_json(fw, file_info):
                 # Determine if json file components are all within the acq filename
                 if compare_json_to_file(os.path.basename(file_info['full_filename']), f['name']):
                     # JSON matches to file - assign json contents as file meta info
+                    f["info"].get(templates.namespace['namespace']).update(contents)
                     fw.set_acquisition_file_info(
                             acq['_id'],
                             f['name'],
-                            {templates.namespace['namespace']: contents})
+                            {templates.namespace['namespace']: f["info"].get(templates.namespace['namespace'])})
 
 def convert_dtype(contents):
     """
