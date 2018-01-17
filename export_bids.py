@@ -106,7 +106,7 @@ def create_json(meta_info, path, namespace):
         json.dump(meta_info, outfile,
                 sort_keys=True, indent=4)
 
-def download_bids_dir(fw, project_id, outdir, src_data=False):
+def download_bids_dir(fw, project_id, outdir, src_data=False, dry_run=False):
     """
 
     fw: Flywheel client
@@ -127,7 +127,6 @@ def download_bids_dir(fw, project_id, outdir, src_data=False):
     for f in project.get('files', []):
         # Don't include source data by default
         if is_source_data(f, namespace) and not src_data:
-            logger.info('Skipping source data file: {0}'.format(f['name']))
             continue
 
         # Define path - ensure that the folder exists...
@@ -137,6 +136,12 @@ def download_bids_dir(fw, project_id, outdir, src_data=False):
             continue
         # Download the file
         logger.info('Downloading project file: {0}'.format(f['name']))
+
+        # For dry run, don't actually download
+        if dry_run:
+            logger.info('  to {0}'.format(path))
+            continue
+
         fw.download_file_from_project(project['_id'], f['name'], path)
         # If zipfile is attached to project, unzip...
         zip_pattern = re.compile('[a-zA-Z0-9]+(.zip)')
@@ -163,7 +168,6 @@ def download_bids_dir(fw, project_id, outdir, src_data=False):
         for f in session.get('files', []):
             # Don't include source data by default
             if is_source_data(f, namespace) and not src_data:
-                logger.info('Skipping source data file: {0}'.format(f['name']))
                 continue
 
             # Define path - ensure that the folder exists...
@@ -173,6 +177,12 @@ def download_bids_dir(fw, project_id, outdir, src_data=False):
                 continue
             # Download the file
             logger.info('Downloading session file: {0}'.format(f['name']))
+
+            # For dry run, don't actually download
+            if dry_run:
+                logger.info('  to {0}'.format(path))
+                continue
+
             fw.download_file_from_session(session['_id'], f['name'], path)
 
         logger.info('Downloading acquisition files')
@@ -185,9 +195,7 @@ def download_bids_dir(fw, project_id, outdir, src_data=False):
             for f in acq.get('files', []):
                 # Don't include source data by default
                 if is_source_data(f, namespace) and not src_data:
-                    logger.info('Skipping source data file: {0}'.format(f['name']))
                     continue
-
 
                 # Define path - ensure that the folder exists...
                 path = define_path(outdir, f, namespace)
@@ -196,6 +204,12 @@ def download_bids_dir(fw, project_id, outdir, src_data=False):
                     continue
                 # Download the file
                 logger.info('Downloading acquisition file: {0}'.format(f['name']))
+                
+                # For dry run, don't actually download
+                if dry_run:
+                    logger.info('  to {0}'.format(path))
+                    continue
+
                 fw.download_file_from_acquisition(acq['_id'], f['name'], path)
                 # Create the sidecar JSON file
                 create_json(f['info'], path, namespace)
@@ -210,6 +224,8 @@ if __name__ == '__main__':
             required=True, help='API key')
     parser.add_argument('--source-data', dest='source_data', action='store_true',
             default=False, required=False, help='Include source data in BIDS export')
+    parser.add_argument('--dry-run', dest='dry_run', action='store_true',
+            default=False, required=False, help='Don\'t actually export any data, just print what would be exported')
     parser.add_argument('-p', dest='project_label', action='store',
             required=False, default=None, help='Project Label on Flywheel instance')
     args = parser.parse_args()
@@ -224,8 +240,9 @@ if __name__ == '__main__':
     project_id = utils.validate_project_label(fw, args.project_label)
 
     ### Download BIDS project
-    download_bids_dir(fw, project_id, args.bids_dir)
+    download_bids_dir(fw, project_id, args.bids_dir, src_data=args.source_data, dry_run=args.dry_run)
 
     # Validate the downloaded directory
     #   Go one more step into the hierarchy to pass to the validator...
-    utils.validate_bids(args.bids_dir)
+    if not args.dry_run:
+        utils.validate_bids(args.bids_dir)
