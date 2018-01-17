@@ -10,7 +10,8 @@ import sys
 import numpy
 import flywheel
 
-from supporting_files import bidsify_flywheel, templates, classifications, utils
+from supporting_files import bidsify_flywheel, classifications, utils
+from supporting_files.templates import BIDS_TEMPLATE as template
 
 
 logging.basicConfig(level=logging.INFO)
@@ -297,7 +298,7 @@ def fill_in_properties(context, path):
     # Get meta info
     meta_info = context['file']['info']
     # Get namespace
-    namespace = templates.namespace['namespace']
+    namespace = template.namespace
     # Iterate over all of the keys within the info namespace ('BIDS')
     for mi in meta_info[namespace]:
         if mi == 'Filename':
@@ -362,7 +363,7 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
         #   (1) create a project OR (2) find an existing project by the project_label -- return project object
         context['container_type'] = 'project'
         context['project'] = handle_project(fw, group_id, proj_label)
-        bidsify_flywheel.process_matching_templates(context)
+        bidsify_flywheel.process_matching_templates(context, template)
 
         ### Iterate over project files - upload file and add meta data
         for fname in bids_hierarchy[proj_label].get('files'):
@@ -379,7 +380,7 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
             context['parent_container_type'] = 'project'
             context['ext'] = utils.get_extension(fname)
             # Identify the templates for the file and return file object
-            context['file'] = bidsify_flywheel.process_matching_templates(context)
+            context['file'] = bidsify_flywheel.process_matching_templates(context, template)
             # Update the meta info files w/ BIDS info from the filename...
             full_path = ''
             meta_info = fill_in_properties(context, full_path)
@@ -418,7 +419,7 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
             context['parent_container_type'] = 'project'
             context['ext'] = utils.get_extension(full_zname)
             # Identify the templates for the file and return file object
-            context['file'] = bidsify_flywheel.process_matching_templates(context)
+            context['file'] = bidsify_flywheel.process_matching_templates(context, template)
             # Update the meta info files w/ BIDS info from the filename...
             full_path = ''
             meta_info = fill_in_properties(context, full_path)
@@ -453,7 +454,7 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
                     context['parent_container_type'] = 'project' # TODO: once subjects are containers, change this to 'subject'
                     context['ext'] = utils.get_extension(fname)
                     # Identify the templates for the file and return file object
-                    context['file'] = bidsify_flywheel.process_matching_templates(context)
+                    context['file'] = bidsify_flywheel.process_matching_templates(context, template)
                     # Update the meta info files w/ BIDS info from the filename...
                     full_path = subject_code
                     meta_info = fill_in_properties(context, full_path)
@@ -499,7 +500,7 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
                     context['parent_container_type'] = 'session'
                     context['ext'] = utils.get_extension(fname)
                     # Identify the templates for the file and return file object
-                    context['file'] = bidsify_flywheel.process_matching_templates(context)
+                    context['file'] = bidsify_flywheel.process_matching_templates(context, template)
                     # Update the meta info files w/ BIDS info from the filename...
                     meta_info = fill_in_properties(context, full_path)
                     # Upload the meta info onto the project file
@@ -549,7 +550,7 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
                         context['parent_container_type'] = 'acquisition'
                         context['ext'] = utils.get_extension(fname)
                         # Identify the templates for the file and return file object
-                        context['file'] = bidsify_flywheel.process_matching_templates(context)
+                        context['file'] = bidsify_flywheel.process_matching_templates(context, template)
                         # Update the meta info files w/ BIDS info from the filename and foldername...
                         meta_info = fill_in_properties(context, full_path)
                         # Upload the meta info onto the project file

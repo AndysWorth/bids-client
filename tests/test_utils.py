@@ -77,67 +77,6 @@ class UtilsTestCases(unittest.TestCase):
         ext = utils.get_extension(fname)
         self.assertEqual('.nii.gz', ext)
 
-    def test_valid_namespace_valid(self):
-        """ Assert function does not raise error when a VALID namespace passed """
-        from supporting_files.templates import namespace
-        utils.valid_namespace(namespace)
-
-    def test_valid_namespace_invalid1(self):
-        """ Assert function returns False when a INVALID namespace passed.
-
-        Namespace is invalid because 'namespace' key should have a string but it's value is 0
-
-        """
-
-        invalid_namespace = {
-            "namespace": 0,
-            "description": "Namespace for BIDS info objects in Flywheel",
-            "datatypes": [
-                {
-                    "container_type": "file",
-                    "description": "BIDS template for diffusion files",
-                    "where": {
-                        "type": "nifti",
-                        },
-                    "properties": {
-                        "Task": {"type": "string", "label": "Task Label", "default": ""}
-                        },
-                    "required": ["Task"]
-                    }
-                ]
-            }
-
-        # Assert ValidationError raised
-        with self.assertRaises(jsonschema.ValidationError) as err:
-            utils.valid_namespace(invalid_namespace)
-
-    def test_valid_namespace_invalid2(self):
-        """ Assert function returns False when a INVALID namespace passed.
-
-        Namespace is invalid because it does not contain the property 'container_type'
-
-        """
-        invalid_namespace = {
-            "namespace": "BIDS",
-            "description": "Namespace for BIDS info objects in Flywheel",
-            "datatypes": [
-                {
-                    "description": "BIDS template for diffusion files",
-                    "where": {
-                        "type": "nifti"
-                        },
-                    "properties": {
-                        "Task": {"type": "string", "label": "Task Label", "default": ""}
-                        }
-                    }
-                ]
-            }
-
-        # Assert ValidationError raised
-        with self.assertRaises(jsonschema.ValidationError) as err:
-            utils.valid_namespace(invalid_namespace)
-
-
     @unittest.skip("Integration test")
     def test_validate_project_label_invalidproject(self):
         """ Get project that does not exist. Assert function returns None.

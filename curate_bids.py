@@ -8,21 +8,11 @@ from supporting_files import bidsify_flywheel, utils, templates
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('curate-bids')
 
-# Get list of mandatory properties from templates
-mandatory_properties = []
-for dt in templates.namespace["datatypes"]:
-    mandatory_properties.extend(
-            dt["required"]
-            )
-# Make the list a set
-mandatory_properties = set(mandatory_properties)
+def clear_meta_info(info, itemplate):
+    if template.namespace in info:
+        del info[template.namespace]
 
-def clear_meta_info(info):
-    namespace = templates.namespace['namespace']
-    if namespace in info:
-        del info[namespace]
-
-def validate_meta_info(container):
+def validate_meta_info(container, template):
     """ Validate meta information
 
     Adds 'BIDS.NA' if no BIDS info present
@@ -38,7 +28,7 @@ def validate_meta_info(container):
 
     """
     # Get namespace
-    namespace = templates.namespace["namespace"]
+    namespace = template.namespace
 
     # If 'info' is NOT in container, then must not
     #   have matched to a template, create 'info'
@@ -57,27 +47,40 @@ def validate_meta_info(container):
     else:
         valid = True
         error_message = ''
-        for key in container['info'][namespace]:
-            # Skip over Path, Folder (it's ok that they are empty strings
-            #   and/or have non alphanumeric values)
-            if key in ['Path', 'Folder']:
-                continue
-            # If key is an empty string, and is
-            #   considered a mandatory property,
-            #   then it's missing and BIDS is not valid
-            if container['info'][namespace][key] == '':
-                if (key in mandatory_properties):
-                    valid = False
-                    error_message += 'Missing required property: %s. ' % key
-            # If not an empty string, ensure the values are alphanumeric...
+
+        # Find template
+        templateName = container['info'][namespace].get('template')
+        if templateName:
+            templateDef = template.definitions.get(templateName)
+            if templateDef:
+                # Extract mandatory properties from template definition
+                mandatory_properties = templateDef.get('required', [])
+
+                for key in sorted(container['info'][namespace].keys()):
+                    # Skip over Path, Folder (it's ok that they are empty strings
+                    #   and/or have non alphanumeric values)
+                    if key in ['Path', 'Folder']:
+                        continue
+                    # If key is an empty string, and is
+                    #   considered a mandatory property,
+                    #   then it's missing and BIDS is not valid
+                    if container['info'][namespace][key] == '':
+                        if (key in mandatory_properties):
+                            valid = False
+                            error_message += 'Missing required property: %s. ' % key
+                    # If not an empty string, ensure the values are alphanumeric...
+                    else:
+                        # 'Filename', 'valid' and 'error_message' don't need to be alphanumeric
+                        if key in ['Filename', 'valid', 'error_message', 'template']:
+                            continue
+                        # Otherwise, check if alphanumerica
+                        if not str(container['info'][namespace][key]).isalnum():
+                            valid = False
+                            error_message += 'Invalid characters in property: %s. ' % key
             else:
-                # 'Filename', 'valid' and 'error_message' don't need to be alphanumeric
-                if key in ['Filename', 'valid', 'error_message']:
-                    continue
-                # Otherwise, check if alphanumerica
-                if not str(container['info'][namespace][key]).isalnum():
-                    valid = False
-                    error_message += 'Invalid characters in property: %s. ' % key
+                valid = False
+                error_message += 'Unknown template: %s. ' % templateName
+
         # Assign 'valid' and 'error_message' values
         container['info'][namespace]['valid'] = valid
         container['info'][namespace]['error_message'] = error_message
@@ -144,12 +147,15 @@ def curate_bids_dir(fw, project_id, reset=False):
     logger.info('Getting project...')
     context['project'] = fw.get_project(project_id)
 
+    # Get template (for now, just use default)
+    template = templates.DEFAULT_TEMPLATE
+
     # Curate Project
     context['container_type'] = 'project'
     if reset:
         clear_meta_info(context['project']['info'])
 
-    bidsify_flywheel.process_matching_templates(context)
+    bidsify_flywheel.process_matching_templates(context, template)
     # Validate meta information
     # TODO: Improve the validator to understand what is valid for dataset_description file...
     #validate_meta_info(context['project'])
@@ -168,9 +174,9 @@ def curate_bids_dir(fw, project_id, reset=False):
         context['parent_container_type'] = 'project'
         context['ext'] = utils.get_extension(f['name'])
         # Identify the templates for the file and return file object
-        context['file'] = bidsify_flywheel.process_matching_templates(context)
+        context['file'] = bidsify_flywheel.process_matching_templates(context, template)
         # Validate meta information
-        validate_meta_info(context['file'])
+        validate_meta_info(context['file'], template)
         # Update file meta information
         update_meta_info(fw, context)
 
@@ -193,9 +199,9 @@ def curate_bids_dir(fw, project_id, reset=False):
             context['parent_container_type'] = 'session'
             context['ext'] = utils.get_extension(f['name'])
             # Identify the templates for the file and return file object
-            context['file'] = bidsify_flywheel.process_matching_templates(context)
+            context['file'] = bidsify_flywheel.process_matching_templates(context, template)
             # Validate meta information
-            validate_meta_info(context['file'])
+            validate_meta_info(context['file'], template)
             # Update file meta information
             update_meta_info(fw, context)
 
@@ -217,9 +223,9 @@ def curate_bids_dir(fw, project_id, reset=False):
                 context['parent_container_type'] = 'acquisition'
                 context['ext'] = utils.get_extension(f['name'])
                 # Identify the templates for the file and return file object
-                context['file'] = bidsify_flywheel.process_matching_templates(context)
+                context['file'] = bidsify_flywheel.process_matching_templates(context, template)
                 # Validate meta information
-                validate_meta_info(context['file'])
+                validate_meta_info(context['file'], template)
                 # Update file meta info
                 update_meta_info(fw, context)
 

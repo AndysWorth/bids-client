@@ -8,8 +8,6 @@ from supporting_files import classifications
 import templates
 import utils
 
-
-
 # process_string_template(template, context)
 # finds values in the context object and substitutes them into the string template
 # Use <path> for cases where you want the result converted to lowerCamelCase
@@ -143,151 +141,43 @@ def update_properties(properties, context, obj):
 # Matching templates define rules for adding objects to the container's info object if they don't already exist
 # Matching templates with 'auto_update' rules will update existing info object values each time it is run.
 
-def process_matching_templates(context):
+def process_matching_templates(context, template=templates.DEFAULT_TEMPLATE):
+    namespace = template.namespace
+
     container_type = context['container_type']
     container = context[container_type]
+
+    initial = (('info' not in container) or (namespace not in container['info']) 
+            or ('template' not in container['info'][namespace]))
+
+    templateDef = None
+
     # add objects based on template if they don't already exist
-    if ("info" not in container) or (templates.namespace["namespace"] not in container["info"]):
-        for template in templates.namespace["datatypes"]:
-            if ((template["container_type"] == context["container_type"] and 'parent_container_type' not in template)
-                or
-                ('parent_container_type' in template and template["container_type"] == context["container_type"] and
-                 template['parent_container_type'] == context['parent_container_type'])):
-                match = True
-                # Check black list of attributes
-                if "not" in template:
-                    for key in template["not"]:
-                        if key in container:
-                            # If container is a list --- get the first entry
-                            if type(container[key]) == list:
-                                value = container[key][0]
-                            # Otherwise, don't need to get the first entry
-                            else:
-                                value = container[key]
-                            # If container[key] matches one of the values in list
-                            if value in template["not"][key]:
-                                match = False
-                                break
+    if initial:
+        # Do initial rule matching
+        for rule in template.rules:
+            if rule.test(context):
+                print 'matches template={0}'.format(rule.template)
+                templateDef = template.definitions.get(rule.template)
+                if templateDef is None:
+                    raise Exception('Unknown template: {0}'.format(rule.template))
 
-                # Check white list of attributes
-                if "where" in template:
-                    for key in template["where"]:
-                        # If the key is in the container, check if it matches the 'where' conditions
-                        if key in container:
-                            # If container is a list --- get the first entry
-                            if type(container[key]) == list:
-                                value = container[key][0]
-                            # Otherwise, don't need to get the first entry
-                            else:
-                                value = container[key]
-                            # If container[key] matches one of the values in list
-                            if value in template["where"][key]:
-                                match = True
-                            else:
-                                match = False
-                                break
-                        # If key is not in the container, does not match the template
-                        else:
-                            match = False
-                            break
-                if match == True:
-                    print("matches template=", template["description"])
-                    obj = {}
-                    namespacekey = templates.namespace["namespace"]
-                    if "info" not in container:
-                        container["info"] = {namespacekey: {}}
-                    elif namespacekey not in container["info"]:
-                        container["info"][namespacekey] = {}
-                    else:
-                        obj = container["info"][namespacekey]
-                    obj = add_properties(template["properties"], obj, container.get('measurements'))
-                    resolve_initial_field_values(template, context, obj)
-                    container["info"][namespacekey] = obj
+                if 'info' not in container:
+                    container['info'] = {}
 
-    # update info object values for matching templates that contain 'auto_update' rules
-    if ("info" in container and templates.namespace["namespace"] in container["info"]):
-        for template in templates.namespace["datatypes"]:
-            if ((template["container_type"] == context["container_type"] and 'parent_container_type' not in template)
-                or
-                ('parent_container_type' in template and template["container_type"] == context["container_type"] and
-                 template['parent_container_type'] == context['parent_container_type'])):
-                match = True
-                # Check black list of attributes
-                if "not" in template:
-                    for key in template["not"]:
-                        if key in container:
-                            # If container is a list --- get the first entry
-                            if type(container[key]) == list:
-                                value = container[key][0]
-                            # Otherwise, don't need to get the first entry
-                            else:
-                                value = container[key]
-                            # If container[key] matches one of the values in list
-                            if value in template["not"][key]:
-                                match = False
-                                break
+                obj = container['info'].get(namespace, {})
+                container['info'][namespace] = add_properties(templateDef['properties'], obj, container.get('measurements'))
+                obj['template'] = rule.template
+                rule.initializeProperties(obj, context)
+                initial = False
+                break
 
-                # Check white list of attributes
-                if "where" in template:
-                    for key in template["where"]:
-                        # If the key is in the container, check if it matches the 'where' conditions
-                        if key in container:
-                            # If container is a list --- get the first entry
-                            if type(container[key]) == list:
-                                value = container[key][0]
-                            # Otherwise, don't need to get the first entry
-                            else:
-                                value = container[key]
-
-                            # If container[key] matches one of the values in list
-                            if value in template["where"][key]:
-                                match = True
-                            else:
-                                match = False
-                                break
-                        # If key is not in the container, does not match the template
-                        else:
-                            match = False
-                            break
-                if match == True:
-                    print("matches template=", template["description"])
-                    obj = {}
-                    namespacekey = templates.namespace["namespace"]
-                    obj = update_properties(template["properties"], context, obj)
-                    # Update container with auto-updated values
-                    container["info"][namespacekey].update(obj)
+    if not initial:
+        # Do auto_updates
+        if not templateDef:
+            templateDef = template.definitions.get(container['info'][template.namespace]['template'])
+        data = update_properties(templateDef["properties"], context, {})
+        container['info'][namespace].update(data)
 
     return container
 
-
-# Attempts to resolve initial values of BIDS fields from context
-# template: The matched template
-# context: The full context object
-# info: The BIDS data to update, if matched
-# 
-# Template properties can now include an "initialize" field that gives instructions on how to attempt to
-# initialize a field based on context. Within the initialize object, there are a list of keys to extract
-# from the context, and currently regular expressions to match against the extracted fields. If the regex
-# matches, then the "value" group will be extracted and assigned. Otherwise if 'take' is True for an initialization
-# spec, we will copy that value into the field.
-def resolve_initial_field_values(template, context, info):
-    # Walk properties, looking for "initialize" specifications
-    for propName, propDef in template['properties'].iteritems():
-        if 'initialize' in propDef:
-            resolvedValue = None
-            for key, valueSpec in propDef['initialize'].items():
-                # Lookup the value of the key
-                value = utils.dict_lookup(context, key)
-                if value is not None:
-                    # Regex matching must provide a 'value' group
-                    if 'regex' in valueSpec:
-                        m = re.search(valueSpec['regex'], value)
-                        if m is not None:
-                            resolvedValue = m.group('value')
-                    # 'take' will just copy the value
-                    elif 'take' in valueSpec and valueSpec['take']:
-                        resolvedValue = value
-                    if resolvedValue:
-                        break
-            if resolvedValue:
-                info[propName] = resolvedValue

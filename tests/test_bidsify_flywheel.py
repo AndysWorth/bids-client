@@ -1,9 +1,10 @@
 import os
+import json
 import re
 import shutil
 import unittest
 
-from supporting_files import bidsify_flywheel
+from supporting_files import utils, bidsify_flywheel
 
 class BidsifyTestCases(unittest.TestCase):
 
@@ -270,6 +271,7 @@ class BidsifyTestCases(unittest.TestCase):
         container_expected = {
             'info': {
                 'BIDS': {
+                    'template': 'anat_file',
                     'Filename': u'sub-001_ses-sestest_T1w.nii.gz',
                     'Path': u'sub-001/ses-sestest/anat', 'Folder': 'anat',
                     'Run': '', 'Acq': '', 'Ce': '', 'Rec': '',
@@ -300,6 +302,7 @@ class BidsifyTestCases(unittest.TestCase):
         container_expected = {
             'info': {
                 'BIDS': {
+                    'template': 'anat_file',
                     'Filename': u'sub-001_ses-sestest_T2w.nii.gz',
                     'Path': u'sub-001/ses-sestest/anat', 'Folder': 'anat',
                     'Run': '', 'Acq': '', 'Ce': '', 'Rec': '',
@@ -330,6 +333,7 @@ class BidsifyTestCases(unittest.TestCase):
         container_expected = {
             'info': {
                 'BIDS': {
+                    'template': 'func_file',
                     'Filename': u'sub-001_ses-sestest_task-{file.info.BIDS.Task}_bold.nii.gz',
                     'Folder': 'func', 'Path': u'sub-001/ses-sestest/func',
                     'Acq': '', 'Task': '', 'Modality': 'bold',
@@ -360,6 +364,7 @@ class BidsifyTestCases(unittest.TestCase):
         container_expected = {
             'info': {
                 'BIDS': {
+                    'template': 'diffusion_file',
                     'Filename': u'sub-001_ses-sestest_dwi.nii.gz',
                     'Path': u'sub-001/ses-sestest/dwi', 'Folder': 'dwi',
                      'Modality': 'dwi', 'Acq': '', 'Run': ''
@@ -389,6 +394,7 @@ class BidsifyTestCases(unittest.TestCase):
         container_expected = {
             'info': {
                 'BIDS': {
+                    'template': 'diffusion_file',
                     'Filename': u'sub-001_ses-sestest_dwi.bval',
                     'Path': u'sub-001/ses-sestest/dwi', 'Folder': 'dwi',
                      'Modality': 'dwi', 'Acq': '', 'Run': ''
@@ -418,6 +424,7 @@ class BidsifyTestCases(unittest.TestCase):
         container_expected = {
             'info': {
                 'BIDS': {
+                    'template': 'diffusion_file',
                     'Filename': u'sub-001_ses-sestest_dwi.bvec',
                     'Path': u'sub-001/ses-sestest/dwi', 'Folder': 'dwi',
                      'Modality': 'dwi', 'Acq': '', 'Run': ''
@@ -445,6 +452,7 @@ class BidsifyTestCases(unittest.TestCase):
         container = bidsify_flywheel.process_matching_templates(context)
         # Define expected container
         container_expected = {'info': {'BIDS': {
+                'template': 'dicom_file',
                 'Filename': '',
                 'Folder': '',
                 'Path': u'sourcedata/sub-001/ses-sestest'
@@ -473,6 +481,7 @@ class BidsifyTestCases(unittest.TestCase):
         container = bidsify_flywheel.process_matching_templates(context)
         # Define expected container
         container_expected = {'info': {'BIDS': {
+                'template': 'dicom_file',
                 'Filename': u'09 cmrr_mbepi_task-spatialfrequency_s6_2mm_66sl_PA_TR1.0.dcm.zip',
                 'Folder': '',
                 'Path': u'sourcedata/sub-001/ses-sestest'
@@ -502,6 +511,7 @@ class BidsifyTestCases(unittest.TestCase):
         container_expected = {
             'info': {
                 'BIDS': {
+                    'template': 'session_file',
                     'Filename': '', 'Folder': 'ses-haha', 'Path': 'sub-12345/ses-haha'
                     }
                 },
@@ -528,6 +538,7 @@ class BidsifyTestCases(unittest.TestCase):
         container_expected = {
             'info': {
                 'BIDS': {
+                    'template': 'project_file',
                     'Filename': '', 'Folder': '', 'Path': ''
                     }
                 },
@@ -556,6 +567,7 @@ class BidsifyTestCases(unittest.TestCase):
         container_expected = {
             'info': {
                 'BIDS': {
+                    'template': 'anat_file',
                     'Filename': u'sub-001_ses-sestest_T1w.nii.gz',
                     'Path': u'sub-001/ses-sestest/anat', 'Folder': 'anat',
                     'Run': '', 'Acq': '', 'Ce': '', 'Rec': '',
@@ -566,83 +578,11 @@ class BidsifyTestCases(unittest.TestCase):
         print container
         self.assertEqual(container, container_expected)
 
-    def test_resolve_func_field_regex(self):
-        filename = u'10 cmrr_mbepi_task-spatialfrequency_s6_2mm_66sl_PA_TR1.0.nii.gz'
-        regex = r'(^|[-_])task[-_](?P<value>[^-_]+)($|[-_])'
-        m = re.search(regex, filename)
-        self.assertIsNotNone(m)
-        result = m.group('value')
-        self.assertEqual(result, 'spatialfrequency')
+    def assertEqual(self, a, b):
+        a = utils.normalize_strings(a)
+        b = utils.normalize_strings(b)
 
-    def test_resolve_initial_func_field_values_from_filename(self):
-        """ """
-        # Define context
-        context = {
-            'container_type': 'file',
-            'parent_container_type': 'acquisition',
-            'project': None,
-            'subject': {u'code': u'001'},
-            'session': {u'label': u'sesTEST'},
-            'acquisition': {u'label': u'acqTEST'},
-            'file': {
-                u'name': u'10 cmrr_mbepi_task-spatialfrequency_s6_2mm_66sl_PA_TR1.0.nii.gz',
-                u'measurements': [u'functional'],
-                u'type': u'nifti',
-            },
-            'ext': '.nii.gz'
-        }
-        # Call function
-        container = bidsify_flywheel.process_matching_templates(context)
-        # Define expected container
-        container_expected = {
-            'info': {
-                'BIDS': {
-                    'Filename': u'sub-001_ses-sestest_task-spatialfrequency_bold.nii.gz',
-                    'Folder': 'func', 'Path': u'sub-001/ses-sestest/func',
-                    'Acq': '', 'Task': u'spatialfrequency', 'Modality': 'bold',
-                    'Rec': '', 'Run': '', 'Echo': ''
-                }
-            },
-            u'name': u'10 cmrr_mbepi_task-spatialfrequency_s6_2mm_66sl_PA_TR1.0.nii.gz',
-            u'measurements': [u'functional'], 
-            u'type': u'nifti'
-        }
-        self.assertEqual(container, container_expected)
-
-    def test_resolve_initial_func_field_values_from_acq_label(self):
-        """ """
-        # Define context
-        context = {
-            'container_type': 'file',
-            'parent_container_type': 'acquisition',
-            'project': None,
-            'subject': {u'code': u'001'},
-            'session': {u'label': u'sesTEST'},
-            'acquisition': {
-                u'label': u'10 cmrr_mbepi_task-spatialfrequency_s6_2mm_66sl_PA_TR1.0'
-            },
-            'file': {
-                u'measurements': [u'functional'],
-                u'type': u'nifti',
-            },
-            'ext': '.nii.gz'
-        }
-        # Call function
-        container = bidsify_flywheel.process_matching_templates(context)
-        # Define expected container
-        container_expected = {
-            'info': {
-                'BIDS': {
-                    'Filename': u'sub-001_ses-sestest_task-spatialfrequency_bold.nii.gz',
-                    'Folder': 'func', 'Path': u'sub-001/ses-sestest/func',
-                    'Acq': '', 'Task': u'spatialfrequency', 'Modality': 'bold',
-                    'Rec': '', 'Run': '', 'Echo': ''
-                }
-            },
-            u'measurements': [u'functional'], 
-            u'type': u'nifti'
-        }
-        self.assertEqual(container, container_expected)
+        unittest.TestCase.assertEqual(self, a, b)
 
 
 if __name__ == "__main__":
