@@ -110,12 +110,13 @@ def download_bids_files(fw, filepath_downloads, dry_run):
     # Download all project files
     logger.info('Downloading project files')
     for f in filepath_downloads['project']:
-        logger.info('Downloading project file: {0}'.format(filepath_downloads['project'][f][1]))
+        args = filepath_downloads['project'][f]
+        logger.info('Downloading project file: {0}'.format(args[1]))
         # For dry run, don't actually download
         if dry_run:
-            logger.info('  to {0}'.format(path))
+            logger.info('  to {0}'.format(args[2]))
             continue
-        fw.download_file_from_project(*filepath_downloads['project'][f])
+        fw.download_file_from_project(*args)
 
         # If zipfile is attached to project, unzip...
         zip_pattern = re.compile('[a-zA-Z0-9]+(.zip)')
@@ -130,26 +131,27 @@ def download_bids_files(fw, filepath_downloads, dry_run):
     # Download all session files
     logger.info('Downloading session files')
     for f in filepath_downloads['session']:
-        logger.info('Downloading session file: {0}'.format(filepath_downloads['session'][f][1]))
+        args = filepath_downloads['session'][f]
+        logger.info('Downloading session file: {0}'.format(args[1]))
         # For dry run, don't actually download
         if dry_run:
-            logger.info('  to {0}'.format(path))
+            logger.info('  to {0}'.format(args[2]))
             continue
-        fw.download_file_from_session(*filepath_downloads['session'][f])
+        fw.download_file_from_session(*args)
 
     # Download all acquisition files
     logger.info('Downloading acquisition files')
     for f in filepath_downloads['acquisition']:
-
+        args = filepath_downloads['acquisition'][f]
         # Download the file
-        logger.info('Downloading acquisition file: {0}'.format(filepath_downloads['acquisition'][f][1]))
+        logger.info('Downloading acquisition file: {0}'.format(args[1]))
 
         # For dry run, don't actually download
         if dry_run:
-            logger.info('  to {0}'.format(path))
+            logger.info('  to {0}'.format(args[2]))
             continue
 
-        fw.download_file_from_acquisition(*filepath_downloads['acquisition'][f])
+        fw.download_file_from_acquisition(*args)
 
 def download_bids_dir(fw, project_id, outdir, src_data=False, dry_run=False):
     """
@@ -248,6 +250,7 @@ def download_bids_dir(fw, project_id, outdir, src_data=False, dry_run=False):
 
                 # Create the sidecar JSON file
                 create_json(f['info'], path, namespace)
+    download_bids_files(fw, filepath_downloads, dry_run)
 
 if __name__ == '__main__':
     ### Read in arguments
