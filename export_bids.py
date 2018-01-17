@@ -106,6 +106,53 @@ def create_json(meta_info, path, namespace):
         json.dump(meta_info, outfile,
                 sort_keys=True, indent=4)
 
+def download_bids_files(fw, filepath_downloads, dry_run):
+    # Download all project files
+    logger.info('Downloading project files')
+    for f in filepath_downloads['project']:
+        args = filepath_downloads['project'][f]
+        logger.info('Downloading project file: {0}'.format(args[1]))
+        # For dry run, don't actually download
+        if dry_run:
+            logger.info('  to {0}'.format(args[2]))
+            continue
+        fw.download_file_from_project(*args)
+
+        # If zipfile is attached to project, unzip...
+        zip_pattern = re.compile('[a-zA-Z0-9]+(.zip)')
+        zip_dirname = path[:-4]
+        if zip_pattern.search(path):
+            zip_ref = zipfile.ZipFile(path, 'r')
+            zip_ref.extractall(zip_dirname)
+            zip_ref.close()
+            # Remove the zipfile
+            os.remove(path)
+
+    # Download all session files
+    logger.info('Downloading session files')
+    for f in filepath_downloads['session']:
+        args = filepath_downloads['session'][f]
+        logger.info('Downloading session file: {0}'.format(args[1]))
+        # For dry run, don't actually download
+        if dry_run:
+            logger.info('  to {0}'.format(args[2]))
+            continue
+        fw.download_file_from_session(*args)
+
+    # Download all acquisition files
+    logger.info('Downloading acquisition files')
+    for f in filepath_downloads['acquisition']:
+        args = filepath_downloads['acquisition'][f]
+        # Download the file
+        logger.info('Downloading acquisition file: {0}'.format(args[1]))
+
+        # For dry run, don't actually download
+        if dry_run:
+            logger.info('  to {0}'.format(args[2]))
+            continue
+
+        fw.download_file_from_acquisition(*args)
+
 def download_bids_dir(fw, project_id, outdir, src_data=False, dry_run=False):
     """
 
@@ -119,10 +166,17 @@ def download_bids_dir(fw, project_id, outdir, src_data=False, dry_run=False):
     # Define namespace
     namespace = 'BIDS'
 
+    # Files and the corresponding download arguments
+    filepath_downloads = {
+        'project':{},
+        'session':{},
+        'acquisition':{}
+    }
+
     # Get project
     project = fw.get_project(project_id)
 
-    logger.info('Downloading project files')
+    logger.info('Processing project files')
     # Iterate over any project files
     for f in project.get('files', []):
         # Don't include source data by default
@@ -134,30 +188,19 @@ def download_bids_dir(fw, project_id, outdir, src_data=False, dry_run=False):
         # If path is not defined (an empty string) move onto next file
         if not path:
             continue
-        # Download the file
-        logger.info('Downloading project file: {0}'.format(f['name']))
 
         # For dry run, don't actually download
-        if dry_run:
-            logger.info('  to {0}'.format(path))
-            continue
+        if path in filepath_downloads['project']:
+            logger.error('Multiple files with path {0}:\n\t{1} and\n\t{2}'.format(path, f['name'], filepath_downloads['project'][path][1]))
+            sys.exit(1)
 
-        fw.download_file_from_project(project['_id'], f['name'], path)
-        # If zipfile is attached to project, unzip...
-        zip_pattern = re.compile('[a-zA-Z0-9]+(.zip)')
-        zip_dirname = path[:-4]
-        if zip_pattern.search(path):
-            zip_ref = zipfile.ZipFile(path, 'r')
-            zip_ref.extractall(zip_dirname)
-            zip_ref.close()
-            # Remove the zipfile
-            os.remove(path)
+        filepath_downloads['project'][path] = (project['_id'], f['name'], path)
 
     ## Create dataset_description.json file
     path = os.path.join(outdir, 'dataset_description.json')
     create_json(project['info'][namespace], path, namespace)
 
-    logger.info('Downloading session files')
+    logger.info('Processing session files')
     # Get project sessions
     project_sessions = fw.get_project_sessions(project_id)
     for proj_ses in project_sessions:
@@ -175,17 +218,14 @@ def download_bids_dir(fw, project_id, outdir, src_data=False, dry_run=False):
             # If path is not defined (an empty string) move onto next file
             if not path:
                 continue
-            # Download the file
-            logger.info('Downloading session file: {0}'.format(f['name']))
 
-            # For dry run, don't actually download
-            if dry_run:
-                logger.info('  to {0}'.format(path))
-                continue
+            if path in filepath_downloads['session']:
+                logger.error('Multiple files with path {0}:\n\t{1} and\n\t{2}'.format(path, f['name'], filepath_downloads['session'][path][1]))
+                sys.exit(1)
 
-            fw.download_file_from_session(session['_id'], f['name'], path)
+            filepath_downloads['session'][path] = (session['_id'], f['name'], path)
 
-        logger.info('Downloading acquisition files')
+        logger.info('Processing acquisition files')
         # Get acquisitions
         session_acqs = fw.get_session_acquisitions(proj_ses['_id'])
         for ses_acq in session_acqs:
@@ -202,17 +242,15 @@ def download_bids_dir(fw, project_id, outdir, src_data=False, dry_run=False):
                 # If path is not defined (an empty string) move onto next file
                 if not path:
                     continue
-                # Download the file
-                logger.info('Downloading acquisition file: {0}'.format(f['name']))
-                
-                # For dry run, don't actually download
-                if dry_run:
-                    logger.info('  to {0}'.format(path))
-                    continue
+                if path in filepath_downloads['acquisition']:
+                    logger.error('Multiple files with path {0}:\n\t{1} and\n\t{2}'.format(path, f['name'], filepath_downloads['acquisition'][path][1]))
+                    sys.exit(1)
 
-                fw.download_file_from_acquisition(acq['_id'], f['name'], path)
+                filepath_downloads['acquisition'][path] = (acq['_id'], f['name'], path)
+
                 # Create the sidecar JSON file
                 create_json(f['info'], path, namespace)
+    download_bids_files(fw, filepath_downloads, dry_run)
 
 if __name__ == '__main__':
     ### Read in arguments
