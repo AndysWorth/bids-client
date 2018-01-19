@@ -1,266 +1,271 @@
+import os, os.path, json, re
+import utils
 
-project_template = {
-    "container_type": "project",
-    "description": "BIDS project template",
-    "properties": {
-        "Name": {"type": "string", "label": "Name", "default": ""},
-        "BIDSVersion": {"type": "string", "label": "BIDS Version", "default": "1.0.2"},
-        "License": {"type": "string", "label": "License", "default": ""},
-        "Authors": {"type": "string", "label": "Authors", "default": []},
-        "Acknowledgements": {"type": "string", "label": "Acknowledgements", "default": ""},
-        "HowToAcknowledge": {"type": "string", "label": "How To Acknowledge", "default": ""},
-        "Funding": {"type": "string", "label": "Funding Sources", "default": ""},
-        "ReferencesAndLinks": {"type": "string", "label":"Reference and Links", "default": ""},
-        "DatasetDOI": {"type": "string", "label": "Dataset DOI", "default": ""}
-    },
-    "required": []
-}
+DEFAULT_TEMPLATE_NAME = 'bids-v1'
+BIDS_TEMPLATE_NAME = 'bids-v1'
+DEFAULT_TEMPLATES = {}
 
-project_file_template = {
-    "container_type": "file",
-    "parent_container_type": "project",
-    "description": "BIDS project file template",
-    "properties": {
-        "Filename": {"type": "string", "label": "Filename", "default": ""},
-        "Folder": {"type": "string", "label": "Folder", "default": ""},
-        "Path": {"type": "string", "label": "Path", "default": ""}
-    },
-    "required": ["Filename", "Folder", "Path"]
-}
+class Template:
+    """
+    Represents a project-level template for organizing data.
 
-session_file_template = {
-    "container_type": "file",
-    "parent_container_type": "session",
-    "description": "BIDS session file template",
-    "properties": {
-        "Filename": {"type": "string", "label": "Filename", "default": ""},
-        "Folder": {"type": "string", "label": "Folder", "default": "",
-            "auto_update": 'ses-<session.label>'},
-        "Path": {"type": "string", "label": "Path", "default": "",
-            "auto_update": 'sub-<subject.code>/ses-<session.label>'},
-    },
-    "required": ["Filename", "Folder", "Path"]
-}
+    Args:
+        data (dict): The json configuration for the template
+        templates (list): The optional existing map of templates by name.
 
-anat_file_template = {
-    "container_type": "file",
-    "parent_container_type": "acquisition",
-    "description": "BIDS template for anat files",
-    "where": {
-        "type": [u"nifti", u"NIfTI"],
-        "measurements": [u"anatomy_t1w", u"anatomy_t2w", u"anatomy_t1wrho",
-            u"map_t1w", u"map_t2w", u"anatomy_t2star", u"anatomy_flair",
-            u"anatomy_flash", u"anatomy_pd", u"map_pd", u"anatomy_pdt2",
-            u"anatomy_t1w_inplane", u"anatomy_t2w_inplane", u"angio",
-            u"defacemask", u"swi"]
-    },
-    "properties": {
-        "Filename": {"type": "string", "label": "Filename", "default": "",
-            "auto_update": 'sub-<subject.code>[_ses-<session.label>][_acq-{file.info.BIDS.Acq}][_ce-{file.info.BIDS.Ce}][_rec-{file.info.BIDS.Rec}][_run-{file.info.BIDS.Run}][_mod-{file.info.BIDS.Mod}]_{file.info.BIDS.Modality}{ext}'},
-        "Folder": {"type": "string", "label": "Folder", "default": "anat"},
-        "Path": {"type": "string", "label": "Path", "default": "",
-            "auto_update": 'sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}'},
-        "Acq": {"type": "string", "label": "Acq Label", "default": ""},
-        "Ce": {"type": "string", "label": "Ce Label", "default": ""},
-        "Rec": {"type": "string", "label": "Rec Label", "default": ""},
-        "Run": {"type": "string", "label": "Run Index", "default": ""},
-        "Mod": {"type": "string", "label": "Mod Label", "default": ""},
-        "Modality": {"type": "string", "label": "Modality Label", "default": "",
-            "enum": [
-                "T1w",
-                "T2w",
-                "T1rho",
-                "T1map",
-                "T2map",
-                "FLAIR",
-                "FLASH",
-                "PD",
-                "PDmap",
-                "PDT2",
-                "inplaneT1",
-                "inplaneT2",
-                "angio",
-                "defacemask",
-                "SWImagandphase"
-            ]
-        }
-    },
-    "required": ["Filename", "Folder", "Path", "Modality"]
-}
+    Attributes:
+        namespace (str): The namespace where resolved template data is displayed.
+        description (str): The optional description of the template.
+        definitions (dict): The map of template definitions.
+        rules (list): The list of if rules for applying templates.
+        extends (string): The optional name of the template to extend.
+        exclude_rules (list): The optional list of rules to exclude from a parent template.
+    """
+    def __init__(self, data=None, templates=None):
+        if data:
+            self.namespace = data.get('namespace')
+            self.description = data.get('description', '')
+            self.definitions = data.get('definitions', {})
+            self.rules = data.get('rules', {})
+            
+            self.extends = data.get('extends')
+            self.exclude_rules = data.get('exclude_rules', [])
+        else:
+            self.namespace = ''
+            self.description = ''
+            self.definitions = {}
+            self.rules = []
 
-func_file_template = {
-    "container_type": "file",
-    "description": "BIDS template for func files",
-    "where": {
-        "type": [u"nifti", u"NIfTI"],
-        "measurements": [u"functional"]
-    },
-    "properties": {
-        "Filename": {"type": "string", "label": "Filename", "default": "",
-            "auto_update": 'sub-<subject.code>[_ses-<session.label>]_task-{file.info.BIDS.Task}[_acq-{file.info.BIDS.Acq}][_rec-{file.info.BIDS.Rec}][_run-{file.info.BIDS.Run}][_echo-{file.info.BIDS.Echo}]_{file.info.BIDS.Modality}{ext}'},
-        "Folder": {"type": "string", "label": "Folder", "default": "func"},
-        "Path": {"type": "string", "label": "Path", "default": "",
-            "auto_update": 'sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}'},
-        "Acq": {"type": "string", "label": "Acq Label", "default": ""},
-        "Task": {"type": "string", "label": "Task Label", "default": ""},
-        "Rec": {"type": "string", "label": "Rec Label", "default": ""},
-        "Run": {"type": "string", "label": "Run Index", "default": ""},
-        "Echo": {"type": "string", "label": "Echo Index", "default": ""},
-        "Modality": {"type": "string", "label": "Modality Label", "default": "bold",
-            "enum": [
-                "bold",
-                "sbref",
-                "stim",
-                "physio"
-            ]
-        }
-    },
-    "required": ["Filename", "Folder", "Path", "Task", "Modality"]
-}
+            self.extends = None
+            self.exclude_rules = []
 
-# Matches to functional
-task_events_file_template = {
-    "container_type": "file",
-    "description": "BIDS template for task events files",
-    "where": {
-        "type": [u"tabular data", u"Tabular Data"],
-        "measurements": [u"functional"]
-    },
-    "properties": {
-        "Filename": {"type": "string", "label": "Filename", "default": "",
-            "auto_update": 'sub-<subject.code>[_ses-<session.label>]_task-{file.info.BIDS.Task}[_acq-{file.info.BIDS.Acq}][_rec-{file.info.BIDS.Rec}][_run-{file.info.BIDS.Run}][_echo-{file.info.BIDS.Echo}]_events.tsv'},
-        "Folder": {"type": "string", "label": "Folder", "default": "func"},
-        "Path": {"type": "string", "label": "Path", "default": "",
-            "auto_update": 'sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}'},
-        "Task": {"type": "string", "label": "Task Label", "default": ""},
-        "Acq": {"type": "string", "label": "Acq Label", "default": ""},
-        "Rec": {"type": "string", "label": "Rec Label", "default": ""},
-        "Run": {"type": "string", "label": "Run Index", "default": ""},
-        "Echo": {"type": "string", "label": "Echo Index", "default": ""},
-    },
-    "required": ["Filename", "Folder", "Path", "Task"]
-}
+        if templates:
+            self.do_extend(templates)
 
-beh_events_file_template = {
-    "container_type": "file",
-    "description": "BIDS template for behavioral events files",
-    "where": {
-        "type": [u"tabular data", u"Tabular Data"],
-        "measurements": ["behavioral"] # TODO: determine this... what is the measurement name of behavioral experiments?
-    },
-    "properties": {
-        "Filename": {"type": "string", "label": "Filename", "default": "",
-            "auto_update": 'sub-<subject.code>[_ses-<session.label>]_task-{file.info.BIDS.Task}_events.tsv'},
-        "Folder": {"type": "string", "label": "Folder", "default": "beh"},
-        "Path": {"type": "string", "label": "Path", "default": "",
-            "auto_update": 'sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}'},
-        "Task": {"type": "string", "label": "Task Label", "default": ""}
-    },
-    "required": ["Filename", "Folder", "Path", "Task"]
-}
+        self.compile_rules()
+
+    def do_extend(self, templates):
+        """
+        Implements the extends logic for this template.
+
+        Args:
+            templates (list): The existing list of templates.
+        """
+        if not self.extends:
+            return
+
+        if self.extends not in templates:
+            raise Exception('Could not find parent template: {0}'.format(self.extends))
+
+        parent = templates[self.extends]
+
+        if not self.namespace:
+            self.namespace = parent.namespace
+
+        my_rules = self.rules
+        my_defs = self.definitions
+
+        # Extend definitions
+        self.definitions = parent.definitions.copy()
+        for key, value in my_defs.items():
+            self.definitions[key] = value
+
+        # Extend rules, after filtering excluded rules
+        filtered_rules = filter(lambda x: x.id not in self.exclude_rules, parent.rules)
+        self.rules = list(filtered_rules) + my_rules
+
+    def compile_rules(self):
+        """
+        Converts the rule dictionaries on this object to Rule class objects.
+        """
+        for i in range(0, len(self.rules)):
+            rule = self.rules[i]
+            if not isinstance(rule, Rule):
+                self.rules[i] = Rule(rule)
+
+class Rule:
+    """
+    Represents a matching rule for applying template definitions to resources or files within a project.
+
+    Args:
+        data (dict): The rule definition as a dictionary.
+
+    Attributes:
+        id (string): The optional rule id.
+        template (str): The name of the template id to apply when this rule matches.
+        initialize (dict): The optional set of initialization rules when this rule matches.
+        conditions (dict): The set of conditions that must be true for this rule to match.
+    """
+    def __init__(self, data):
+        self.id = data.get('id', '')
+        self.template = data.get('template')
+        self.initialize = data.get('initialize', {})
+        if self.template is None:
+            raise Exception('"template" field is required!')
+        self.conditions = data.get('where')
+        if not self.conditions:
+            raise Exception('"where" field is required!')
+
+    def test(self, context):
+        """
+        Test if the given context matches this rule.
+        
+        Args:
+            context (dict): The context, which includes the hierarchy and current container
+
+        Returns:
+            bool: True if the rule matches the given context.
+        """
+        # Process matches
+        conditions = self.conditions
+
+        # Handle $or clauses at top-level
+        if '$or' in conditions:
+            for field, match in conditions['$or']:
+                value = utils.dict_lookup(context, field)
+                if processValueMatch(value, match):
+                    return True
+            return False
+
+        # Otherwise AND clauses
+        if '$and' in conditions:
+            conditions = conditions['$and']
+
+        for field, match in conditions.items():
+            value = utils.dict_lookup(context, field)
+            if not processValueMatch(value, match):
+                return False
+
+        return True
+
+    def initializeProperties(self, info, context):
+        """
+        Attempts to resolve initial values of BIDS fields from context.
+
+        Template properties can now include an "initialize" field that gives instructions on how to attempt to
+        initialize a field based on context. Within the initialize object, there are a list of keys to extract
+        from the context, and currently regular expressions to match against the extracted fields. If the regex
+        matches, then the "value" group will be extracted and assigned. Otherwise if 'take' is True for an initialization
+        spec, we will copy that value into the field.
+
+        Args:
+            context (dict): The full context object
+            info (dict): The BIDS data to update, if matched
+        """
+        for propName, propDef in self.initialize.items():
+            resolvedValue = None
+
+            if isinstance(propDef, dict):
+                for key, valueSpec in propDef.items():
+                    # Lookup the value of the key
+                    value = utils.dict_lookup(context, key)
+                    if value is not None:
+                        # Regex matching must provide a 'value' group
+                        if '$regex' in valueSpec:
+                            m = re.search(valueSpec['$regex'], value)
+                            if m is not None:
+                                resolvedValue = m.group('value')
+                        # 'take' will just copy the value
+                        elif '$take' in valueSpec and valueSpec['$take']:
+                            resolvedValue = value
+
+                        if resolvedValue:
+                            break
+            else:
+                resolvedValue = propDef
+
+            if resolvedValue:
+                info[propName] = resolvedValue
 
 
-diffusion_file_template = {
-    "container_type": "file",
-    "description": "BIDS template for diffusion files",
-    "where": {
-        "type": [u"nifti", u"bvec", u"bval", u"NIfTI", u"BVEC", u"BVAL"],
-        "measurements": [u"diffusion"]
-    },
-    "properties": {
-        "Filename": {"type": "string", "label": "Filename", "default": "",
-            "auto_update":'sub-<subject.code>[_ses-<session.label>][_acq-{file.info.BIDS.Acq}][_run-{file.info.BIDS.Run}]_{file.info.BIDS.Modality}{ext}'},
-        "Folder": {"type": "string", "label": "Folder", "default": "dwi"},
-        "Path": {"type": "string", "label": "Path", "default": "",
-            "auto_update": 'sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}'},
-        "Acq": {"type": "string", "label": "Acq Label", "default": ""},
-        "Run": {"type": "string", "label": "Run Index", "default": ""},
-        "Modality": {"type": "string", "label": "Modality Label", "default": "dwi",
-            "enum": [
-                "dwi",
-                "sbref"
-            ]
-        }
-    },
-    "required": ["Filename", "Folder", "Path", "Modality"]
-}
+def processValueMatch(value, match):
+    """
+    Helper function that recursively performs value matching.
+    Args:
+        value: The value to match
+        match: The matching rule
+    Returns:
+        bool: The result of matching the value against the match spec.
+    """
+    if isinstance(match, dict):
+        # Deeper processing
+        if '$in' in match:
+            # Check if value is in list
+            if isinstance(value, list):
+                for item in value:
+                    if item in match['$in']:
+                        return True
+                return False
+            
+            return value in match['$in']
 
-fieldmap_file_template = {
-    "container_type": "file",
-    "description": "BIDS template for field map files",
-    "where": {
-        "type": [u"nifti", u"NIfTI"],
-        "measurements": [u"field_map"]
-    },
-    "properties": {
-        "Filename": {"type": "string", "label": "Filename", "default": "",
-            "auto_update":'sub-<subject.code>[_ses-<session.label>][_acq-{file.info.BIDS.Acq}][_run-{file.info.BIDS.Run}][_dir-{file.info.BIDS.Dir}]_{file.info.BIDS.Modality}{ext}'},
-        "Folder": {"type": "string", "label": "Folder", "default": "fmap"},
-        "Path": {"type": "string", "label": "Path", "default": "",
-            "auto_update": 'sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}'},
-        "Acq": {"type": "string", "label": "Acq Label", "default": ""},
-        "Run": {"type": "string", "label": "Run Index", "default": ""},
-        "Dir": {"type": "string", "label": "Dir Label", "default": ""}, # TODO: This is only required for 'epi' fieldmap
-        "Modality": {"type": "string", "label": "Modality Label", "default": "fieldmap",
-            "enum": [
-                "phasediff",
-                "magnitude1",
-                "magnitude2",
-                "phase1",
-                "phase2",
-                "magnitude",
-                "fieldmap",
-                "epi"
-                ]
-        }
-    },
-    "required": ["Filename", "Folder", "Path", "Modality"]
-}
+        elif '$not' in match:
+            # Negate result of nested match
+            return not processMatch(value, match['$not'])
 
-dicom_file_template = {
-    "container_type": "file",
-    "description": "BIDS template for DICOM files",
-    "where": {
-        "type": [u"dicom", u"DICOM"]
-    },
-    "properties": {
-        "Filename": {"type": "string", "label": "Filename", "default": ""},
-        "Folder": {"type": "string", "label": "Folder", "default": "sourcedata"},
-        "Path": {"type": "string", "label": "Path", "default": "",
-            "auto_update": 'sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}'},
-    },
-    "required": ["Filename", "Folder", "Path"]
-}
+        elif '$regex' in match:
+            regex = re.compile(match['$regex'])
 
-json_file_template = {
-    "container_type": "file",
-    "description": "BIDS template for JSON files",
-    "where": {
-        "type": [u"source code", u"JSON"]
-    },
-    "properties": {
-        "Filename": {"type": "string", "label": "Filename", "default": ""},
-        "Folder": {"type": "string", "label": "Folder", "default": ""},
-        "Path": {"type": "string", "label": "Path", "default": ""}
-    },
-    "required": ["Filename", "Folder", "Path"]
-}
+            if isinstance(value, list):
+                for item in value:
+                    if regex.search(item) is not None:
+                        return True
 
-namespace = {
-    "namespace": "BIDS",
-    "description": "Namespace for BIDS info objects in Flywheel",
-    "datatypes": [
-        project_template,
-        project_file_template,
-        session_file_template,
-        anat_file_template,
-        func_file_template,
-        task_events_file_template,
-        beh_events_file_template,
-        diffusion_file_template,
-        fieldmap_file_template,
-        dicom_file_template,
-        json_file_template
-    ]
-}
+                return False
+            
+            return regex.search(value) is not None 
+
+    else:
+        # Direct match
+        if isinstance(value, list):
+            for item in value:
+                if item == match:
+                    return True
+            return False
+
+        return value == match
+
+def loadTemplates(templates_dir=None):
+    """
+    Load all templates in the given (or default) directory
+    
+    Args:
+        templates_dir (string): The optional directory to load templates from.
+    """
+    results = {}
+
+    if templates_dir is None:
+        script_dir = os.path.dirname( os.path.realpath(__file__) )
+        templates_dir = os.path.join(script_dir, '../templates')
+
+    # Load all templates from the templates directory
+    for fname in os.listdir(templates_dir):
+        path = os.path.join(templates_dir, fname)
+        name, ext = os.path.splitext(fname)
+        if ext == '.json' and os.path.isfile(path):
+            results[name] = loadTemplate(path)
+
+    return results
+
+def loadTemplate(path, templates=None):
+    """
+    Load the template at path
+    
+    Args:
+        path (str): The path to the template to load
+        templates (dict): The mapping of template names to template defintions.
+    Returns:
+        Template: The template that was loaded (otherwise throws)
+    """
+    with open(path, 'r') as f:
+        data = json.load(f)
+
+    if templates is None:
+        templates = DEFAULT_TEMPLATES
+
+    return Template(data, templates)
+
+DEFAULT_TEMPLATES = loadTemplates()
+DEFAULT_TEMPLATE = DEFAULT_TEMPLATES.get(DEFAULT_TEMPLATE_NAME)
+BIDS_TEMPLATE = DEFAULT_TEMPLATES.get(BIDS_TEMPLATE_NAME)
 

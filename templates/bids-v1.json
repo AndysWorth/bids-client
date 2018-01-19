@@ -1,0 +1,363 @@
+{
+    "namespace": "BIDS",
+    "description": "Namespace for BIDS info objects in Flywheel",
+	"definitions": {
+		"project": {
+	    	"description": "BIDS project template",
+			"properties": {
+				"Name": {"type": "string", "label": "Name", "default": ""},
+				"BIDSVersion": {"type": "string", "label": "BIDS Version", "default": "1.0.2"},
+				"License": {"type": "string", "label": "License", "default": ""},
+				"Authors": {"type": "string", "label": "Authors", "default": []},
+				"Acknowledgements": {"type": "string", "label": "Acknowledgements", "default": ""},
+				"HowToAcknowledge": {"type": "string", "label": "How To Acknowledge", "default": ""},
+				"Funding": {"type": "string", "label": "Funding Sources", "default": ""},
+				"ReferencesAndLinks": {"type": "string", "label":"Reference and Links", "default": ""},
+				"DatasetDOI": {"type": "string", "label": "Dataset DOI", "default": ""}
+			},
+			"required": []
+		},
+		"project_file": {
+			"description": "BIDS project file template",
+			"properties": {
+				"Filename": {"type": "string", "label": "Filename", "default": ""},
+				"Folder": {"type": "string", "label": "Folder", "default": ""},
+				"Path": {"type": "string", "label": "Path", "default": ""}
+			},
+			"required": ["Filename", "Folder", "Path"]
+		},
+		"session_file": {
+			"description": "BIDS session file template",
+			"properties": {
+				"Filename": {"type": "string", "label": "Filename", "default": ""},
+				"Folder": {"type": "string", "label": "Folder", "default": "",
+					"auto_update": "ses-<session.label>"},
+				"Path": {"type": "string", "label": "Path", "default": "",
+					"auto_update": "sub-<subject.code>/ses-<session.label>"}
+			},
+			"required": ["Filename", "Folder", "Path"]
+		},
+		"anat_file": { 
+			"description": "BIDS template for anat files",
+			"properties": {
+				"Filename": {"type": "string", "label": "Filename", "default": "",
+					"auto_update": "sub-<subject.code>[_ses-<session.label>][_acq-{file.info.BIDS.Acq}][_ce-{file.info.BIDS.Ce}][_rec-{file.info.BIDS.Rec}][_run-{file.info.BIDS.Run}][_mod-{file.info.BIDS.Mod}]_{file.info.BIDS.Modality}{ext}"},
+				"Folder": {"type": "string", "label": "Folder", "default": "anat"},
+				"Path": {"type": "string", "label": "Path", "default": "",
+					"auto_update": "sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}"},
+				"Acq": {"type": "string", "label": "Acq Label", "default": ""},
+				"Ce": {"type": "string", "label": "Ce Label", "default": ""},
+				"Rec": {"type": "string", "label": "Rec Label", "default": ""},
+				"Run": {"type": "string", "label": "Run Index", "default": ""},
+				"Mod": {"type": "string", "label": "Mod Label", "default": ""},
+				"Modality": {"type": "string", "label": "Modality Label", "default": "",
+					"enum": [
+						"T1w",
+						"T2w",
+						"T1rho",
+						"T1map",
+						"T2map",
+						"FLAIR",
+						"FLASH",
+						"PD",
+						"PDmap",
+						"PDT2",
+						"inplaneT1",
+						"inplaneT2",
+						"angio",
+						"defacemask",
+						"SWImagandphase"
+					]
+				}
+			},
+			"required": ["Filename", "Folder", "Path", "Modality"]
+		},
+		"func_file": {	
+			"description": "BIDS template for func files",
+			"properties": {
+				"Filename": {"type": "string", "label": "Filename", "default": "",
+					"auto_update": "sub-<subject.code>[_ses-<session.label>]_task-{file.info.BIDS.Task}[_acq-{file.info.BIDS.Acq}][_rec-{file.info.BIDS.Rec}][_run-{file.info.BIDS.Run}][_echo-{file.info.BIDS.Echo}]_{file.info.BIDS.Modality}{ext}"},
+				"Folder": {"type": "string", "label": "Folder", "default": "func"},
+				"Path": {"type": "string", "label": "Path", "default": "",
+					"auto_update": "sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}"},
+				"Acq": {"type": "string", "label": "Acq Label", "default": ""},
+				"Task": {"type": "string", "label": "Task Label", "default": ""},
+				"Rec": {"type": "string", "label": "Rec Label", "default": ""},
+				"Run": {"type": "string", "label": "Run Index", "default": ""},
+				"Echo": {"type": "string", "label": "Echo Index", "default": ""},
+				"Modality": {"type": "string", "label": "Modality Label", "default": "bold",
+					"enum": [
+						"bold",
+						"sbref",
+						"stim",
+						"physio"
+					]
+				}
+			},
+			"required": ["Filename", "Folder", "Path", "Task", "Modality"]
+		},
+		"task_events_file": {	
+			"description": "BIDS template for task events files",
+			"properties": {
+				"Filename": {"type": "string", "label": "Filename", "default": "",
+					"auto_update": "sub-<subject.code>[_ses-<session.label>]_task-{file.info.BIDS.Task}[_acq-{file.info.BIDS.Acq}][_rec-{file.info.BIDS.Rec}][_run-{file.info.BIDS.Run}][_echo-{file.info.BIDS.Echo}]_events.tsv"},
+				"Folder": {"type": "string", "label": "Folder", "default": "func"},
+				"Path": {"type": "string", "label": "Path", "default": "",
+					"auto_update": "sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}"},
+				"Task": {"type": "string", "label": "Task Label", "default": ""},
+				"Acq": {"type": "string", "label": "Acq Label", "default": ""},
+				"Rec": {"type": "string", "label": "Rec Label", "default": ""},
+				"Run": {"type": "string", "label": "Run Index", "default": ""},
+				"Echo": {"type": "string", "label": "Echo Index", "default": ""}
+			},
+			"required": ["Filename", "Folder", "Path", "Task"]
+		},
+		"beh_events_file": {
+			"description": "BIDS template for behavioral events files",
+			"properties": {
+				"Filename": {"type": "string", "label": "Filename", "default": "",
+					"auto_update": "sub-<subject.code>[_ses-<session.label>]_task-{file.info.BIDS.Task}_events.tsv"},
+				"Folder": {"type": "string", "label": "Folder", "default": "beh"},
+				"Path": {"type": "string", "label": "Path", "default": "",
+					"auto_update": "sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}"},
+				"Task": {"type": "string", "label": "Task Label", "default": ""}
+			},
+			"required": ["Filename", "Folder", "Path", "Task"]
+		},
+		"physio_task_file": {	
+			"description": "BIDS template for physio files",
+			"properties": {
+				"Filename": {"type": "string", "label": "Filename", "default": "",
+					"auto_update": "sub-<subject.code>[_ses-<session.label>]_task-{file.info.BIDS.Task}[_acq-{file.info.BIDS.Acq}][_rec-{file.info.BIDS.Rec}][_run-{file.info.BIDS.Run}][_echo-{file.info.BIDS.Echo}][_recording-{file.info.BIDS.recording}]_{file.info.BIDS.Modality}{ext}"},
+				"Folder": {"type": "string", "label": "Folder", "default": "func"},
+				"Path": {"type": "string", "label": "Path", "default": "",
+					"auto_update": "sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}"},
+				"Acq": {"type": "string", "label": "Acq Label", "default": ""},
+				"Task": {"type": "string", "label": "Task Label", "default": ""},
+				"Rec": {"type": "string", "label": "Rec Label", "default": ""},
+				"Run": {"type": "string", "label": "Run Index", "default": ""},
+				"Echo": {"type": "string", "label": "Echo Index", "default": ""},
+				"Recording": {"type": "string", "label": "Recording Label", "default": ""},
+				"Modality": {"type": "string", "label": "Modality Label", "default": "physio",
+					"enum": [
+						"stim",
+						"physio"
+					]
+				}
+			},
+			"required": ["Filename", "Folder", "Path", "Task", "Modality"]
+		},
+		"diffusion_file": {
+			"description": "BIDS template for diffusion files",
+			"properties": {
+				"Filename": {"type": "string", "label": "Filename", "default": "",
+					"auto_update":"sub-<subject.code>[_ses-<session.label>][_acq-{file.info.BIDS.Acq}][_run-{file.info.BIDS.Run}]_{file.info.BIDS.Modality}{ext}"},
+				"Folder": {"type": "string", "label": "Folder", "default": "dwi"},
+				"Path": {"type": "string", "label": "Path", "default": "",
+					"auto_update": "sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}"},
+				"Acq": {"type": "string", "label": "Acq Label", "default": ""},
+				"Run": {"type": "string", "label": "Run Index", "default": ""},
+				"Modality": {"type": "string", "label": "Modality Label", "default": "dwi",
+					"enum": [
+						"dwi",
+						"sbref"
+					]
+				}
+			},
+			"required": ["Filename", "Folder", "Path", "Modality"]
+		},
+		"fieldmap_file": {
+			"description": "BIDS template for field map files",
+			"properties": {
+				"Filename": {"type": "string", "label": "Filename", "default": "",
+					"auto_update":"sub-<subject.code>[_ses-<session.label>][_acq-{file.info.BIDS.Acq}][_run-{file.info.BIDS.Run}][_dir-{file.info.BIDS.Dir}]_{file.info.BIDS.Modality}{ext}"},
+				"Folder": {"type": "string", "label": "Folder", "default": "fmap"},
+				"Path": {"type": "string", "label": "Path", "default": "",
+					"auto_update": "sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}"},
+				"Acq": {"type": "string", "label": "Acq Label", "default": ""},
+				"Run": {"type": "string", "label": "Run Index", "default": ""},
+				"Dir": {"type": "string", "label": "Dir Label", "default": ""},
+				"Modality": {"type": "string", "label": "Modality Label", "default": "fieldmap",
+					"enum": [
+						"phasediff",
+						"magnitude1",
+						"magnitude2",
+						"phase1",
+						"phase2",
+						"magnitude",
+						"fieldmap",
+						"epi"
+						]
+				}
+			},
+			"required": ["Filename", "Folder", "Path", "Modality"]
+		},
+		"dicom_file": {	
+			"description": "BIDS template for DICOM files",
+			"properties": {
+				"Filename": {"type": "string", "label": "Filename", "default": ""},
+				"Folder": {"type": "string", "label": "Folder", "default": ""},
+				"Path": {"type": "string", "label": "Path", "default": "",
+					"auto_update": "sourcedata/sub-<subject.code>[/ses-<session.label>][/{file.info.BIDS.Folder}]"}
+			},
+			"required": ["Filename", "Path"]
+		},
+		"json_file": {
+			"description": "BIDS template for JSON files",
+			"properties": {
+				"Filename": {"type": "string", "label": "Filename", "default": ""},
+				"Folder": {"type": "string", "label": "Folder", "default": ""},
+				"Path": {"type": "string", "label": "Path", "default": ""}
+			},
+			"required": ["Filename", "Folder", "Path"]
+		}
+	},
+	"rules": [
+		{
+			"id": "bids_project",
+			"template": "project",
+			"where": {
+				"container_type": "project"
+			}
+		},
+		{
+			"id": "bids_project_file",
+			"template": "project_file",
+			"where": {
+				"container_type": "file",
+				"parent_container_type": "project"
+			}
+		},
+		{
+			"id": "bids_session_file",
+			"template": "session_file",
+			"where": {
+				"container_type": "file",
+				"parent_container_type": "session"
+			}
+		},
+		{
+			"id": "bids_anat_file",
+			"template": "anat_file",
+			"where": {
+				"container_type": "file",
+				"parent_container_type": "acquisition",
+				"file.type": {
+					"$in": ["nifti", "NIfTI"]
+				},
+				"file.measurements": {
+					"$in": [
+						"anatomy_t1w", "anatomy_t2w", "anatomy_t1wrho",
+						"map_t1w", "map_t2w", "anatomy_t2star", "anatomy_flair",
+						"anatomy_flash", "anatomy_pd", "map_pd", "anatomy_pdt2",
+						"anatomy_t1w_inplane", "anatomy_t2w_inplane", "angio",
+						"defacemask", "swi"
+					]
+				}					
+			}
+		},
+		{
+			"id": "bids_func_file",
+			"template": "func_file",
+			"where": {
+				"container_type": "file",
+		        "file.type": {
+					"$in": ["nifti", "NIfTI"]
+				},
+        		"file.measurements": {
+					"$in": ["functional"]
+				}
+			}
+		},
+		{
+			"id": "bids_task_events_file",
+			"template": "task_events_file",
+			"where": {
+				"container_type": "file",
+				"file.type": {
+					"$in": ["tabular data", "Tabular Data"]
+				},
+				"file.measurements": {
+					"$in": ["functional"]
+				}
+			}
+		},
+		{
+			"id": "bids_beh_events_file",
+			"template": "beh_events_file",
+			"where": {
+				"container_type": "file",
+				"file.type": {
+					"$in": ["tabular data", "Tabular Data"]
+				},
+				"file.measurements": {
+					"$in": ["behavioral"]
+				}
+			}
+		},
+		{
+			"id": "bids_physio_task_file",
+			"template": "physio_task_file",
+			"where": {
+				"container_type": "file",
+				"file.type": {
+					"$in": ["tabular data", "Tabular Data"]
+				},
+				"file.measurements": {
+					"$in": ["physio"]
+				}
+			}
+		},
+		{
+			"id": "bids_diffusion_file",
+			"template": "diffusion_file",
+			"where": {
+				"container_type": "file",
+				"file.type": {
+					"$in": ["nifti", "bvec", "bval", "NIfTI", "BVEC", "BVAL"]
+				},
+				"file.measurements": {
+					"$in": ["diffusion"]
+				}
+			}
+		},
+		{
+			"id": "bids_fieldmap_file",
+			"template": "fieldmap_file",
+			"where": {
+				"container_type": "file",
+				"file.type": {
+					"$in": ["nifti", "NIfTI"]
+				},
+				"file.measurements": {
+					"$in": ["field_map"]
+				}
+			}
+		},
+		{
+			"id": "bids_dicom_file",
+			"template": "dicom_file",
+			"where": {
+				"container_type": "file",
+        		"file.type": {
+					"$in": ["dicom", "DICOM"]
+				}
+			},
+			"initialize": {
+				"Filename": { 
+					"file.name": { "$take": true }
+				}
+			}
+		},
+		{
+			"id": "bids_json_file",
+			"template": "json_file",
+			"where": {
+				"container_type": "file",
+	        	"file.type": {
+					"$in": ["source code", "JSON"]
+				}
+			}
+		}
+	]
+}

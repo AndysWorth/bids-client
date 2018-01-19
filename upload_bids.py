@@ -10,7 +10,8 @@ import sys
 import numpy
 import flywheel
 
-from supporting_files import bidsify_flywheel, templates, classifications, utils
+from supporting_files import bidsify_flywheel, classifications, utils
+from supporting_files.templates import BIDS_TEMPLATE as template
 
 
 logging.basicConfig(level=logging.INFO)
@@ -297,7 +298,7 @@ def fill_in_properties(context, path):
     # Get meta info
     meta_info = context['file']['info']
     # Get namespace
-    namespace = templates.namespace['namespace']
+    namespace = template.namespace
     # Iterate over all of the keys within the info namespace ('BIDS')
     for mi in meta_info[namespace]:
         if mi == 'Filename':
@@ -307,6 +308,8 @@ def fill_in_properties(context, path):
         elif mi == 'Path':
             meta_info[namespace][mi] = path
             # Search for regex string within BIDS filename and populate meta_info
+        elif mi == 'template':
+            pass
         else:
             tokens = re.compile(properties_regex[mi])
             token = tokens.search(context['file']['name'])
@@ -362,7 +365,7 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
         #   (1) create a project OR (2) find an existing project by the project_label -- return project object
         context['container_type'] = 'project'
         context['project'] = handle_project(fw, group_id, proj_label)
-        bidsify_flywheel.process_matching_templates(context)
+        bidsify_flywheel.process_matching_templates(context, template)
 
         ### Iterate over project files - upload file and add meta data
         for fname in bids_hierarchy[proj_label].get('files'):
@@ -379,7 +382,7 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
             context['parent_container_type'] = 'project'
             context['ext'] = utils.get_extension(fname)
             # Identify the templates for the file and return file object
-            context['file'] = bidsify_flywheel.process_matching_templates(context)
+            context['file'] = bidsify_flywheel.process_matching_templates(context, template)
             # Update the meta info files w/ BIDS info from the filename...
             full_path = ''
             meta_info = fill_in_properties(context, full_path)
@@ -418,7 +421,7 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
             context['parent_container_type'] = 'project'
             context['ext'] = utils.get_extension(full_zname)
             # Identify the templates for the file and return file object
-            context['file'] = bidsify_flywheel.process_matching_templates(context)
+            context['file'] = bidsify_flywheel.process_matching_templates(context, template)
             # Update the meta info files w/ BIDS info from the filename...
             full_path = ''
             meta_info = fill_in_properties(context, full_path)
@@ -453,7 +456,7 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
                     context['parent_container_type'] = 'project' # TODO: once subjects are containers, change this to 'subject'
                     context['ext'] = utils.get_extension(fname)
                     # Identify the templates for the file and return file object
-                    context['file'] = bidsify_flywheel.process_matching_templates(context)
+                    context['file'] = bidsify_flywheel.process_matching_templates(context, template)
                     # Update the meta info files w/ BIDS info from the filename...
                     full_path = subject_code
                     meta_info = fill_in_properties(context, full_path)
@@ -499,7 +502,7 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
                     context['parent_container_type'] = 'session'
                     context['ext'] = utils.get_extension(fname)
                     # Identify the templates for the file and return file object
-                    context['file'] = bidsify_flywheel.process_matching_templates(context)
+                    context['file'] = bidsify_flywheel.process_matching_templates(context, template)
                     # Update the meta info files w/ BIDS info from the filename...
                     meta_info = fill_in_properties(context, full_path)
                     # Upload the meta info onto the project file
@@ -549,7 +552,7 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
                         context['parent_container_type'] = 'acquisition'
                         context['ext'] = utils.get_extension(fname)
                         # Identify the templates for the file and return file object
-                        context['file'] = bidsify_flywheel.process_matching_templates(context)
+                        context['file'] = bidsify_flywheel.process_matching_templates(context, template)
                         # Update the meta info files w/ BIDS info from the filename and foldername...
                         meta_info = fill_in_properties(context, full_path)
                         # Upload the meta info onto the project file
@@ -620,7 +623,7 @@ def attach_json(fw, file_info):
     contents = parse_json(file_info['full_filename'])
     # Attach parsed JSON to project
     if 'dataset_description.json' in file_info['full_filename']:
-        fw.modify_project(file_info['_id'], {'info': {templates.namespace['namespace']: contents}})
+        fw.modify_project(file_info['_id'], {'info': {template.namespace: contents}})
     # Otherwise... it's a JSON file that should be assigned to acquisition file(s)
     else:
         # Figure out which acquisition files within PROJECT should have JSON info attached...
@@ -636,11 +639,11 @@ def attach_json(fw, file_info):
                         # Determine if json file components are all within the acq filename
                         if compare_json_to_file(os.path.basename(file_info['full_filename']), f['name']):
                             # JSON matches to file - assign json contents as file meta info
-                            f["info"].get(templates.namespace['namespace']).update(contents)
+                            f["info"].get(template.namespace).update(contents)
                             fw.set_acquisition_file_info(
                                     ses_acq['_id'],
                                     f['name'],
-                                    {templates.namespace['namespace']: f["info"].get(templates.namespace['namespace'])})
+                                    {template.namespace: f["info"].get(template.namespace)})
 
         # Figure out which acquisition files within SESSION should have JSON info attached...
         elif (file_info['id_type'] == 'session'):
@@ -651,11 +654,11 @@ def attach_json(fw, file_info):
                     # Determine if json file components are all within the acq filename
                     if compare_json_to_file(os.path.basename(file_info['full_filename']), f['name']):
                         # JSON matches to file - assign json contents as file meta info
-                        f["info"].get(templates.namespace['namespace']).update(contents)
+                        f["info"].get(template.namespace).update(contents)
                         fw.set_acquisition_file_info(
                                 ses_acq['_id'],
                                 f['name'],
-                                {templates.namespace['namespace']: f["info"].get(templates.namespace['namespace'])})
+                                {template.namespace: f["info"].get(template.namespace)})
 
         # Figure out which acquisition files within ACQUISITION should have JSON info attached...
         elif (file_info['id_type'] == 'acquisition'):
@@ -664,11 +667,11 @@ def attach_json(fw, file_info):
                 # Determine if json file components are all within the acq filename
                 if compare_json_to_file(os.path.basename(file_info['full_filename']), f['name']):
                     # JSON matches to file - assign json contents as file meta info
-                    f["info"].get(templates.namespace['namespace']).update(contents)
+                    f["info"].get(template.namespace).update(contents)
                     fw.set_acquisition_file_info(
                             acq['_id'],
                             f['name'],
-                            {templates.namespace['namespace']: f["info"].get(templates.namespace['namespace'])})
+                            {template.namespace: f["info"].get(template.namespace)})
 
 def convert_dtype(contents):
     """

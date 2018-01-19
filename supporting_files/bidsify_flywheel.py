@@ -6,8 +6,7 @@ import flywheel
 
 from supporting_files import classifications
 import templates
-
-
+import utils
 
 # process_string_template(template, context)
 # finds values in the context object and substitutes them into the string template
@@ -21,7 +20,7 @@ import templates
 #       'sub-<subject.code>_ses-<session.label>_acq-<acquisition.label>_{file.info.BIDS.Modality}.nii.gz'
 
 def process_string_template(template, context):
-    tokens = re.compile('[^\[][A-Za-z0-9\.><}{-]+|\[[A-Za-z0-9><}{_\.-]+\]')
+    tokens = re.compile('[^\[][A-Za-z0-9\.><}{-]+|\[[/A-Za-z0-9><}{_\.-]+\]')
     values = re.compile('[{<][A-Za-z0-9\.-]+[>}]')
 
     for token in tokens.findall(template):
@@ -53,7 +52,7 @@ def process_string_template(template, context):
                             result = result[0].lower() + result[1:]
 
                     # Replace the token with the result
-                    template = template.replace(replace_token, result)
+                    template = template.replace(replace_token, str(result))
                 # If result not found, but the token is option, remove the token from the template
                 elif token[0] == '[':
                     template = template.replace(token, '')
@@ -136,124 +135,54 @@ def update_properties(properties, context, obj):
     return(obj)
 
 
-# process_matching_templates(context)
+# process_matching_templates(context, template)
 # Accepts a context object that represents a Flywheel container and related parent containers
 # and looks for matching templates in namespace.
 # Matching templates define rules for adding objects to the container's info object if they don't already exist
 # Matching templates with 'auto_update' rules will update existing info object values each time it is run.
 
-def process_matching_templates(context):
+def process_matching_templates(context, template=templates.DEFAULT_TEMPLATE):
+    namespace = template.namespace
+
     container_type = context['container_type']
     container = context[container_type]
+
+    initial = (('info' not in container) or (namespace not in container['info']) 
+            or ('template' not in container['info'][namespace]))
+
+    templateDef = None
+
     # add objects based on template if they don't already exist
-    if ("info" not in container) or (templates.namespace["namespace"] not in container["info"]):
-        for template in templates.namespace["datatypes"]:
-            if ((template["container_type"] == context["container_type"] and 'parent_container_type' not in template)
-                or
-                ('parent_container_type' in template and template["container_type"] == context["container_type"] and
-                 template['parent_container_type'] == context['parent_container_type'])):
+    if initial:
+        # Do initial rule matching
+        match = False
+        for rule in template.rules:
+            if rule.test(context):
+                print 'matches template={0}'.format(rule.template)
                 match = True
-                # Check black list of attributes
-                if "not" in template:
-                    for key in template["not"]:
-                        if key in container:
-                            # If container is a list --- get the first entry
-                            if type(container[key]) == list:
-                                value = container[key][0]
-                            # Otherwise, don't need to get the first entry
-                            else:
-                                value = container[key]
-                            # If container[key] matches one of the values in list
-                            if value in template["not"][key]:
-                                match = False
-                                break
+                templateDef = template.definitions.get(rule.template)
+                if templateDef is None:
+                    raise Exception('Unknown template: {0}'.format(rule.template))
 
-                # Check white list of attributes
-                if "where" in template:
-                    for key in template["where"]:
-                        # If the key is in the container, check if it matches the 'where' conditions
-                        if key in container:
-                            # If container is a list --- get the first entry
-                            if type(container[key]) == list:
-                                value = container[key][0]
-                            # Otherwise, don't need to get the first entry
-                            else:
-                                value = container[key]
-                            # If container[key] matches one of the values in list
-                            if value in template["where"][key]:
-                                match = True
-                            else:
-                                match = False
-                                break
-                        # If key is not in the container, does not match the template
-                        else:
-                            match = False
-                            break
-                if match == True:
-                    print("matches template=", template["description"])
-                    obj = {}
-                    namespacekey = templates.namespace["namespace"]
-                    if "info" not in container:
-                        container["info"] = {namespacekey: {}}
-                    elif namespacekey not in container["info"]:
-                        container["info"][namespacekey] = {}
-                    else:
-                        obj = container["info"][namespacekey]
-                    obj = add_properties(template["properties"], obj, container.get('measurements'))
-                    container["info"][namespacekey] = obj
+                if 'info' not in container:
+                    container['info'] = {}
 
-    # update info object values for matching templates that contain 'auto_update' rules
-    if ("info" in container and templates.namespace["namespace"] in container["info"]):
-        for template in templates.namespace["datatypes"]:
-            if ((template["container_type"] == context["container_type"] and 'parent_container_type' not in template)
-                or
-                ('parent_container_type' in template and template["container_type"] == context["container_type"] and
-                 template['parent_container_type'] == context['parent_container_type'])):
-                match = True
-                # Check black list of attributes
-                if "not" in template:
-                    for key in template["not"]:
-                        if key in container:
-                            # If container is a list --- get the first entry
-                            if type(container[key]) == list:
-                                value = container[key][0]
-                            # Otherwise, don't need to get the first entry
-                            else:
-                                value = container[key]
-                            # If container[key] matches one of the values in list
-                            if value in template["not"][key]:
-                                match = False
-                                break
+                obj = container['info'].get(namespace, {})
+                container['info'][namespace] = add_properties(templateDef['properties'], obj, container.get('measurements'))
+                obj['template'] = rule.template
+                rule.initializeProperties(obj, context)
+                initial = False
+                break
+        if not match:
+            print 'no template matched for {} in {} {}'.format(container['name'], context['parent_container_type'], context[context['parent_container_type']]['_id'])
+            container['info'] = {namespace: {'template': 'NO_MATCH'}}
 
-                # Check white list of attributes
-                if "where" in template:
-                    for key in template["where"]:
-                        # If the key is in the container, check if it matches the 'where' conditions
-                        if key in container:
-                            # If container is a list --- get the first entry
-                            if type(container[key]) == list:
-                                value = container[key][0]
-                            # Otherwise, don't need to get the first entry
-                            else:
-                                value = container[key]
-
-                            # If container[key] matches one of the values in list
-                            if value in template["where"][key]:
-                                match = True
-                            else:
-                                match = False
-                                break
-                        # If key is not in the container, does not match the template
-                        else:
-                            match = False
-                            break
-                if match == True:
-                    print("matches template=", template["description"])
-                    obj = {}
-                    namespacekey = templates.namespace["namespace"]
-                    obj = update_properties(template["properties"], context, obj)
-                    # Update container with auto-updated values
-                    container["info"][namespacekey].update(obj)
+    if not initial:
+        # Do auto_updates
+        if not templateDef:
+            templateDef = template.definitions.get(container['info'][template.namespace]['template'])
+        data = update_properties(templateDef["properties"], context, {})
+        container['info'][namespace].update(data)
 
     return container
 

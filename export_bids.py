@@ -37,6 +37,17 @@ def validate_dirname(dirname):
             logger.error('Directory (%s) is not empty. Exporter will not run.' % dirname)
             sys.exit(1)
 
+def is_source_data(f, namespace):
+    if 'info' not in f: 
+        return False
+    if namespace not in f['info']:
+        return False
+    if f['info'][namespace] == 'NA':
+        return False
+    
+    path = f['info'][namespace]['Path']
+    return path.startswith('sourcedata')
+
 def define_path(outdir, f, namespace):
     """"""
     # Check if 'info' in f object
@@ -95,31 +106,18 @@ def create_json(meta_info, path, namespace):
         json.dump(meta_info, outfile,
                 sort_keys=True, indent=4)
 
-def download_bids_dir(fw, project_id, outdir):
-    """
-
-    fw: Flywheel client
-    project_id: Label of the project to download
-    outdir: path to directory to download files to, string
-
-    """
-
-    # Define namespace
-    namespace = 'BIDS'
-
-    # Get project
-    project = fw.get_project(project_id)
-
+def download_bids_files(fw, filepath_downloads, dry_run):
+    # Download all project files
     logger.info('Downloading project files')
-    # Iterate over any project files
-    for f in project.get('files', []):
-        # Define path - ensure that the folder exists...
-        path = define_path(outdir, f, namespace)
-        # If path is not defined (an empty string) move onto next file
-        if not path:
+    for f in filepath_downloads['project']:
+        args = filepath_downloads['project'][f]
+        logger.info('Downloading project file: {0}'.format(args[1]))
+        # For dry run, don't actually download
+        if dry_run:
+            logger.info('  to {0}'.format(args[2]))
             continue
-        # Download the file
-        fw.download_file_from_project(project['_id'], f['name'], path)
+        fw.download_file_from_project(*args)
+
         # If zipfile is attached to project, unzip...
         zip_pattern = re.compile('[a-zA-Z0-9]+(.zip)')
         zip_dirname = path[:-4]
@@ -130,11 +128,79 @@ def download_bids_dir(fw, project_id, outdir):
             # Remove the zipfile
             os.remove(path)
 
+    # Download all session files
+    logger.info('Downloading session files')
+    for f in filepath_downloads['session']:
+        args = filepath_downloads['session'][f]
+        logger.info('Downloading session file: {0}'.format(args[1]))
+        # For dry run, don't actually download
+        if dry_run:
+            logger.info('  to {0}'.format(args[2]))
+            continue
+        fw.download_file_from_session(*args)
+
+    # Download all acquisition files
+    logger.info('Downloading acquisition files')
+    for f in filepath_downloads['acquisition']:
+        args = filepath_downloads['acquisition'][f]
+        # Download the file
+        logger.info('Downloading acquisition file: {0}'.format(args[1]))
+
+        # For dry run, don't actually download
+        if dry_run:
+            logger.info('  to {0}'.format(args[2]))
+            continue
+
+        fw.download_file_from_acquisition(*args)
+
+def download_bids_dir(fw, project_id, outdir, src_data=False, dry_run=False):
+    """
+
+    fw: Flywheel client
+    project_id: Label of the project to download
+    outdir: path to directory to download files to, string
+    src_data: Option to include sourcedata when downloading
+
+    """
+
+    # Define namespace
+    namespace = 'BIDS'
+
+    # Files and the corresponding download arguments
+    filepath_downloads = {
+        'project':{},
+        'session':{},
+        'acquisition':{}
+    }
+
+    # Get project
+    project = fw.get_project(project_id)
+
+    logger.info('Processing project files')
+    # Iterate over any project files
+    for f in project.get('files', []):
+        # Don't include source data by default
+        if is_source_data(f, namespace) and not src_data:
+            continue
+
+        # Define path - ensure that the folder exists...
+        path = define_path(outdir, f, namespace)
+        # If path is not defined (an empty string) move onto next file
+        if not path:
+            continue
+
+        # For dry run, don't actually download
+        if path in filepath_downloads['project']:
+            logger.error('Multiple files with path {0}:\n\t{1} and\n\t{2}'.format(path, f['name'], filepath_downloads['project'][path][1]))
+            sys.exit(1)
+
+        filepath_downloads['project'][path] = (project['_id'], f['name'], path)
+
     ## Create dataset_description.json file
     path = os.path.join(outdir, 'dataset_description.json')
     create_json(project['info'][namespace], path, namespace)
 
-    logger.info('Downloading session files')
+    logger.info('Processing session files')
     # Get project sessions
     project_sessions = fw.get_project_sessions(project_id)
     for proj_ses in project_sessions:
@@ -143,15 +209,23 @@ def download_bids_dir(fw, project_id, outdir):
         # Check if session contains files
         # Iterate over any session files
         for f in session.get('files', []):
+            # Don't include source data by default
+            if is_source_data(f, namespace) and not src_data:
+                continue
+
             # Define path - ensure that the folder exists...
             path = define_path(outdir, f, namespace)
             # If path is not defined (an empty string) move onto next file
             if not path:
                 continue
-            # Download the file
-            fw.download_file_from_session(session['_id'], f['name'], path)
 
-        logger.info('Downloading acquisition files')
+            if path in filepath_downloads['session']:
+                logger.error('Multiple files with path {0}:\n\t{1} and\n\t{2}'.format(path, f['name'], filepath_downloads['session'][path][1]))
+                sys.exit(1)
+
+            filepath_downloads['session'][path] = (session['_id'], f['name'], path)
+
+        logger.info('Processing acquisition files')
         # Get acquisitions
         session_acqs = fw.get_session_acquisitions(proj_ses['_id'])
         for ses_acq in session_acqs:
@@ -159,15 +233,24 @@ def download_bids_dir(fw, project_id, outdir):
             acq = fw.get_acquisition(ses_acq['_id'])
             # Iterate over acquistion files
             for f in acq.get('files', []):
+                # Don't include source data by default
+                if is_source_data(f, namespace) and not src_data:
+                    continue
+
                 # Define path - ensure that the folder exists...
                 path = define_path(outdir, f, namespace)
                 # If path is not defined (an empty string) move onto next file
                 if not path:
                     continue
-                # Download the file
-                fw.download_file_from_acquisition(acq['_id'], f['name'], path)
+                if path in filepath_downloads['acquisition']:
+                    logger.error('Multiple files with path {0}:\n\t{1} and\n\t{2}'.format(path, f['name'], filepath_downloads['acquisition'][path][1]))
+                    sys.exit(1)
+
+                filepath_downloads['acquisition'][path] = (acq['_id'], f['name'], path)
+
                 # Create the sidecar JSON file
                 create_json(f['info'], path, namespace)
+    download_bids_files(fw, filepath_downloads, dry_run)
 
 if __name__ == '__main__':
     ### Read in arguments
@@ -177,6 +260,10 @@ if __name__ == '__main__':
                     NOTE: Directory must be empty.')
     parser.add_argument('--api-key', dest='api_key', action='store',
             required=True, help='API key')
+    parser.add_argument('--source-data', dest='source_data', action='store_true',
+            default=False, required=False, help='Include source data in BIDS export')
+    parser.add_argument('--dry-run', dest='dry_run', action='store_true',
+            default=False, required=False, help='Don\'t actually export any data, just print what would be exported')
     parser.add_argument('-p', dest='project_label', action='store',
             required=False, default=None, help='Project Label on Flywheel instance')
     args = parser.parse_args()
@@ -191,8 +278,9 @@ if __name__ == '__main__':
     project_id = utils.validate_project_label(fw, args.project_label)
 
     ### Download BIDS project
-    download_bids_dir(fw, project_id, args.bids_dir)
+    download_bids_dir(fw, project_id, args.bids_dir, src_data=args.source_data, dry_run=args.dry_run)
 
     # Validate the downloaded directory
     #   Go one more step into the hierarchy to pass to the validator...
-    utils.validate_bids(args.bids_dir)
+    if not args.dry_run:
+        utils.validate_bids(args.bids_dir)

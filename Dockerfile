@@ -43,5 +43,5 @@ COPY supporting_files ${ROOTDIR}/supporting_files
 COPY upload_bids.py ${ROOTDIR}/upload_bids.py
 COPY export_bids.py ${ROOTDIR}/export_bids.py
 COPY curate_bids.py ${ROOTDIR}/curate_bids.py
-
+COPY templates ${ROOTDIR}/templates
 
