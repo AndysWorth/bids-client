@@ -251,7 +251,7 @@ if __name__ == '__main__':
             required=True, help='API key')
     parser.add_argument('-p', dest='project_label', action='store',
             required=False, default=None, help='Project Label on Flywheel instance')
-    parser.add_argument('--reset', dest='reset', action='store_true', 
+    parser.add_argument('--reset', dest='reset', action='store_true',
             default=False, help='Reset BIDS data before running')
     parser.add_argument('--template-file', dest='template_file', action='store',
             default=None, help='Template file to use')
