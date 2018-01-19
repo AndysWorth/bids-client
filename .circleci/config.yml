@@ -39,7 +39,7 @@ jobs:
                 docker tag bids-client flywheel/bids-client:${CIRCLE_TAG}
                 docker push flywheel/bids-client:${CIRCLE_TAG}
               fi
-              if [ "$CIRCLE_BRANCH" == "master"]; then
+              if [ "$CIRCLE_BRANCH" == "master" ]; then
                 docker tag bids-client flywheel/bids-client:latest
                 docker push flywheel/bids-client:latest
               fi
