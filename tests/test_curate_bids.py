@@ -113,6 +113,18 @@ class BidsCurateTestCases(unittest.TestCase):
         self.assertEqual(meta_info['info']['BIDS']['error_message'],
                 'Missing required property: Modality. ')
 
+    def test_validate_meta_info_invalid4(self):
+        """ """
+        # Define meta information - invalid/unknown/NO_MATCH template
+        meta_info = {'info': {'BIDS': {'template': 'NO_MATCH', 'Modality': 'bold'}}}
+        # Call function
+        curate_bids.validate_meta_info(meta_info, BIDS_TEMPLATE)
+        # Assert 'BIDS.valid' == False
+        self.assertFalse(meta_info['info']['BIDS']['valid'])
+        # Assert error message is correct
+        self.assertEqual(meta_info['info']['BIDS']['error_message'],
+                'Unknown template: NO_MATCH. ')
+
     def test_validate_meta_info_invalid_characters1(self):
         """ """
         # Define meta information - invalid characters in multiple keys

@@ -181,8 +181,9 @@ def process_matching_templates(context, template=templates.DEFAULT_TEMPLATE):
         # Do auto_updates
         if not templateDef:
             templateDef = template.definitions.get(container['info'][template.namespace]['template'])
-        data = update_properties(templateDef["properties"], context, {})
-        container['info'][namespace].update(data)
+        if templateDef:
+            data = update_properties(templateDef["properties"], context, {})
+            container['info'][namespace].update(data)
 
     return container
 
