@@ -7,7 +7,6 @@ import re
 import shutil
 import sys
 
-import numpy
 import flywheel
 
 from supporting_files import bidsify_flywheel, classifications, utils
@@ -684,24 +683,27 @@ def convert_dtype(contents):
         from string to float or int
     """
     # Convert contents to array
-    contents_arr = numpy.asarray(contents[1:])
+    contents_arr = contents[1:]
+    cols = zip(*contents_arr)
+
     # Iterate over every column in array
-    for idx in xrange(len(contents_arr.T)):
+    for idx in xrange(len(cols)):
         # Get column
-        col = contents_arr.T[idx]
+        col = cols[idx]
+
         # Determine if column contains float/integer/string
         #    Check if first element is a float
         if '.' in col[0]:
             # Try to convert to float
             try:
-                col = col.astype('float')
+                col = [float(x) for x in col]
             except ValueError:
                 pass
         # Else try and convert column to integer
         else:
             # Convert to integer
             try:
-                col = col.astype('int')
+                col = [int(x) for x in col]
             # Otherwise leave as string
             except ValueError:
                 pass
@@ -709,9 +711,8 @@ def convert_dtype(contents):
         # Check if column only contains 'F'/'M'
         #   if so, convert to 'Female'/'Male'
         if set(col).issubset({'F', 'M', 'O'}):
-            # Convert from array to list
-            col = col.tolist()
             # Iterate over column, replace
+            col = list(col)
             for idxxx, item in enumerate(col):
                 if item == 'F':
                     col[idxxx] = 'female'
