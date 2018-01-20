@@ -80,14 +80,14 @@ class BidsCurateTestCases(unittest.TestCase):
     def test_validate_meta_info_invalid1(self):
         """ """
         # Define meta information - Task value is missing
-        meta_info = {'info': {'BIDS': {'template': 'task_events_file', 'Task': '', 'Modality': 'bold'}}}
+        meta_info = {'info': {'BIDS': {'template': 'task_events_file', 'Filename': 'example.tsv', 'Task': '', 'Modality': 'bold'}}}
         # Call function
         curate_bids.validate_meta_info(meta_info, BIDS_TEMPLATE)
         # Assert 'BIDS.valid' == False
         self.assertFalse(meta_info['info']['BIDS']['valid'])
         # Assert error message is correct
         self.assertEqual(meta_info['info']['BIDS']['error_message'],
-                'Missing required property: Task. ')
+                u"Task '' does not match '^[a-zA-Z0-9]+$'")
 
     def test_validate_meta_info_invalid2(self):
         """ """
@@ -99,19 +99,20 @@ class BidsCurateTestCases(unittest.TestCase):
         self.assertFalse(meta_info['info']['BIDS']['valid'])
         # Assert error message is correct
         self.assertEqual(meta_info['info']['BIDS']['error_message'],
-                'Missing required property: Filename. ')
+               u"'Modality' is a required property\nFilename '' is too short") 
 
     def test_validate_meta_info_invalid3(self):
         """ """
         # Define meta information - Modality value is missing
-        meta_info = {'info': {'BIDS': {'template': 'anat_file', 'Modality': ''}}}
+        meta_info = {'info': {'BIDS': {'template': 'anat_file', 'Filename': 'example.nii.gz', 'Modality': ''}}}
         # Call function
         curate_bids.validate_meta_info(meta_info, BIDS_TEMPLATE)
         # Assert 'BIDS.valid' == False
         self.assertFalse(meta_info['info']['BIDS']['valid'])
         # Assert error message is correct
         self.assertEqual(meta_info['info']['BIDS']['error_message'],
-                'Missing required property: Modality. ')
+                "Modality '' is not one of ['T1w', 'T2w', 'T1rho', 'T1map', 'T2map', 'FLAIR', 'FLASH', 'PD',"+\
+                " 'PDmap', 'PDT2', 'inplaneT1', 'inplaneT2', 'angio', 'defacemask', 'SWImagandphase']")
 
     def test_validate_meta_info_invalid4(self):
         """ """
@@ -141,11 +142,11 @@ class BidsCurateTestCases(unittest.TestCase):
         self.assertFalse(meta_info['info']['BIDS']['valid'])
         # Assert error message is correct
         self.assertEqual(meta_info['info']['BIDS']['error_message'],
-                'Invalid characters in property: Ce. '+\
-                'Missing required property: Filename. ' +\
-                'Invalid characters in property: Mod. '+\
-                'Invalid characters in property: Modality. '
-                )
+                "Ce 'invalid2.' does not match '^[a-zA-Z0-9]+$'\n"+\
+                "Filename '' is too short\n"+\
+                "Modality 'invalid._#$*%' is not one of ['T1w', 'T2w', 'T1rho', 'T1map', 'T2map', 'FLAIR', 'FLASH', 'PD'"+\
+                ", 'PDmap', 'PDT2', 'inplaneT1', 'inplaneT2', 'angio', 'defacemask', 'SWImagandphase']\n"+\
+                "Mod '_invalid2' does not match '^[a-zA-Z0-9]+$'")
 
     def test_validate_meta_info_no_BIDS(self):
         """ """

@@ -17,6 +17,12 @@ def clear_meta_info(context, template):
     if 'info' in context and template.namespace in context['info']:
         del context['info'][template.namespace]
 
+def format_validation_error(err):
+    path = '/'.join(err.path)
+    if path:
+        return path + ' ' + err.message
+    return err.message
+
 def validate_meta_info(container, template):
     """ Validate meta information
 
@@ -58,30 +64,10 @@ def validate_meta_info(container, template):
         if templateName:
             templateDef = template.definitions.get(templateName)
             if templateDef:
-                # Extract mandatory properties from template definition
-                mandatory_properties = templateDef.get('required', [])
-
-                for key in sorted(container['info'][namespace].keys()):
-                    # Skip over Path, Folder (it's ok that they are empty strings
-                    #   and/or have non alphanumeric values)
-                    if key in ['Path', 'Folder']:
-                        continue
-                    # If key is an empty string, and is
-                    #   considered a mandatory property,
-                    #   then it's missing and BIDS is not valid
-                    if container['info'][namespace][key] == '':
-                        if (key in mandatory_properties):
-                            valid = False
-                            error_message += 'Missing required property: %s. ' % key
-                    # If not an empty string, ensure the values are alphanumeric...
-                    else:
-                        # 'Filename', 'valid' and 'error_message' don't need to be alphanumeric
-                        if key in ['Filename', 'valid', 'error_message', 'template']:
-                            continue
-                        # Otherwise, check if alphanumerica
-                        if not str(container['info'][namespace][key]).isalnum():
-                            valid = False
-                            error_message += 'Invalid characters in property: %s. ' % key
+                errors = template.validate(templateDef, container['info'][namespace])
+                if errors:
+                    valid = False
+                    error_message = '\n'.join([format_validation_error(err) for err in errors])
             else:
                 valid = False
                 error_message += 'Unknown template: %s. ' % templateName

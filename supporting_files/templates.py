@@ -1,5 +1,6 @@
 import os, os.path, json, re
 import utils
+import jsonschema
 
 DEFAULT_TEMPLATE_NAME = 'bids-v1'
 BIDS_TEMPLATE_NAME = 'bids-v1'
@@ -21,7 +22,7 @@ class Template:
         extends (string): The optional name of the template to extend.
         exclude_rules (list): The optional list of rules to exclude from a parent template.
     """
-    def __init__(self, data=None, templates=None):
+    def __init__(self, data, templates=None):
         if data:
             self.namespace = data.get('namespace')
             self.description = data.get('description', '')
@@ -31,17 +32,13 @@ class Template:
             self.extends = data.get('extends')
             self.exclude_rules = data.get('exclude_rules', [])
         else:
-            self.namespace = ''
-            self.description = ''
-            self.definitions = {}
-            self.rules = []
-
-            self.extends = None
-            self.exclude_rules = []
+            raise Exception("data is required")
 
         if templates:
             self.do_extend(templates)
 
+        resolver = jsonschema.RefResolver.from_schema({'definitions': self.definitions})
+        self.resolve_refs(resolver, self.definitions)
         self.compile_rules()
 
     def do_extend(self, templates):
@@ -82,6 +79,45 @@ class Template:
             rule = self.rules[i]
             if not isinstance(rule, Rule):
                 self.rules[i] = Rule(rule)
+            
+    def validate(self, templateDef, info):
+        """
+        Validate info against a template definition schema.
+
+        Args:
+            templateDef (dict): The template definition (schema)
+            info (dict): The info object to validate
+
+        Returns:
+            list(string): A list of validation errors if invalid, otherwise an empty list.
+        """
+        if '_validator' not in templateDef:
+            templateDef['_validator'] = jsonschema.Draft4Validator(templateDef)
+
+        return list(templateDef['_validator'].iter_errors(info))
+
+    def resolve_refs(self, resolver, obj, parent=None, key=None):
+        """
+        Resolve all references found in the definitions tree.
+
+        Args:
+            resolver (jsonschema.RefResolver): The resolver instance
+            obj (object): The object to resolve
+            parent (object): The parent object
+            key: The key to the parent object
+        """
+        if isinstance(obj, dict): 
+            if parent and '$ref' in obj:
+                ref, result = resolver.resolve(obj['$ref'])
+                parent[key] = result
+            else:
+                for k in obj.keys():
+                    print('resolve refs: {0}'.format(k))
+                    self.resolve_refs(resolver, obj[k], obj, k)
+        elif isinstance(obj, list):
+            for i in xrange(len(obj)):
+                self.resolve_refs(resolver, obj[i], obj, i)
+
 
 class Rule:
     """
@@ -259,6 +295,8 @@ def loadTemplate(path, templates=None):
     """
     with open(path, 'r') as f:
         data = json.load(f)
+
+    data = utils.normalize_strings(data)
 
     if templates is None:
         templates = DEFAULT_TEMPLATES
