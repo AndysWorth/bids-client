@@ -6,19 +6,19 @@
 			"type": "string",
 			"title": "Acquisition Label",
 			"default": "",
-			"pattern": "^[a-zA-Z0-9]+$"
+			"pattern": "^[a-zA-Z0-9]*$"
 		},
 		"Ce": {
 			"type": "string",
 			"title": "Contrast Agent Label",
 			"default": "",
-			"pattern": "^[a-zA-Z0-9]+$"
+			"pattern": "^[a-zA-Z0-9]*$"
 		},
 		"Echo": {
 			"type": "string", 
 			"title": "Echo Index", 
 			"default": "",
-			"pattern": "^[0-9]+$"
+			"pattern": "^[0-9]*$"
 		},
 		"Filename": {
 			"type": "string",
@@ -30,19 +30,19 @@
 			"type": "string", 
 			"title": "Mod Label", 
 			"default": "",
-			"pattern": "^[a-zA-Z0-9]+$"
+			"pattern": "^[a-zA-Z0-9]*$"
 		},
 		"Rec": {
 			"type": "string",
 			"title": "Reconstruction Algorithm Label",
 			"default": "",
-			"pattern": "^[a-zA-Z0-9]+$"
+			"pattern": "^[a-zA-Z0-9]*$"
 		},
 		"Run": {
 			"type": "string",
 			"title": "Run Index",
 			"default": "",
-			"pattern": "^[0-9]+$"
+			"pattern": "^[0-9]*$"
 		},
 		"Task": {
 			"type": "string",
