@@ -45,8 +45,8 @@ def is_source_data(f, namespace):
     if f['info'][namespace] == 'NA':
         return False
     
-    path = f['info'][namespace]['Path']
-    return path.startswith('sourcedata')
+    path = f['info'][namespace].get('Path')
+    return path and path.startswith('sourcedata')
 
 def define_path(outdir, f, namespace):
     """"""
@@ -178,6 +178,7 @@ def download_bids_dir(fw, project_id, outdir, src_data=False, dry_run=False):
 
     logger.info('Processing project files')
     # Iterate over any project files
+    valid = True
     for f in project.get('files', []):
         # Don't include source data by default
         if is_source_data(f, namespace) and not src_data:
@@ -192,7 +193,7 @@ def download_bids_dir(fw, project_id, outdir, src_data=False, dry_run=False):
         # For dry run, don't actually download
         if path in filepath_downloads['project']:
             logger.error('Multiple files with path {0}:\n\t{1} and\n\t{2}'.format(path, f['name'], filepath_downloads['project'][path][1]))
-            sys.exit(1)
+            valid = False
 
         filepath_downloads['project'][path] = (project['_id'], f['name'], path)
 
@@ -221,7 +222,7 @@ def download_bids_dir(fw, project_id, outdir, src_data=False, dry_run=False):
 
             if path in filepath_downloads['session']:
                 logger.error('Multiple files with path {0}:\n\t{1} and\n\t{2}'.format(path, f['name'], filepath_downloads['session'][path][1]))
-                sys.exit(1)
+                valid = False
 
             filepath_downloads['session'][path] = (session['_id'], f['name'], path)
 
@@ -244,12 +245,16 @@ def download_bids_dir(fw, project_id, outdir, src_data=False, dry_run=False):
                     continue
                 if path in filepath_downloads['acquisition']:
                     logger.error('Multiple files with path {0}:\n\t{1} and\n\t{2}'.format(path, f['name'], filepath_downloads['acquisition'][path][1]))
-                    sys.exit(1)
+                    valid = False
 
                 filepath_downloads['acquisition'][path] = (acq['_id'], f['name'], path)
 
                 # Create the sidecar JSON file
                 create_json(f['info'], path, namespace)
+
+    if not valid:
+        sys.exit(1)
+
     download_bids_files(fw, filepath_downloads, dry_run)
 
 if __name__ == '__main__':
