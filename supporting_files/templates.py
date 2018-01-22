@@ -112,7 +112,6 @@ class Template:
                 parent[key] = result
             else:
                 for k in obj.keys():
-                    print('resolve refs: {0}'.format(k))
                     self.resolve_refs(resolver, obj[k], obj, k)
         elif isinstance(obj, list):
             for i in xrange(len(obj)):

@@ -3,6 +3,7 @@ import logging
 import json
 import os
 import tempfile
+import sys
 
 import flywheel
 
@@ -265,8 +266,12 @@ if __name__ == '__main__':
     # Get project id from label
     if args.project_label:
         project_id = utils.validate_project_label(fw, args.project_label)
-    else:
+    elif args.session_id:
         project_id = utils.get_project_id_from_session_id(fw, args.session_id)
+    else:
+        print('Either project label or session id is required!')
+        sys.exit(1)
+
 
     ### Curate BIDS project
     curate_bids_dir(fw, project_id, reset=args.reset, template_file=args.template_file)
