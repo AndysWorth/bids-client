@@ -147,7 +147,7 @@ def process_matching_templates(context, template=templates.DEFAULT_TEMPLATE):
     container_type = context['container_type']
     container = context[container_type]
 
-    initial = (('info' not in container) or (namespace not in container['info']) 
+    initial = (('info' not in container) or (namespace not in container['info'])
             or ('template' not in container['info'][namespace]))
 
     templateDef = None
@@ -175,7 +175,6 @@ def process_matching_templates(context, template=templates.DEFAULT_TEMPLATE):
                 break
         if not match:
             print 'no template matched for {} in {} {}'.format(container['name'], context['parent_container_type'], context[context['parent_container_type']]['_id'])
-            container['info'] = {namespace: {'template': 'NO_MATCH'}}
 
     if not initial:
         # Do auto_updates

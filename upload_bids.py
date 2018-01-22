@@ -557,10 +557,12 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
                         context['ext'] = utils.get_extension(fname)
                         # Identify the templates for the file and return file object
                         context['file'] = bidsify_flywheel.process_matching_templates(context, template)
-                        # Update the meta info files w/ BIDS info from the filename and foldername...
-                        meta_info = fill_in_properties(context, full_path)
-                        # Upload the meta info onto the project file
-                        fw.set_acquisition_file_info(context['acquisition']['_id'], fname, meta_info)
+                        # Check that the file matched a template
+                        if context['file'].get('info'):
+                            # Update the meta info files w/ BIDS info from the filename and foldername...
+                            meta_info = fill_in_properties(context, full_path)
+                            # Upload the meta info onto the project file
+                            fw.set_acquisition_file_info(context['acquisition']['_id'], fname, meta_info)
 
                         # Check if any acquisition files are of interest (to be parsed later)
                         #   interested in JSON files
