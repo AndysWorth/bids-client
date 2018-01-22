@@ -126,6 +126,19 @@ class BidsCurateTestCases(unittest.TestCase):
         self.assertEqual(meta_info['info']['BIDS']['error_message'],
                 'Unknown template: NO_MATCH. ')
 
+    def test_validate_meta_info_invalid5(self):
+        """ """
+        # Define meta information - Task is empty, 
+        meta_info = {'info': {'BIDS': {'template': 'func_file', 'Filename': 'example.nii.gz', 
+            'Modality': 'sbref', 'Task': '', 'Rec': '', 'Run': '01', 'Echo': 'AA'}}}
+        # Call function
+        curate_bids.validate_meta_info(meta_info, BIDS_TEMPLATE)
+        # Assert 'BIDS.valid' == False
+        self.assertFalse(meta_info['info']['BIDS']['valid'])
+        # Assert error message is correct
+        self.assertEqual(meta_info['info']['BIDS']['error_message'],
+                "Task '' does not match '^[a-zA-Z0-9]+$'\nEcho 'AA' does not match '^[0-9]*$'") 
+
     def test_validate_meta_info_invalid_characters1(self):
         """ """
         # Define meta information - invalid characters in multiple keys
