@@ -241,6 +241,32 @@
 			},
 			"required": ["Filename", "Modality"]
 		},
+		"fieldmap_phase_encoded_file": {
+			"description": "BIDS template for phase encoded field map files",
+			"properties": {
+				"Filename": {"type": "string", "label": "Filename", "default": "",
+					"auto_update":"sub-<subject.code>[_ses-<session.label>][_acq-{file.info.BIDS.Acq}][_run-{file.info.BIDS.Run}]_dir-{file.info.BIDS.Dir}_{file.info.BIDS.Modality}{ext}"},
+				"Folder": {"type": "string", "label": "Folder", "default": "fmap"},
+				"Path": {"type": "string", "label": "Path", "default": "",
+					"auto_update": "sub-<subject.code>[/ses-<session.label>]/{file.info.BIDS.Folder}"},
+				"Acq": {"type": "string", "label": "Acq Label", "default": ""},
+				"Run": {"type": "string", "label": "Run Index", "default": ""},
+				"Dir": {"type": "string", "label": "Dir Label", "default": ""},
+				"Modality": {"type": "string", "label": "Modality Label", "default": "epi",
+					"enum": [
+						"phasediff",
+						"magnitude1",
+						"magnitude2",
+						"phase1",
+						"phase2",
+						"magnitude",
+						"fieldmap",
+						"epi"
+						]
+				}
+			},
+			"required": ["Filename", "Folder", "Path", "Modality", "Dir"]
+		},
 		"dicom_file": {	
 			"description": "BIDS template for DICOM files",
 			"properties": {
@@ -367,6 +393,29 @@
 				},
 				"file.measurements": {
 					"$in": ["diffusion"]
+				}
+			}
+		},
+		{
+			"id": "bids_fieldmap_phase_encoded_file",
+			"template": "fieldmap_phase_encoded_file",
+			"where": {
+				"container_type": "file",
+				"file.type": {
+					"$in": ["nifti", "NIfTI"]
+				},
+				"file.measurements": {
+					"$in": ["field_map"]
+				},
+				"file.info.PhaseEncodingDirection": {
+					"$in": ["i", "j", "k", "i-", "j-", "k-"]
+				}
+			},
+			"initialize": {
+				"Dir": {
+					"acquisition.label": {
+						"$regex": "([^a-zA-Z0-9]|^)(?P<value>AP|PA|LR|RL)([^a-zA-Z0-9]|$)"
+					}
 				}
 			}
 		},
