@@ -41,6 +41,17 @@ def validate_project_label(fw, project_label):
 
     return project_id
 
+def get_project_id_from_session_id(fw, session_id):
+    """ """
+    # Find project id from session
+    session = fw.get_session(session_id)
+    if not session:
+        logger.error('Could not load session %s.' % session_id)
+        sys.exit(1)
+
+    return session['project']
+
+
 def get_extension(fname):
     """ Get extension
 
