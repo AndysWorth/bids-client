@@ -251,7 +251,9 @@ if __name__ == '__main__':
             required=True, help='API key')
     parser.add_argument('-p', dest='project_label', action='store',
             required=False, default=None, help='Project Label on Flywheel instance')
-    parser.add_argument('--reset', dest='reset', action='store_true',
+    parser.add_argument('--session', dest='session_id', action='store',
+            required=False, default=None, help='Session ID, used to look up project if project label is not readily available')
+    parser.add_argument('--reset', dest='reset', action='store_true', 
             default=False, help='Reset BIDS data before running')
     parser.add_argument('--template-file', dest='template_file', action='store',
             default=None, help='Template file to use')
@@ -261,7 +263,10 @@ if __name__ == '__main__':
     # Check API key - raises Error if key is invalid
     fw = flywheel.Flywheel(args.api_key)
     # Get project id from label
-    project_id = utils.validate_project_label(fw, args.project_label)
+    if args.project_label:
+        project_id = utils.validate_project_label(fw, args.project_label)
+    else:
+        project_id = utils.get_project_id_from_session_id(fw, args.session_id)
 
     ### Curate BIDS project
     curate_bids_dir(fw, project_id, reset=args.reset, template_file=args.template_file)
