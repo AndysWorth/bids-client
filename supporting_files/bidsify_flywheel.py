@@ -187,3 +187,24 @@ def process_matching_templates(context, template=templates.DEFAULT_TEMPLATE):
 
     return container
 
+def ensure_info_exists(context, template=templates.DEFAULT_TEMPLATE):
+    """
+    Ensure that the given info object has an entry for the template namespace.
+
+    Args:
+        context (dict): The context that should have a valid info object
+        template (Template): The template
+
+    Returns:
+        bool: Whether or not the info was updated.
+    """
+    updated = False
+    if 'info' not in context:
+        context['info'] = {}
+        updated = True
+    if template.namespace not in context['info']:
+        context['info'][template.namespace] = {}
+        updated = True
+
+    return updated
+
