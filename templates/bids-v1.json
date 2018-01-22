@@ -5,7 +5,7 @@
 		"project": {
 	    	"description": "BIDS project template",
 			"properties": {
-				"Name": {"type": "string", "label": "Name", "default": ""},
+				"Name": {"type": "string", "label": "Name", "default": "", "auto_update": "{project.label}"},
 				"BIDSVersion": {"type": "string", "label": "BIDS Version", "default": "1.0.2"},
 				"License": {"type": "string", "label": "License", "default": ""},
 				"Authors": {"type": "string", "label": "Authors", "default": []},

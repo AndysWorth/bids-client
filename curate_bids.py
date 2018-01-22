@@ -121,10 +121,10 @@ def update_meta_info(fw, context):
             logger.info('Cannot determine file parent container type')
     # Modify project
     elif context['container_type'] == 'project':
-        fw.modify_project(
-                context['project']['_id'],
-                {'info': context['project']['info']}
-                )
+        fw.replace_project_info(context['project']['_id'], context['project']['info'])
+    # Modify session
+    elif context['container_type'] == 'session':
+        fw.replace_session_info(context['session']['_id'], context['session']['info'])
     # Cannot determine container type
     else:
         logger.info('Cannot determine container type')
@@ -211,6 +211,12 @@ def curate_bids_dir(fw, project_id, reset=False, template_file=None):
         # Get true session, in order to access file info
         context['session'] = fw.get_session(proj_ses['_id'])
         context['subject'] = context['session']['subject']
+
+        context['container_type'] = 'session'
+        # Returns true if modified
+        if bidsify_flywheel.ensure_info_exists(context['session'], template):
+            update_meta_info(fw, context)
+
         # Iterate over any session files
         for f in context['session'].get('files', []):
             # Optionally reset meta info

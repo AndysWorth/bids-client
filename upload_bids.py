@@ -164,8 +164,13 @@ def handle_session(fw, project_id, session_name, subject_name):
     # If session does not exist, create new session
     if not found:
         logger.info('Session (%s) not found. Creating new session for project %s.' % (session_name, project_id))
-        session_id = fw.add_session({'label': session_name, 'project': project_id,
-                                    'subject': {'code': subject_name}})
+
+        session_id = fw.add_session({
+            'label': session_name, 
+            'project': project_id,                    
+            'subject': {'code': subject_name},
+            'info': { template.namespace: {} }
+        })
         session = fw.get_session(session_id)
 
     return session

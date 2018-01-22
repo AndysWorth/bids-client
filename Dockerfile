@@ -33,8 +33,7 @@ RUN npm install -g /src/bids-validator-0.24.0/
 
 
 # Install python SDK
-RUN pip install https://github.com/flywheel-io/sdk/releases/download/0.2.0/flywheel-0.2.0-py2-none-linux_x86_64.whl
-
+RUN pip install https://github.com/flywheel-io/sdk/releases/download/0.3.0/flywheel-0.3.0-py2-none-linux_x86_64.whl
 
 # Copy code into place
 ENV ROOTDIR /code
