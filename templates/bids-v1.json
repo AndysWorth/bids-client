@@ -271,11 +271,11 @@
 			"description": "BIDS template for DICOM files",
 			"properties": {
 				"Filename": {"$ref":"#/definitions/Filename"},
-				"Folder": {"type": "string", "title": "Folder", "default": ""},
+				"Folder": {"type": "string", "title": "Folder", "default": "sourcedata"},
 				"Path": {"type": "string", "title": "Path", "default": "",
-					"auto_update": "sourcedata/sub-<subject.code>[/ses-<session.label>][/{file.info.BIDS.Folder}]"}
+					"auto_update": "{file.info.BIDS.Folder}/sub-<subject.code>[/ses-<session.label>]"}
 			},
-			"required": ["Filename"]
+			"required": ["Filename", "Folder"]
 		},
 		"json_file": {
 			"description": "BIDS template for JSON files",

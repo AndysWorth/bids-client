@@ -454,7 +454,7 @@ class BidsifyTestCases(unittest.TestCase):
         container_expected = {'info': {'BIDS': {
                 'template': 'dicom_file',
                 'Filename': '',
-                'Folder': '',
+                'Folder': 'sourcedata',
                 'Path': u'sourcedata/sub-001/ses-sestest'
                 }},
             u'measurements': [u'diffusion'],
@@ -483,7 +483,7 @@ class BidsifyTestCases(unittest.TestCase):
         container_expected = {'info': {'BIDS': {
                 'template': 'dicom_file',
                 'Filename': u'09 cmrr_mbepi_task-spatialfrequency_s6_2mm_66sl_PA_TR1.0.dcm.zip',
-                'Folder': '',
+                'Folder': 'sourcedata',
                 'Path': u'sourcedata/sub-001/ses-sestest'
                 }},
             u'name': u'09 cmrr_mbepi_task-spatialfrequency_s6_2mm_66sl_PA_TR1.0.dcm.zip',
