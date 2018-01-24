@@ -343,6 +343,101 @@ class BidsifyTestCases(unittest.TestCase):
             u'measurements': [u'functional'], u'type': u'nifti'}
         self.assertEqual(container, container_expected)
 
+    def test_process_matching_templates_task_events(self):
+        """"""
+        # Define context
+        context = {
+            'container_type': 'file',
+            'parent_container_type': 'acquisition',
+            'project': None,
+            'subject': {u'code': u'001'},
+            'session': {u'label': u'sesTEST'},
+            'acquisition': {u'label': u'acqTEST'},
+            'file': {u'measurements': [u'functional'],
+                    u'type': u'tabular data',
+                        },
+            'ext': '.tsv'
+        }
+        # Call function
+        container = bidsify_flywheel.process_matching_templates(context)
+        # Define expected container
+        container_expected = {
+            'info': {
+                'BIDS': {
+                    'template': 'task_events_file',
+                    'Filename': u'sub-001_ses-sestest_task-{file.info.BIDS.Task}_events.tsv',
+                    'Folder': 'func', 'Path': u'sub-001/ses-sestest/func',
+                    'Acq': '', 'Task': '',
+                    'Rec': '', 'Run': '', 'Echo': ''
+                    }
+                },
+            u'measurements': [u'functional'], u'type': u'tabular data'}
+        self.assertEqual(container, container_expected)
+
+    def test_process_matching_beh_events_file(self):
+        """"""
+        # Define context
+        context = {
+            'container_type': 'file',
+            'parent_container_type': 'acquisition',
+            'project': None,
+            'subject': {u'code': u'001'},
+            'session': {u'label': u'sesTEST'},
+            'acquisition': {u'label': u'acqTEST'},
+            'file': {u'measurements': [u'behavioral'],
+                    u'type': u'tabular data',
+                        },
+            'ext': '.tsv'
+        }
+        # Call function
+        container = bidsify_flywheel.process_matching_templates(context)
+        # Define expected container
+        container_expected = {
+            'info': {
+                'BIDS': {
+                    'template': 'beh_events_file',
+                    'Filename': u'sub-001_ses-sestest_task-{file.info.BIDS.Task}_events.tsv',
+                    'Folder': 'beh', 'Path': u'sub-001/ses-sestest/beh', 'Task': ''
+                    }
+                },
+            u'measurements': [u'behavioral'], u'type': u'tabular data'}
+        self.assertEqual(container, container_expected)
+
+    def test_process_matching_templates_physio_task_events(self):
+        """"""
+        # Define context
+        context = {
+            'container_type': 'file',
+            'parent_container_type': 'acquisition',
+            'project': None,
+            'subject': {u'code': u'001'},
+            'session': {u'label': u'sesTEST'},
+            'acquisition': {u'label': u'acqTEST'},
+            'file': {u'measurements': [u'physio'],
+                    u'type': u'tabular data',
+                        },
+            'ext': '.tsv'
+        }
+        # Call function
+        container = bidsify_flywheel.process_matching_templates(context)
+        # Define expected container
+        container_expected = {
+            'info': {
+                'BIDS': {
+                    'template': 'physio_task_file',
+                    'Filename': u'sub-001_ses-sestest_task-{file.info.BIDS.Task}_physio.tsv',
+                    'Folder': 'func', 'Path': u'sub-001/ses-sestest/func',
+                    'Acq': '', 'Task': '',
+                    'Modality': 'physio',
+                    'Rec': '',
+                    'Recording': '',
+                    'Run': '',
+                    'Echo': ''
+                    }
+                },
+            u'measurements': [u'physio'], u'type': u'tabular data'}
+        self.assertEqual(container, container_expected)
+
     def test_process_matching_templates_dwi_nifti(self):
         """ """
         # Define context
@@ -431,6 +526,70 @@ class BidsifyTestCases(unittest.TestCase):
                     }
                 },
             u'measurements': [u'diffusion'], u'type': u'bvec'}
+        self.assertEqual(container, container_expected)
+
+    def test_process_matching_templates_fieldmap(self):
+        """"""
+        # Define context
+        context = {
+            'container_type': 'file',
+            'parent_container_type': 'acquisition',
+            'project': None,
+            'subject': {u'code': u'001'},
+            'session': {u'label': u'sesTEST'},
+            'acquisition': {u'label': u'acqTEST'},
+            'file': {u'measurements': [u'field_map'],
+                    u'type': u'nifti',
+                        },
+            'ext': '.nii.gz'
+        }
+        # Call function
+        container = bidsify_flywheel.process_matching_templates(context)
+        # Define expected container
+        container_expected = {
+            'info': {
+                'BIDS': {
+                    'template': 'fieldmap_file',
+                    'Filename': u'sub-001_ses-sestest_fieldmap.nii.gz',
+                    'Folder': 'fmap', 'Path': u'sub-001/ses-sestest/fmap',
+                    'Acq': '', 'Run': '', 'Dir': '', 'Modality': 'fieldmap'
+                    }
+                },
+            u'measurements': [u'field_map'], u'type': u'nifti'}
+        self.assertEqual(container, container_expected)
+
+    def test_process_matching_templates_fieldmap_phase_encoded(self):
+        """"""
+        # Define context
+        context = {
+            'container_type': 'file',
+            'parent_container_type': 'acquisition',
+            'project': None,
+            'subject': {u'code': u'001'},
+            'session': {u'label': u'sesTEST'},
+            'acquisition': {u'label': u'acqTEST PA'}, # Acquisition label needs to contain
+            'file': {u'measurements': [u'field_map'],
+                    u'type': u'nifti',
+                    u'info': {
+                        u'PhaseEncodingDirection': 'j'
+                        },
+                    },
+            'ext': '.nii.gz'
+        }
+        # Call function
+        container = bidsify_flywheel.process_matching_templates(context)
+        # Define expected container
+        container_expected = {
+            'info': {
+                'BIDS': {
+                    'template': 'fieldmap_phase_encoded_file',
+                    'Filename': u'sub-001_ses-sestest_dir-PA_epi.nii.gz',
+                    'Folder': 'fmap', 'Path': u'sub-001/ses-sestest/fmap',
+                    'Acq': '', 'Run': '', 'Dir': 'PA', 'Modality': 'epi'
+                    },
+                    'PhaseEncodingDirection': 'j'
+                },
+            u'measurements': [u'field_map'], u'type': u'nifti'}
         self.assertEqual(container, container_expected)
 
     def test_process_matching_templates_dicom(self):
