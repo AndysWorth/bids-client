@@ -119,6 +119,7 @@ def download_bids_files(fw, filepath_downloads, dry_run):
         fw.download_file_from_project(*args)
 
         # If zipfile is attached to project, unzip...
+        path = args[2]
         zip_pattern = re.compile('[a-zA-Z0-9]+(.zip)')
         zip_dirname = path[:-4]
         if zip_pattern.search(path):
