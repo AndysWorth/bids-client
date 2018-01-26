@@ -76,6 +76,16 @@ def define_path(outdir, f, namespace):
 
     return full_filename
 
+def get_folder(f, namespace):
+    if 'info' not in f:
+        return ''
+    if namespace not in f['info']:
+        return ''
+    if not isinstance(f['info'][namespace], dict):
+        return ''
+
+    return f['info'][namespace].get('Folder')
+
 def create_json(meta_info, path, namespace):
     """
     Given a dictionary of the meta info
@@ -154,7 +164,8 @@ def download_bids_files(fw, filepath_downloads, dry_run):
 
         fw.download_file_from_acquisition(*args)
 
-def download_bids_dir(fw, project_id, outdir, src_data=False, dry_run=False):
+def download_bids_dir(fw, project_id, outdir, src_data=False, 
+        dry_run=False, subjects=[], sessions=[], folders=[]):
     """
 
     fw: Flywheel client
@@ -206,6 +217,16 @@ def download_bids_dir(fw, project_id, outdir, src_data=False, dry_run=False):
     # Get project sessions
     project_sessions = fw.get_project_sessions(project_id)
     for proj_ses in project_sessions:
+        # Skip session if we're filtering to the list of sessions
+        if sessions and proj_ses.get('label') not in sessions:
+            continue
+
+        # Skip subject if we're filtering subjects
+        if subjects:
+            subj_code = proj_ses.get('subject', {}).get('code')
+            if subj_code not in subjects:
+                continue
+
         # Get true session, in order to access file info
         session = fw.get_session(proj_ses['_id'])
         # Check if session contains files
@@ -239,6 +260,12 @@ def download_bids_dir(fw, project_id, outdir, src_data=False, dry_run=False):
                 if is_source_data(f, namespace) and not src_data:
                     continue
 
+                # Skip any folders not in the skip-list (if there is a skip list)
+                if folders:
+                    folder = get_folder(f, namespace)
+                    if folder not in folders:
+                        continue
+                
                 # Define path - ensure that the folder exists...
                 path = define_path(outdir, f, namespace)
                 # If path is not defined (an empty string) move onto next file
@@ -270,6 +297,9 @@ if __name__ == '__main__':
             default=False, required=False, help='Include source data in BIDS export')
     parser.add_argument('--dry-run', dest='dry_run', action='store_true',
             default=False, required=False, help='Don\'t actually export any data, just print what would be exported')
+    parser.add_argument('--subject', dest='subjects', action='append', help='Limit export to the given subject')
+    parser.add_argument('--session', dest='sessions', action='append', help='Limit export to the given session name')
+    parser.add_argument('--folder', dest='folders', action='append', help='Limit export to the given folder. (e.g. func)')
     parser.add_argument('-p', dest='project_label', action='store',
             required=False, default=None, help='Project Label on Flywheel instance')
     args = parser.parse_args()
@@ -284,7 +314,8 @@ if __name__ == '__main__':
     project_id = utils.validate_project_label(fw, args.project_label)
 
     ### Download BIDS project
-    download_bids_dir(fw, project_id, args.bids_dir, src_data=args.source_data, dry_run=args.dry_run)
+    download_bids_dir(fw, project_id, args.bids_dir, src_data=args.source_data, 
+            dry_run=args.dry_run, subjects=args.subjects, sessions=args.sessions, folders=args.folders)
 
     # Validate the downloaded directory
     #   Go one more step into the hierarchy to pass to the validator...
