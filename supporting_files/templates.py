@@ -191,26 +191,44 @@ class Rule:
             resolvedValue = None
 
             if isinstance(propDef, dict):
-                for key, valueSpec in propDef.items():
-                    # Lookup the value of the key
-                    value = utils.dict_lookup(context, key)
-                    if value is not None:
-                        # Regex matching must provide a 'value' group
-                        if '$regex' in valueSpec:
-                            m = re.search(valueSpec['$regex'], value)
-                            if m is not None:
-                                resolvedValue = m.group('value')
-                        # 'take' will just copy the value
-                        elif '$take' in valueSpec and valueSpec['$take']:
-                            resolvedValue = value
+                if '$switch' in propDef:
+                    resolvedValue = self._handleSwitch(propDef['$switch'], context)
+                else:
+                    for key, valueSpec in propDef.items():
+                        # Lookup the value of the key
+                        value = utils.dict_lookup(context, key)
+                        if value is not None:
+                            # Regex matching must provide a 'value' group
+                            if '$regex' in valueSpec:
+                                m = re.search(valueSpec['$regex'], value)
+                                if m is not None:
+                                    resolvedValue = m.group('value')
+                            # 'take' will just copy the value
+                            elif '$take' in valueSpec and valueSpec['$take']:
+                                resolvedValue = value
 
-                        if resolvedValue:
-                            break
+                            if resolvedValue:
+                                break
             else:
                 resolvedValue = propDef
 
             if resolvedValue:
                 info[propName] = resolvedValue
+
+    def _handleSwitch(self, switchDef, context):
+        value = utils.dict_lookup(context, switchDef['$on'])
+        if isinstance(value, list):
+            value = set(value)
+
+        for caseDef in switchDef['$cases']:
+            compValue = caseDef.get('$eq')
+            if isinstance(compValue, list):
+                compValue = set(compValue)
+
+            if '$default' in caseDef or value == compValue:
+                return caseDef.get('$value')
+
+        return None
 
 
 def processValueMatch(value, match):
