@@ -48,6 +48,26 @@ def is_source_data(f, namespace):
     path = f['info'][namespace].get('Path')
     return path and path.startswith('sourcedata')
 
+def parse_bool(v):
+    if v is None:
+        return False
+    if isinstance(v, bool):
+        return v
+    if isinstance(v, int):
+        return v != 0
+
+    return str(v).lower() == 'true'
+
+def is_file_excluded(f, namespace):
+    if 'info' not in f: 
+        return True
+    if namespace not in f['info']:
+        return True
+    if f['info'][namespace] == 'NA':
+        return True
+
+    return parse_bool(f['info'][namespace].get('exclude', False))
+
 def define_path(outdir, f, namespace):
     """"""
     # Check if 'info' in f object
@@ -192,6 +212,10 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
     # Iterate over any project files
     valid = True
     for f in project.get('files', []):
+        # Don't exclude any files that specify exclusion
+        if is_file_excluded(f, namespace):
+            continue
+
         # Don't include source data by default
         if is_source_data(f, namespace) and not src_data:
             continue
@@ -232,6 +256,10 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
         # Check if session contains files
         # Iterate over any session files
         for f in session.get('files', []):
+            # Don't exclude any files that specify exclusion
+            if is_file_excluded(f, namespace):
+                continue
+
             # Don't include source data by default
             if is_source_data(f, namespace) and not src_data:
                 continue
@@ -256,6 +284,10 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
             acq = fw.get_acquisition(ses_acq['_id'])
             # Iterate over acquistion files
             for f in acq.get('files', []):
+                # Don't exclude any files that specify exclusion
+                if is_file_excluded(f, namespace):
+                    continue
+
                 # Don't include source data by default
                 if is_source_data(f, namespace) and not src_data:
                     continue
