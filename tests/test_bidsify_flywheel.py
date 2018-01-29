@@ -677,6 +677,41 @@ class BidsifyTestCases(unittest.TestCase):
             u'type': u'tabular'}
         self.assertEqual(container, container_expected)
 
+    def test_process_matching_templates_project(self):
+        """ """
+        # Define context
+        context = {
+            'container_type': 'project',
+            'parent_container_type': 'group',
+            'project': {'label': 'Project_Label_Test'},
+            'subject': None,
+            'session': None,
+            'acquisition': None,
+            'file': {},
+            'ext': '.zip'
+        }
+        # Call function
+        container = bidsify_flywheel.process_matching_templates(context)
+        # Define expected container
+        container_expected = {
+            'info': {
+                'BIDS': {
+                    'Acknowledgements': '',
+                    'Authors': [],
+                    'BIDSVersion': '1.0.2',
+                    'DatasetDOI': '',
+                    'Funding': '',
+                    'HowToAcknowledge': '',
+                    'License': '',
+                    'Name': 'Project_Label_Test',
+                    'ReferencesAndLinks': [],
+                    'template': 'project'
+                    }
+                },
+                'label': 'Project_Label_Test'
+            }
+        self.assertEqual(container, container_expected)
+
     def test_process_matching_templates_project_file(self):
         """ """
         # Define context
