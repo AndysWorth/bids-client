@@ -61,7 +61,7 @@
 				"Acknowledgements": {"type": "string", "title": "Acknowledgements", "default": ""},
 				"HowToAcknowledge": {"type": "string", "title": "How To Acknowledge", "default": ""},
 				"Funding": {"type": "string", "title": "Funding Sources", "default": ""},
-				"ReferencesAndLinks": {"type": "string", "title":"Reference and Links", "default": ""},
+				"ReferencesAndLinks": {"type": "string", "title":"Reference and Links", "default": []},
 				"DatasetDOI": {"type": "string", "title": "Dataset DOI", "default": ""}
 			},
 			"required": []
