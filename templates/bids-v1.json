@@ -329,6 +329,18 @@
 						"defacemask", "swi"
 					]
 				}					
+			},
+			"initialize": {
+				"Task": {
+					"acquisition.label": {
+						"$regex": "_task-(?P<value>[^-_]+)"
+					}
+				},
+				"Run": {
+					"acquisition.label": {
+						"$regex": "_run-(?P<value>\\d+)"
+					}
+				}
 			}
 		},
 		{
@@ -341,6 +353,37 @@
 				},
         		"file.measurements": {
 					"$in": ["functional"]
+				}
+			},
+			"initialize": {
+				"Task": {
+					"acquisition.label": {
+						"$regex": "_task-(?P<value>[^-_]+)"
+					}
+				},
+				"Run": {
+					"acquisition.label": {
+						"$regex": "_run-(?P<value>\\d+)"
+					}
+				},
+				"Modality": {
+					"$switch": {
+						"$on": "file.info.ImageType",
+						"$cases": [
+							{
+								"$eq": [ "ORIGINAL", "PRIMARY", "P", "ND", "MOSAIC"  ],
+								"$value": "sbref"
+							},
+							{
+								"$eq": [ "ORIGINAL", "PRIMARY", "M", "ND", "MOSAIC"  ],
+								"$value": "sbref"
+							},
+							{
+								"$eq": [ "ORIGINAL", "PRIMARY", "M", "ND", "NORM", "MOSAIC"  ],
+								"$value": "sbref"
+							}
+						]
+					}
 				}
 			}
 		},
@@ -355,6 +398,18 @@
 				"file.measurements": {
 					"$in": ["functional"]
 				}
+			},
+			"initialize": {
+				"Task": {
+					"acquisition.label": {
+						"$regex": "_task-(?P<value>[^-_]+)"
+					}
+				},
+				"Run": {
+					"acquisition.label": {
+						"$regex": "_run-(?P<value>\\d+)"
+					}
+				}
 			}
 		},
 		{
@@ -367,6 +422,13 @@
 				},
 				"file.measurements": {
 					"$in": ["behavioral"]
+				}
+			},
+			"initialize": {
+				"Task": {
+					"acquisition.label": {
+						"$regex": "_task-(?P<value>[^-_]+)"
+					}
 				}
 			}
 		},
@@ -381,6 +443,18 @@
 				"file.measurements": {
 					"$in": ["physio"]
 				}
+			},
+			"initialize": {
+				"Task": {
+					"acquisition.label": {
+						"$regex": "_task-(?P<value>[^-_]+)"
+					}
+				},
+				"Run": {
+					"acquisition.label": {
+						"$regex": "_run-(?P<value>\\d+)"
+					}
+				}
 			}
 		},
 		{
@@ -393,6 +467,13 @@
 				},
 				"file.measurements": {
 					"$in": ["diffusion"]
+				}
+			},
+			"initialize": {
+				"Run": {
+					"acquisition.label": {
+						"$regex": "_run-(?P<value>\\d+)"
+					}
 				}
 			}
 		},
@@ -413,8 +494,14 @@
 			},
 			"initialize": {
 				"Dir": {
+					"$comment": "Currently matching bipedal orientations",
 					"acquisition.label": {
-						"$regex": "([^a-zA-Z0-9]|^)(?P<value>AP|PA|LR|RL)([^a-zA-Z0-9]|$)"
+						"$regex": "([^a-zA-Z0-9]|^)(?P<value>[aprlhfAPRLHF]{2})([^a-zA-Z0-9]|$)"
+					}
+				},
+				"Run": {
+					"acquisition.label": {
+						"$regex": "_run-(?P<value>\\d+)"
 					}
 				}
 			}
@@ -429,6 +516,13 @@
 				},
 				"file.measurements": {
 					"$in": ["field_map"]
+				}
+			},
+			"initialize": {
+				"Run": {
+					"acquisition.label": {
+						"$regex": "_run-(?P<value>\\d+)"
+					}
 				}
 			}
 		},
