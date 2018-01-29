@@ -37,44 +37,68 @@ def validate_dirname(dirname):
             logger.error('Directory (%s) is not empty. Exporter will not run.' % dirname)
             sys.exit(1)
 
-def is_source_data(f, namespace):
-    if 'info' not in f: 
+def parse_bool(v):
+    if v is None:
         return False
-    if namespace not in f['info']:
-        return False
-    if f['info'][namespace] == 'NA':
-        return False
-    
-    path = f['info'][namespace].get('Path')
-    return path and path.startswith('sourcedata')
+    if isinstance(v, bool):
+        return v
+    if isinstance(v, int):
+        return v != 0
+
+    return str(v).lower() == 'true'
+
+def get_metadata(ctx, namespace):
+    # Check if 'info' in f object
+    if 'info' not in ctx:
+        return None
+    # Check if namespace ('BIDS') in f object
+    if namespace not in ctx['info']:
+        return None
+    # Check if 'info.BIDS' == 'NA'
+    if ctx['info'][namespace] == 'NA':
+        return None
+
+    return ctx['info'][namespace]
+
+def is_file_excluded(f, namespace, src_data):
+    metadata = get_metadata(f, namespace)
+    if not metadata:
+        return True
+
+    if parse_bool(metadata.get('exclude', False)):
+        return True
+
+    if not src_data:
+        path = metadata.get('Path')
+        if path and path.startswith('sourcedata'):
+            return True
+   
+    return False
 
 def define_path(outdir, f, namespace):
     """"""
-    # Check if 'info' in f object
-    if 'info' not in f:
+    metadata = get_metadata(f, namespace)
+    if not metadata:
         full_filename = ''
-    # Check if namespace ('BIDS') in f object
-    elif namespace not in f['info']:
-        full_filename = ''
-    # Check if 'info.BIDS' == 'NA'
-    elif (f['info'][namespace] == 'NA'):
-        full_filename = ''
-    # Check if 'Filename' has a value
-    elif f['info'][namespace].get('Filename'):
+    elif metadata.get('Filename'):
         # Ensure that the folder exists...
         full_path = os.path.join(outdir,
-                f['info'][namespace]['Path'])
+                metadata['Path'])
         if not os.path.exists(full_path):
             os.makedirs(full_path)
         # Define path to download file to...
-        full_filename = os.path.join(
-                full_path,
-                f['info'][namespace]['Filename']
-            )
+        full_filename = os.path.join(full_path, metadata['Filename'])
     else:
         full_filename = ''
 
     return full_filename
+
+def get_folder(f, namespace):
+    metadata = get_metadata(f, namespace)
+    if not metadata:
+        return ''
+
+    return metadata.get('Folder')
 
 def create_json(meta_info, path, namespace):
     """
@@ -154,7 +178,8 @@ def download_bids_files(fw, filepath_downloads, dry_run):
 
         fw.download_file_from_acquisition(*args)
 
-def download_bids_dir(fw, project_id, outdir, src_data=False, dry_run=False):
+def download_bids_dir(fw, project_id, outdir, src_data=False, 
+        dry_run=False, subjects=[], sessions=[], folders=[]):
     """
 
     fw: Flywheel client
@@ -181,8 +206,8 @@ def download_bids_dir(fw, project_id, outdir, src_data=False, dry_run=False):
     # Iterate over any project files
     valid = True
     for f in project.get('files', []):
-        # Don't include source data by default
-        if is_source_data(f, namespace) and not src_data:
+        # Don't exclude any files that specify exclusion
+        if is_file_excluded(f, namespace, src_data):
             continue
 
         # Define path - ensure that the folder exists...
@@ -206,13 +231,23 @@ def download_bids_dir(fw, project_id, outdir, src_data=False, dry_run=False):
     # Get project sessions
     project_sessions = fw.get_project_sessions(project_id)
     for proj_ses in project_sessions:
+        # Skip session if we're filtering to the list of sessions
+        if sessions and proj_ses.get('label') not in sessions:
+            continue
+
+        # Skip subject if we're filtering subjects
+        if subjects:
+            subj_code = proj_ses.get('subject', {}).get('code')
+            if subj_code not in subjects:
+                continue
+
         # Get true session, in order to access file info
         session = fw.get_session(proj_ses['_id'])
         # Check if session contains files
         # Iterate over any session files
         for f in session.get('files', []):
-            # Don't include source data by default
-            if is_source_data(f, namespace) and not src_data:
+            # Don't exclude any files that specify exclusion
+            if is_file_excluded(f, namespace, src_data):
                 continue
 
             # Define path - ensure that the folder exists...
@@ -235,10 +270,16 @@ def download_bids_dir(fw, project_id, outdir, src_data=False, dry_run=False):
             acq = fw.get_acquisition(ses_acq['_id'])
             # Iterate over acquistion files
             for f in acq.get('files', []):
-                # Don't include source data by default
-                if is_source_data(f, namespace) and not src_data:
+                # Don't exclude any files that specify exclusion
+                if is_file_excluded(f, namespace, src_data):
                     continue
 
+                # Skip any folders not in the skip-list (if there is a skip list)
+                if folders:
+                    folder = get_folder(f, namespace)
+                    if folder not in folders:
+                        continue
+                
                 # Define path - ensure that the folder exists...
                 path = define_path(outdir, f, namespace)
                 # If path is not defined (an empty string) move onto next file
@@ -270,6 +311,9 @@ if __name__ == '__main__':
             default=False, required=False, help='Include source data in BIDS export')
     parser.add_argument('--dry-run', dest='dry_run', action='store_true',
             default=False, required=False, help='Don\'t actually export any data, just print what would be exported')
+    parser.add_argument('--subject', dest='subjects', action='append', help='Limit export to the given subject')
+    parser.add_argument('--session', dest='sessions', action='append', help='Limit export to the given session name')
+    parser.add_argument('--folder', dest='folders', action='append', help='Limit export to the given folder. (e.g. func)')
     parser.add_argument('-p', dest='project_label', action='store',
             required=False, default=None, help='Project Label on Flywheel instance')
     args = parser.parse_args()
@@ -284,7 +328,8 @@ if __name__ == '__main__':
     project_id = utils.validate_project_label(fw, args.project_label)
 
     ### Download BIDS project
-    download_bids_dir(fw, project_id, args.bids_dir, src_data=args.source_data, dry_run=args.dry_run)
+    download_bids_dir(fw, project_id, args.bids_dir, src_data=args.source_data, 
+            dry_run=args.dry_run, subjects=args.subjects, sessions=args.sessions, folders=args.folders)
 
     # Validate the downloaded directory
     #   Go one more step into the hierarchy to pass to the validator...
