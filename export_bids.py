@@ -72,8 +72,18 @@ def is_file_excluded(f, namespace, src_data):
         path = metadata.get('Path')
         if path and path.startswith('sourcedata'):
             return True
-   
+
     return False
+
+def is_file_bids_valid(f, namespace):
+    """
+    Logs a warning iff info.BIDS.valid = false
+    """
+    metadata = get_metadata(f, namespace)
+    if not metadata or metadata.get('valid') == None:
+        return
+    elif not parse_bool(metadata.get('valid')):
+        logger.warn('File {} is not valid: {}'.format(metadata.get('Filename'), metadata.get('error_message')))
 
 def define_path(outdir, f, namespace):
     """"""
@@ -215,6 +225,8 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
         if is_file_excluded(f, namespace, src_data):
             continue
 
+        is_file_bids_valid(f, namespace)
+
         # Define path - ensure that the folder exists...
         path = define_path(outdir, f, namespace)
         # If path is not defined (an empty string) move onto next file
@@ -255,6 +267,8 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
             if is_file_excluded(f, namespace, src_data):
                 continue
 
+            is_file_bids_valid(f, namespace)
+
             # Define path - ensure that the folder exists...
             path = define_path(outdir, f, namespace)
             # If path is not defined (an empty string) move onto next file
@@ -278,6 +292,8 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
                 # Don't exclude any files that specify exclusion
                 if is_file_excluded(f, namespace, src_data):
                     continue
+
+                is_file_bids_valid(f, namespace)
 
                 # Skip any folders not in the skip-list (if there is a skip list)
                 if folders:
