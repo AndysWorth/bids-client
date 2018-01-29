@@ -111,7 +111,7 @@ def add_properties(properties, obj, measurements):
             else:
                 obj[key] = "default"
         elif proptype == "object":
-            print 'WHY AM I HERE?!?'
+            print 'Property {} is an object'.format(key)
             obj[key] = {}
             obj[key] = add_properties(properties[key]["properties"], obj[key], measurements)
     return(obj)

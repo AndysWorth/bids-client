@@ -328,7 +328,7 @@ def fill_in_properties(context, path):
                     value = result.split('-')[-1]
                 # If value as an 'index' instead of a 'label', make it an integer (for search)
                 if mi in ['Run', 'Echo']:
-                    value = int(value)
+                    value = str(value)
                 # Assign value to meta_info
                 meta_info[namespace][mi] = value
 
