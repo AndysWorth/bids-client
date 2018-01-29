@@ -75,7 +75,7 @@ def is_file_excluded(f, namespace, src_data):
 
     return False
 
-def is_file_bids_valid(f, namespace):
+def warn_if_bids_invalid(f, namespace):
     """
     Logs a warning iff info.BIDS.valid = false
     """
@@ -225,7 +225,7 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
         if is_file_excluded(f, namespace, src_data):
             continue
 
-        is_file_bids_valid(f, namespace)
+        warn_if_bids_invalid(f, namespace)
 
         # Define path - ensure that the folder exists...
         path = define_path(outdir, f, namespace)
@@ -267,7 +267,7 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
             if is_file_excluded(f, namespace, src_data):
                 continue
 
-            is_file_bids_valid(f, namespace)
+            warn_if_bids_invalid(f, namespace)
 
             # Define path - ensure that the folder exists...
             path = define_path(outdir, f, namespace)
@@ -293,14 +293,14 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
                 if is_file_excluded(f, namespace, src_data):
                     continue
 
-                is_file_bids_valid(f, namespace)
+                warn_if_bids_invalid(f, namespace)
 
                 # Skip any folders not in the skip-list (if there is a skip list)
                 if folders:
                     folder = get_folder(f, namespace)
                     if folder not in folders:
                         continue
-                
+
                 # Define path - ensure that the folder exists...
                 path = define_path(outdir, f, namespace)
                 # If path is not defined (an empty string) move onto next file
