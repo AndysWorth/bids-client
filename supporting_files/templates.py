@@ -27,7 +27,7 @@ class Template:
             self.namespace = data.get('namespace')
             self.description = data.get('description', '')
             self.definitions = data.get('definitions', {})
-            self.rules = data.get('rules', {})
+            self.rules = data.get('rules', [])
             
             self.extends = data.get('extends')
             self.exclude_rules = data.get('exclude_rules', [])
