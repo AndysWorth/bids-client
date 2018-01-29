@@ -406,7 +406,7 @@ class BidsUploadTestCases(unittest.TestCase):
                 'BIDS': {
                     'Ce': 'label1',
                     'Rec': 'label2',
-                    'Run': 1,
+                    'Run': '01',
                     'Mod': 'label3',
                     'Modality': 'T1w',
                     'Folder': folder_name,
@@ -444,8 +444,8 @@ class BidsUploadTestCases(unittest.TestCase):
                 'BIDS': {
                     'Task': 'label1',
                     'Rec': 'label2',
-                    'Run': 1,
-                    'Echo': 2,
+                    'Run': '01',
+                    'Echo': '2',
                     'Modality': 'bold',
                     'Folder': folder_name,
                     'Filename': context['file']['name']
@@ -477,7 +477,7 @@ class BidsUploadTestCases(unittest.TestCase):
         # Define expected outputs
         meta_info_expected = {
                 'BIDS': {
-                    'Run': 1,
+                    'Run': '01',
                     'Modality': 'dwi',
                     'Folder': folder_name,
                     'Filename': context['file']['name']
@@ -509,7 +509,7 @@ class BidsUploadTestCases(unittest.TestCase):
         # Define expected outputs
         meta_info_expected = {
                 'BIDS': {
-                    'Run': 3,
+                    'Run': '03',
                     'Modality': 'phasediff',
                     'Folder': folder_name,
                     'Filename': context['file']['name']
@@ -543,7 +543,7 @@ class BidsUploadTestCases(unittest.TestCase):
         meta_info_expected = {
                 'BIDS': {
                     'Dir': 'label1',
-                    'Run': 3,
+                    'Run': '03',
                     'Modality': 'epi',
                     'Folder': folder_name,
                     'Filename': context['file']['name']
