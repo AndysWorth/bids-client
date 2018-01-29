@@ -379,6 +379,14 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
             ### Upload file
             # define full filename
             full_fname = os.path.join(rootdir, fname)
+            # Don't upload dataset_description.json
+            if fname == 'dataset_description.json':
+                files_of_interest[fname] = {
+                        '_id': context['project']['_id'],
+                        'id_type': 'project',
+                        'full_filename': full_fname
+                        }
+                continue
             # Upload project file
             context['file'] = upload_project_file(fw, context, full_fname)
             # Update the context for this file
