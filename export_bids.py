@@ -37,17 +37,6 @@ def validate_dirname(dirname):
             logger.error('Directory (%s) is not empty. Exporter will not run.' % dirname)
             sys.exit(1)
 
-def is_source_data(f, namespace):
-    if 'info' not in f: 
-        return False
-    if namespace not in f['info']:
-        return False
-    if f['info'][namespace] == 'NA':
-        return False
-    
-    path = f['info'][namespace].get('Path')
-    return path and path.startswith('sourcedata')
-
 def parse_bool(v):
     if v is None:
         return False
@@ -58,7 +47,7 @@ def parse_bool(v):
 
     return str(v).lower() == 'true'
 
-def is_file_excluded(f, namespace):
+def is_file_excluded(f, namespace, src_data):
     if 'info' not in f: 
         return True
     if namespace not in f['info']:
@@ -66,7 +55,15 @@ def is_file_excluded(f, namespace):
     if f['info'][namespace] == 'NA':
         return True
 
-    return parse_bool(f['info'][namespace].get('exclude', False))
+    if parse_bool(f['info'][namespace].get('exclude', False)):
+        return True
+
+    if not src_data:
+        path = f['info'][namespace].get('Path')
+        if path and path.startswith('sourcedata'):
+            return True
+   
+    return False
 
 def define_path(outdir, f, namespace):
     """"""
@@ -213,11 +210,7 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
     valid = True
     for f in project.get('files', []):
         # Don't exclude any files that specify exclusion
-        if is_file_excluded(f, namespace):
-            continue
-
-        # Don't include source data by default
-        if is_source_data(f, namespace) and not src_data:
+        if is_file_excluded(f, namespace, src_data):
             continue
 
         # Define path - ensure that the folder exists...
@@ -257,11 +250,7 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
         # Iterate over any session files
         for f in session.get('files', []):
             # Don't exclude any files that specify exclusion
-            if is_file_excluded(f, namespace):
-                continue
-
-            # Don't include source data by default
-            if is_source_data(f, namespace) and not src_data:
+            if is_file_excluded(f, namespace, src_data):
                 continue
 
             # Define path - ensure that the folder exists...
@@ -285,11 +274,7 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
             # Iterate over acquistion files
             for f in acq.get('files', []):
                 # Don't exclude any files that specify exclusion
-                if is_file_excluded(f, namespace):
-                    continue
-
-                # Don't include source data by default
-                if is_source_data(f, namespace) and not src_data:
+                if is_file_excluded(f, namespace, src_data):
                     continue
 
                 # Skip any folders not in the skip-list (if there is a skip list)
