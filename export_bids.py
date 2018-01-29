@@ -72,8 +72,18 @@ def is_file_excluded(f, namespace, src_data):
         path = metadata.get('Path')
         if path and path.startswith('sourcedata'):
             return True
-   
+
     return False
+
+def warn_if_bids_invalid(f, namespace):
+    """
+    Logs a warning iff info.BIDS.valid = false
+    """
+    metadata = get_metadata(f, namespace)
+    if not metadata or metadata.get('valid') == None:
+        return
+    elif not parse_bool(metadata.get('valid')):
+        logger.warn('File {} is not valid: {}'.format(metadata.get('Filename'), metadata.get('error_message')))
 
 def define_path(outdir, f, namespace):
     """"""
@@ -215,6 +225,8 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
         if is_file_excluded(f, namespace, src_data):
             continue
 
+        warn_if_bids_invalid(f, namespace)
+
         # Define path - ensure that the folder exists...
         path = define_path(outdir, f, namespace)
         # If path is not defined (an empty string) move onto next file
@@ -255,6 +267,8 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
             if is_file_excluded(f, namespace, src_data):
                 continue
 
+            warn_if_bids_invalid(f, namespace)
+
             # Define path - ensure that the folder exists...
             path = define_path(outdir, f, namespace)
             # If path is not defined (an empty string) move onto next file
@@ -279,12 +293,14 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
                 if is_file_excluded(f, namespace, src_data):
                     continue
 
+                warn_if_bids_invalid(f, namespace)
+
                 # Skip any folders not in the skip-list (if there is a skip list)
                 if folders:
                     folder = get_folder(f, namespace)
                     if folder not in folders:
                         continue
-                
+
                 # Define path - ensure that the folder exists...
                 path = define_path(outdir, f, namespace)
                 # If path is not defined (an empty string) move onto next file
