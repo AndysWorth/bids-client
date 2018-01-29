@@ -47,19 +47,29 @@ def parse_bool(v):
 
     return str(v).lower() == 'true'
 
+def get_metadata(ctx, namespace):
+    # Check if 'info' in f object
+    if 'info' not in ctx:
+        return None
+    # Check if namespace ('BIDS') in f object
+    if namespace not in ctx['info']:
+        return None
+    # Check if 'info.BIDS' == 'NA'
+    if ctx['info'][namespace] == 'NA':
+        return None
+
+    return ctx['info'][namespace]
+
 def is_file_excluded(f, namespace, src_data):
-    if 'info' not in f: 
-        return True
-    if namespace not in f['info']:
-        return True
-    if f['info'][namespace] == 'NA':
+    metadata = get_metadata(f, namespace)
+    if not metadata:
         return True
 
-    if parse_bool(f['info'][namespace].get('exclude', False)):
+    if parse_bool(metadata.get('exclude', False)):
         return True
 
     if not src_data:
-        path = f['info'][namespace].get('Path')
+        path = metadata.get('Path')
         if path and path.startswith('sourcedata'):
             return True
    
@@ -67,41 +77,28 @@ def is_file_excluded(f, namespace, src_data):
 
 def define_path(outdir, f, namespace):
     """"""
-    # Check if 'info' in f object
-    if 'info' not in f:
+    metadata = get_metadata(f, namespace)
+    if not metadata:
         full_filename = ''
-    # Check if namespace ('BIDS') in f object
-    elif namespace not in f['info']:
-        full_filename = ''
-    # Check if 'info.BIDS' == 'NA'
-    elif (f['info'][namespace] == 'NA'):
-        full_filename = ''
-    # Check if 'Filename' has a value
-    elif f['info'][namespace].get('Filename'):
+    elif metadata.get('Filename'):
         # Ensure that the folder exists...
         full_path = os.path.join(outdir,
-                f['info'][namespace]['Path'])
+                metadata['Path'])
         if not os.path.exists(full_path):
             os.makedirs(full_path)
         # Define path to download file to...
-        full_filename = os.path.join(
-                full_path,
-                f['info'][namespace]['Filename']
-            )
+        full_filename = os.path.join(full_path, metadata['Filename'])
     else:
         full_filename = ''
 
     return full_filename
 
 def get_folder(f, namespace):
-    if 'info' not in f:
-        return ''
-    if namespace not in f['info']:
-        return ''
-    if not isinstance(f['info'][namespace], dict):
+    metadata = get_metadata(f, namespace)
+    if not metadata:
         return ''
 
-    return f['info'][namespace].get('Folder')
+    return metadata.get('Folder')
 
 def create_json(meta_info, path, namespace):
     """
