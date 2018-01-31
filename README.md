@@ -75,7 +75,13 @@ Run it using the docker script
 ```
 ./docker/curate.sh \
     --api-key '<PLACE YOUR API KEY HERE>' \
-    -p '<PLACE PROJECT LABEL HERE>'
+    -p '<PLACE PROJECT LABEL HERE>' \
+    [optional flags]
+```
+Flags:
+```
+  --reset               Reset BIDS data before running
+  --template-file       Template file to use
 ```
 
 ## Export
