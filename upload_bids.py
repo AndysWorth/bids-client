@@ -369,7 +369,8 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
         #   (1) create a project OR (2) find an existing project by the project_label -- return project object
         context['container_type'] = 'project'
         context['project'] = handle_project(fw, group_id, proj_label)
-        bidsify_flywheel.process_matching_templates(context, template)
+        context['project'] = bidsify_flywheel.process_matching_templates(context, template)
+        fw.modify_project(context['project']['_id'], {'info': {template.namespace: context['project']['info'][template.namespace]}})
 
         ### Iterate over project files - upload file and add meta data
         for fname in bids_hierarchy[proj_label].get('files'):
@@ -379,6 +380,14 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
             ### Upload file
             # define full filename
             full_fname = os.path.join(rootdir, fname)
+            # Don't upload dataset_description.json
+            if fname == 'dataset_description.json':
+                files_of_interest[fname] = {
+                        '_id': context['project']['_id'],
+                        'id_type': 'project',
+                        'full_filename': full_fname
+                        }
+                continue
             # Upload project file
             context['file'] = upload_project_file(fw, context, full_fname)
             # Update the context for this file
@@ -629,7 +638,9 @@ def attach_json(fw, file_info):
     contents = parse_json(file_info['full_filename'])
     # Attach parsed JSON to project
     if 'dataset_description.json' in file_info['full_filename']:
-        fw.modify_project(file_info['_id'], {'info': {template.namespace: contents}})
+        proj = fw.get_project(file_info['_id'])
+        proj.get('info').get(template.namespace).update(contents)
+        fw.modify_project(file_info['_id'], {'info': {template.namespace: proj.get('info').get(template.namespace)}})
     # Otherwise... it's a JSON file that should be assigned to acquisition file(s)
     else:
         # Figure out which acquisition files within PROJECT should have JSON info attached...
