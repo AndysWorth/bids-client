@@ -129,6 +129,8 @@ def update_properties(properties, context, obj):
         if proptype == "string":
             if "auto_update" in properties[key]:
                 obj[key] = process_string_template(properties[key]['auto_update'],context)
+        if "cross_update" in properties[key]:
+            obj[key] = "cross_update"
         elif proptype == "object":
             obj[key] = {}
             obj[key] = update_properties(properties[key]["properties"], context, obj[key])
@@ -185,6 +187,45 @@ def process_matching_templates(context, template=templates.DEFAULT_TEMPLATE):
             container['info'][namespace].update(data)
 
     return container
+
+def cross_filter(filters, ref_context, bids_context):
+    for filter in filters:
+        test = [process_string_template(filt, bids_context) for filt in filters[filter]]
+        value = utils.dict_lookup(ref_context, filter)
+        if not value:
+            return False
+        # Filter values can be string or list of strings
+        if not value in test:
+            return False
+    return True
+
+def cross_update(bids_contexts, template=templates.DEFAULT_TEMPLATE):
+    """
+    Iterates through all bids files and if a field needs to be cross updated,
+    It will iterate through the files to retrieve the needed info to generate the properties
+    """
+    print "number of possible files: {}".format(len(bids_contexts))
+    cross_updated_ctxs = []
+    namespace = template.namespace
+
+    for bids_context in bids_contexts:
+        bids_obj = bids_context['file'].get('info').get(namespace)
+        templateDef = template.definitions.get(bids_obj['template'])
+        cross = False
+        for key in bids_obj:
+            if bids_obj.get(key) == "cross_update":
+                cross = True
+                bids_obj[key] = []
+                for ref_context in bids_contexts:
+                    ref_obj = ref_context['file'].get('info').get(namespace)
+                    # Filter through files to see which match the filters specified by the template
+                    if cross_filter(templateDef.get('properties').get(key).get('filters', []), ref_context, bids_context):
+                        # Process String given
+                        bids_obj[key].append(process_string_template(templateDef.get('properties').get(key).get('cross_update'), ref_context))
+        bids_context['file']['info'][namespace] = bids_obj
+        if cross:
+            cross_updated_ctxs.append(bids_context)
+    return cross_updated_ctxs
 
 def ensure_info_exists(context, template=templates.DEFAULT_TEMPLATE):
     """

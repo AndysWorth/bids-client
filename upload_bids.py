@@ -312,6 +312,8 @@ def fill_in_properties(context, path):
         elif mi == 'Path':
             meta_info[namespace][mi] = path
             # Search for regex string within BIDS filename and populate meta_info
+        elif mi == 'IntendedFor':
+            meta_info[namespace][mi] = "cross_update"
         elif mi == 'template':
             pass
         else:

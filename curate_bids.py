@@ -1,4 +1,5 @@
 import argparse
+import copy
 import logging
 import json
 import os
@@ -169,6 +170,9 @@ def curate_bids_dir(fw, project_id, reset=False, template_file=None):
     # Update project meta information
     update_meta_info(fw, context)
 
+    # To cross update fields (such as IntendedFor) we'll need to iterate over all the BIDS files
+    bids_files = []
+
     # Iterate over all files within project
     logger.info('Updating project files...')
     for f in project_files:
@@ -187,6 +191,8 @@ def curate_bids_dir(fw, project_id, reset=False, template_file=None):
         context['file'] = bidsify_flywheel.process_matching_templates(context, template)
         # Validate meta information
         validate_meta_info(context['file'], template)
+        # Append the meta information to the list of BIDS files
+        bids_files.append(copy.deepcopy(context))
         # Update file meta information
         update_meta_info(fw, context)
 
@@ -218,6 +224,8 @@ def curate_bids_dir(fw, project_id, reset=False, template_file=None):
             context['file'] = bidsify_flywheel.process_matching_templates(context, template)
             # Validate meta information
             validate_meta_info(context['file'], template)
+            # Append the meta information to the list of BIDS files
+            bids_files.append(copy.deepcopy(context))
             # Update file meta information
             update_meta_info(fw, context)
 
@@ -242,9 +250,17 @@ def curate_bids_dir(fw, project_id, reset=False, template_file=None):
                 context['file'] = bidsify_flywheel.process_matching_templates(context, template)
                 # Validate meta information
                 validate_meta_info(context['file'], template)
+                # Append the meta information to the list of BIDS files
+                bids_files.append(copy.deepcopy(context))
                 # Update file meta info
                 update_meta_info(fw, context)
-
+    # Cross update
+    cross_updated_ctxs = bidsify_flywheel.cross_update(bids_files, template)
+    for updated_ctx in cross_updated_ctxs:
+        # Validate meta information
+        validate_meta_info(updated_ctx['file'], template)
+        # Update file meta info
+        update_meta_info(fw, updated_ctx)
 if __name__ == '__main__':
     ### Read in arguments
     parser = argparse.ArgumentParser(description='BIDS Curation')

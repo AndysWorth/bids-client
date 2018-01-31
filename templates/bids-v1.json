@@ -50,7 +50,11 @@
 			"default": "",
 			"pattern": "^[a-zA-Z0-9]+$"
 		},
-
+		"IntendedFor": {
+			"type": "array",
+			"title": "IntendedFor",
+			"default": []
+		},
 		"project": {
 	    	"description": "BIDS project template",
 			"properties": {
@@ -226,6 +230,10 @@
 				"Acq": {"$ref":"#/definitions/Acq"},
 				"Run": {"$ref":"#/definitions/Run"},
 				"Dir": {"type": "string", "title": "Dir Label", "default": ""},
+				"IntendedFor": {
+					"type": "array", "title": "IntendedFor", "default": [], "filters": {"file.info.BIDS.Folder": ["func"], "subject.code": ["{subject.code}"]},
+					"cross_update": "[ses-<session.label>/]{file.info.BIDS.Folder}/{file.info.BIDS.Filename}"
+				},
 				"Modality": {"type": "string", "title": "Modality Label", "default": "fieldmap",
 					"enum": [
 						"phasediff",
