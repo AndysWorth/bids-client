@@ -314,7 +314,7 @@ def fill_in_properties(context, path):
             # Search for regex string within BIDS filename and populate meta_info
         elif mi == 'template':
             pass
-        else:
+        elif mi in properties_regex:
             tokens = re.compile(properties_regex[mi])
             token = tokens.search(context['file']['name'])
             if token:
@@ -331,6 +331,8 @@ def fill_in_properties(context, path):
                     value = str(value)
                 # Assign value to meta_info
                 meta_info[namespace][mi] = value
+        else:
+            pass
 
     return meta_info
 
