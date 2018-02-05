@@ -117,7 +117,7 @@ def update_meta_info(fw, context):
     else:
         logger.info('Cannot determine container type')
 
-def curate_bids_dir(fw, project_id, reset=False, template_file=None):
+def curate_bids_dir(fw, project_id, reset=False, template_file=None, cross_update=False):
     """
 
     fw: Flywheel client
@@ -188,13 +188,16 @@ def curate_bids_dir(fw, project_id, reset=False, template_file=None):
         context['parent_container_type'] = 'project'
         context['ext'] = utils.get_extension(f['name'])
         # Identify the templates for the file and return file object
-        context['file'] = bidsify_flywheel.process_matching_templates(context, template)
+        context['file'] = bidsify_flywheel.process_matching_templates(context, template=template, cross_update=cross_update)
         # Validate meta information
         validate_meta_info(context['file'], template)
-        # Append the meta information to the list of BIDS files
-        bids_files.append(copy.deepcopy(context))
-        # Update file meta information
-        update_meta_info(fw, context)
+
+        if cross_update:
+            # Append the meta information to the list of BIDS files
+            bids_files.append(copy.deepcopy(context))
+        else:
+            # Update file meta information
+            update_meta_info(fw, context)
 
     # Iterate over all files within session
     logger.info('Updating session files...')
@@ -221,13 +224,16 @@ def curate_bids_dir(fw, project_id, reset=False, template_file=None):
             context['parent_container_type'] = 'session'
             context['ext'] = utils.get_extension(f['name'])
             # Identify the templates for the file and return file object
-            context['file'] = bidsify_flywheel.process_matching_templates(context, template)
+            context['file'] = bidsify_flywheel.process_matching_templates(context, template=template, cross_update=cross_update)
             # Validate meta information
             validate_meta_info(context['file'], template)
-            # Append the meta information to the list of BIDS files
-            bids_files.append(copy.deepcopy(context))
-            # Update file meta information
-            update_meta_info(fw, context)
+
+            if cross_update:
+                # Append the meta information to the list of BIDS files
+                bids_files.append(copy.deepcopy(context))
+            else:
+                # Update file meta information
+                update_meta_info(fw, context)
 
         # Iterate over all files within acquisition
         logger.info('Updating acquisition files...')
@@ -247,20 +253,23 @@ def curate_bids_dir(fw, project_id, reset=False, template_file=None):
                 context['parent_container_type'] = 'acquisition'
                 context['ext'] = utils.get_extension(f['name'])
                 # Identify the templates for the file and return file object
-                context['file'] = bidsify_flywheel.process_matching_templates(context, template)
+                context['file'] = bidsify_flywheel.process_matching_templates(context, template=template, cross_update=cross_update)
                 # Validate meta information
                 validate_meta_info(context['file'], template)
-                # Append the meta information to the list of BIDS files
-                bids_files.append(copy.deepcopy(context))
-                # Update file meta info
-                update_meta_info(fw, context)
-    # Cross update
-    cross_updated_ctxs = bidsify_flywheel.cross_update(bids_files, template)
-    for updated_ctx in cross_updated_ctxs:
-        # Validate meta information
-        validate_meta_info(updated_ctx['file'], template)
-        # Update file meta info
-        update_meta_info(fw, updated_ctx)
+                if cross_update:
+                    # Append the meta information to the list of BIDS files
+                    bids_files.append(copy.deepcopy(context))
+                else:
+                    # Update file meta info
+                    update_meta_info(fw, context)
+    if cross_update:
+        # Cross update
+        cross_updated_ctxs = bidsify_flywheel.cross_update(bids_files, template)
+        for updated_ctx in cross_updated_ctxs:
+            # Validate meta information
+            validate_meta_info(updated_ctx['file'], template)
+            # Update file meta info
+            update_meta_info(fw, updated_ctx)
 if __name__ == '__main__':
     ### Read in arguments
     parser = argparse.ArgumentParser(description='BIDS Curation')
@@ -270,10 +279,12 @@ if __name__ == '__main__':
             required=False, default=None, help='Project Label on Flywheel instance')
     parser.add_argument('--session', dest='session_id', action='store',
             required=False, default=None, help='Session ID, used to look up project if project label is not readily available')
-    parser.add_argument('--reset', dest='reset', action='store_true', 
+    parser.add_argument('--reset', dest='reset', action='store_true',
             default=False, help='Reset BIDS data before running')
     parser.add_argument('--template-file', dest='template_file', action='store',
             default=None, help='Template file to use')
+    parser.add_argument('--cross-update', action='store_true',
+            default=False, help='Cross update fields according to templates')
     args = parser.parse_args()
 
     ### Prep
@@ -290,4 +301,4 @@ if __name__ == '__main__':
 
 
     ### Curate BIDS project
-    curate_bids_dir(fw, project_id, reset=args.reset, template_file=args.template_file)
+    curate_bids_dir(fw, project_id, reset=args.reset, template_file=args.template_file, cross_update=args.cross_update)

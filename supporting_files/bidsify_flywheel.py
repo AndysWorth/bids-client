@@ -123,13 +123,13 @@ def add_properties(properties, obj, measurements):
 # See process_string_template for details on how to use string templates
 # Updated keys are added to the obj object for later update to Flywheel
 
-def update_properties(properties, context, obj):
+def update_properties(properties, context, obj, cross_update=False):
     for key in properties:
         proptype = properties[key]["type"]
         if proptype == "string":
             if "auto_update" in properties[key]:
                 obj[key] = process_string_template(properties[key]['auto_update'],context)
-        if "cross_update" in properties[key]:
+        if cross_update and "cross_update" in properties[key]:
             obj[key] = "cross_update"
         elif proptype == "object":
             obj[key] = {}
@@ -143,7 +143,7 @@ def update_properties(properties, context, obj):
 # Matching templates define rules for adding objects to the container's info object if they don't already exist
 # Matching templates with 'auto_update' rules will update existing info object values each time it is run.
 
-def process_matching_templates(context, template=templates.DEFAULT_TEMPLATE):
+def process_matching_templates(context, template=templates.DEFAULT_TEMPLATE, cross_update=False):
     namespace = template.namespace
 
     container_type = context['container_type']
@@ -183,7 +183,7 @@ def process_matching_templates(context, template=templates.DEFAULT_TEMPLATE):
         if not templateDef:
             templateDef = template.definitions.get(container['info'][template.namespace]['template'])
         if templateDef:
-            data = update_properties(templateDef["properties"], context, {})
+            data = update_properties(templateDef["properties"], context, {}, cross_update=cross_update)
             container['info'][namespace].update(data)
 
     return container

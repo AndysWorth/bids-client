@@ -15,8 +15,8 @@
 			"pattern": "^[a-zA-Z0-9]*$"
 		},
 		"Echo": {
-			"type": "string", 
-			"title": "Echo Index", 
+			"type": "string",
+			"title": "Echo Index",
 			"default": "",
 			"pattern": "^[0-9]*$"
 		},
@@ -27,8 +27,8 @@
 			"minLength": 1
 		},
 		"Mod": {
-			"type": "string", 
-			"title": "Mod Label", 
+			"type": "string",
+			"title": "Mod Label",
 			"default": "",
 			"pattern": "^[a-zA-Z0-9]*$"
 		},
@@ -90,7 +90,7 @@
 			},
 			"required": ["Filename"]
 		},
-		"anat_file": { 
+		"anat_file": {
 			"description": "BIDS template for anat files",
 			"properties": {
 				"Filename": {"type": "string", "title": "Filename", "default": "", "minLength": 1,
@@ -125,7 +125,7 @@
 			},
 			"required": ["Filename", "Modality"]
 		},
-		"func_file": {	
+		"func_file": {
 			"description": "BIDS template for func files",
 			"properties": {
 				"Filename": {"type": "string", "title": "Filename", "default": "", "minLength": 1,
@@ -149,7 +149,7 @@
 			},
 			"required": ["Filename", "Task", "Modality"]
 		},
-		"task_events_file": {	
+		"task_events_file": {
 			"description": "BIDS template for task events files",
 			"properties": {
 				"Filename": {"type": "string", "title": "Filename", "default": "", "minLength": 1,
@@ -177,7 +177,7 @@
 			},
 			"required": ["Filename", "Task"]
 		},
-		"physio_task_file": {	
+		"physio_task_file": {
 			"description": "BIDS template for physio files",
 			"properties": {
 				"Filename": {"type": "string", "title": "Filename", "default": "", "minLength": 1,
@@ -260,6 +260,10 @@
 				"Acq": {"type": "string", "label": "Acq Label", "default": ""},
 				"Run": {"type": "string", "label": "Run Index", "default": ""},
 				"Dir": {"type": "string", "label": "Dir Label", "default": ""},
+				"IntendedFor": {
+					"type": "array", "title": "IntendedFor", "default": [], "filters": {"file.info.BIDS.Folder": ["func"], "subject.code": ["{subject.code}"]},
+					"cross_update": "[ses-<session.label>/]{file.info.BIDS.Folder}/{file.info.BIDS.Filename}"
+				},
 				"Modality": {"type": "string", "label": "Modality Label", "default": "epi",
 					"enum": [
 						"phasediff",
@@ -275,7 +279,7 @@
 			},
 			"required": ["Filename", "Folder", "Path", "Modality", "Dir"]
 		},
-		"dicom_file": {	
+		"dicom_file": {
 			"description": "BIDS template for DICOM files",
 			"properties": {
 				"Filename": {"$ref":"#/definitions/Filename"},
@@ -336,7 +340,7 @@
 						"anatomy_t1w_inplane", "anatomy_t2w_inplane", "angio",
 						"defacemask", "swi"
 					]
-				}					
+				}
 			},
 			"initialize": {
 				"Task": {
@@ -544,7 +548,7 @@
 				}
 			},
 			"initialize": {
-				"Filename": { 
+				"Filename": {
 					"file.name": { "$take": true }
 				}
 			}
