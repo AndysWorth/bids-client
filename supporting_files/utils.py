@@ -71,6 +71,8 @@ def dict_lookup(obj, value):
     for part in parts:
         if isinstance(curr, dict) and part in curr:
             curr = curr[part]
+        elif isinstance(curr, list) and int(part) < len(curr):
+            curr = curr[int(part)]
         else:
             curr = None
             break

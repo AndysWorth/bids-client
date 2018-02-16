@@ -79,4 +79,24 @@ class RuleTestCases(unittest.TestCase):
         rule.initializeProperties(info, context)
         self.assertEqual( info, { 'Property': 'no_match' } )
 
+    def test_rule_initialize_format(self):
+        rule = templates.Rule({
+            'template': 'test',
+            'where': { 'x': True },
+            'initialize': {
+                'Property': {
+                    'value': {
+                        '$take': True,
+                        '$format': [
+                            {'$replace': {'$pattern': 'OLD', '$replacement': 'NEW'}}
+                        ]
+                    }
+                }
+            }
+        })
+        context = { 'value': 'The_OLD_String' }
+        info = { }
+        rule.initializeProperties(info, context)
+        self.assertEqual( info, { 'Property': 'The_NEW_String'})
+
 
