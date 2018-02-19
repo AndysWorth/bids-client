@@ -28,7 +28,7 @@ class Template:
             self.description = data.get('description', '')
             self.definitions = data.get('definitions', {})
             self.rules = data.get('rules', [])
-            
+
             self.extends = data.get('extends')
             self.exclude_rules = data.get('exclude_rules', [])
         else:
@@ -79,7 +79,7 @@ class Template:
             rule = self.rules[i]
             if not isinstance(rule, Rule):
                 self.rules[i] = Rule(rule)
-            
+
     def validate(self, templateDef, info):
         """
         Validate info against a template definition schema.
@@ -106,7 +106,7 @@ class Template:
             parent (object): The parent object
             key: The key to the parent object
         """
-        if isinstance(obj, dict): 
+        if isinstance(obj, dict):
             if parent and '$ref' in obj:
                 ref, result = resolver.resolve(obj['$ref'])
                 parent[key] = result
@@ -144,7 +144,7 @@ class Rule:
     def test(self, context):
         """
         Test if the given context matches this rule.
-        
+
         Args:
             context (dict): The context, which includes the hierarchy and current container
 
@@ -207,6 +207,9 @@ class Rule:
                             elif '$take' in valueSpec and valueSpec['$take']:
                                 resolvedValue = value
 
+                            if '$format' in valueSpec and resolvedValue:
+                                resolvedValue = formatValue(valueSpec['$format'], resolvedValue)
+
                             if resolvedValue:
                                 break
             else:
@@ -249,7 +252,7 @@ def processValueMatch(value, match):
                     if item in match['$in']:
                         return True
                 return False
-            
+
             return value in match['$in']
 
         elif '$not' in match:
@@ -265,8 +268,8 @@ def processValueMatch(value, match):
                         return True
 
                 return False
-            
-            return regex.search(value) is not None 
+
+            return regex.search(value) is not None
 
     else:
         # Direct match
@@ -278,10 +281,20 @@ def processValueMatch(value, match):
 
         return value == match
 
+def formatValue(params, value):
+    """
+    Formats a string value based on given parameters i.e. {"$replace": {"$pattern": "ab", "$replacement": "c"}}
+    will return "dcf" from "dabf"
+    """
+    for param in params:
+        if "$replace" in param:
+            value = re.sub(param["$replace"].get('$pattern'), param["$replace"].get('$replacement'), value)
+    return value
+
 def loadTemplates(templates_dir=None):
     """
     Load all templates in the given (or default) directory
-    
+
     Args:
         templates_dir (string): The optional directory to load templates from.
     """
@@ -303,7 +316,7 @@ def loadTemplates(templates_dir=None):
 def loadTemplate(path, templates=None):
     """
     Load the template at path
-    
+
     Args:
         path (str): The path to the template to load
         templates (dict): The mapping of template names to template defintions.
