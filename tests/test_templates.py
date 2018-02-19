@@ -88,15 +88,18 @@ class RuleTestCases(unittest.TestCase):
                     'value': {
                         '$take': True,
                         '$format': [
-                            {'$replace': {'$pattern': 'OLD', '$replacement': 'NEW'}}
+                            # Use regex to find patterns
+                            {'$replace': {'$pattern': '[A-Z]+', '$replacement': 'NEW'}},
+                            # Chain formatting operations
+                            {'$replace': {'$pattern': 'EW', '$replacement': 'ew'}}
                         ]
                     }
                 }
             }
         })
-        context = { 'value': 'The_OLD_String' }
+        context = { 'value': 'the_OLD_string' }
         info = { }
         rule.initializeProperties(info, context)
-        self.assertEqual( info, { 'Property': 'The_NEW_String'})
+        self.assertEqual( info, { 'Property': 'the_New_string'})
 
 

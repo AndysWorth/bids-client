@@ -288,7 +288,7 @@ def formatValue(params, value):
     """
     for param in params:
         if "$replace" in param:
-            value = value.replace(param["$replace"].get('$pattern'), param["$replace"].get('$replacement'))
+            value = re.sub(param["$replace"].get('$pattern'), param["$replace"].get('$replacement'), value)
     return value
 
 def loadTemplates(templates_dir=None):
