@@ -49,9 +49,7 @@ def add_properties(properties, obj, measurements):
             else:
                 obj[key] = "default"
         elif proptype == "object":
-            print 'Property {} is an object'.format(key)
-            obj[key] = {}
-            obj[key] = add_properties(properties[key]["properties"], obj[key], measurements)
+            obj[key] = properties[key].get('default', {})
     return(obj)
 
 
@@ -67,9 +65,6 @@ def update_properties(properties, context, obj):
         if proptype == "string":
             if "auto_update" in properties[key]:
                 obj[key] = utils.process_string_template(properties[key]['auto_update'],context)
-        elif proptype == "object":
-            obj[key] = {}
-            obj[key] = update_properties(properties[key]["properties"], context, obj[key])
     return(obj)
 
 
@@ -123,6 +118,22 @@ def process_matching_templates(context, template=templates.DEFAULT_TEMPLATE):
             container['info'][namespace].update(data)
 
     return container
+
+def process_resolvers(session, context, template=templates.DEFAULT_TEMPLATE):
+    namespace = template.namespace
+
+    container_type = context['container_type']
+    container = context[container_type]
+
+    if (('info' not in container) or (namespace not in container['info']) or ('template' not in container['info'][namespace])):
+        return
+    
+    template_name = container['info'][namespace]['template']
+    resolvers = template.resolver_map.get(template_name, [])
+
+    for resolver in resolvers:
+        resolver.resolve(session, context)
+
 
 def ensure_info_exists(context, template=templates.DEFAULT_TEMPLATE):
     """

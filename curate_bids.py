@@ -106,7 +106,7 @@ def update_meta_info(fw, context):
                     context['file']['info']
                     )
         else:
-            logger.info('Cannot determine file parent container type')
+            logger.info('Cannot determine file parent container type: ' + context['parent_container_type'])
     # Modify project
     elif context['container_type'] == 'project':
         fw.replace_project_info(context['project']['_id'], context['project']['info'])
@@ -115,7 +115,7 @@ def update_meta_info(fw, context):
         fw.replace_session_info(context['session']['_id'], context['session']['info'])
     # Cannot determine container type
     else:
-        logger.info('Cannot determine container type')
+        logger.info('Cannot determine container type: ' + context['container_type'])
 
 def curate_bids_dir(fw, project_id, reset=False, template_file=None):
     """
@@ -185,6 +185,16 @@ def curate_bids_tree(fw, project, reset=False, template_file=None, update=True):
             context['file'] = bidsify_flywheel.process_matching_templates(context, template)
             # Validate meta information
             validate_meta_info(context['file'], template)
+
+    # 2. Perform any path resolutions
+    session = None
+    for context in project.context_iter():
+        ctype = context['container_type']
+        if ctype == 'session':
+            session = context['session']
+        if session is not None:
+            # Resolution
+            bidsify_flywheel.process_resolvers(session, context, template)
 
     # 3. Send updates to server
     if update:

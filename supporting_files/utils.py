@@ -64,7 +64,7 @@ def get_extension(fname):
         ext = ext.group()
     return ext
 
-def dict_lookup(obj, value):
+def dict_lookup(obj, value, default=None):
     # For now, we don't support escaping of dots
     parts = value.split('.')
     curr = obj
@@ -74,9 +74,21 @@ def dict_lookup(obj, value):
         elif isinstance(curr, list) and int(part) < len(curr):
             curr = curr[int(part)]
         else:
-            curr = None
+            curr = default
             break
     return curr
+
+def dict_set(obj, key, value):
+    parts = key.split('.')
+    curr = obj
+    for part in parts[:-1]:
+        if isinstance(curr, (dict, collections.Mapping)) and part in curr:
+            curr = curr[part]
+        elif isinstance(curr, list) and int(part) < len(curr):
+            curr = curr[int(part)]
+        else:
+            raise ValueError('Could not set value for key: ' + key)
+    curr[parts[-1]] = value
 
 def normalize_strings(obj):
     if isinstance(obj, basestring):

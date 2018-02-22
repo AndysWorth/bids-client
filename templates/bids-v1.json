@@ -26,6 +26,13 @@
 			"default": "",
 			"minLength": 1
 		},
+		"IntendedFor": {
+			"type": "object",
+			"title": "IntendedFor",
+			"default": {
+				"Folder": ["anat", "func"]
+			}
+		},
 		"Mod": {
 			"type": "string", 
 			"title": "Mod Label", 
@@ -226,6 +233,7 @@
 				"Acq": {"$ref":"#/definitions/Acq"},
 				"Run": {"$ref":"#/definitions/Run"},
 				"Dir": {"type": "string", "title": "Dir Label", "default": ""},
+				"IntendedFor": {"$ref":"#/definitions/IntendedFor"},
 				"Modality": {"type": "string", "title": "Modality Label", "default": "fieldmap",
 					"enum": [
 						"phasediff",
@@ -252,6 +260,7 @@
 				"Acq": {"type": "string", "label": "Acq Label", "default": ""},
 				"Run": {"type": "string", "label": "Run Index", "default": ""},
 				"Dir": {"type": "string", "label": "Dir Label", "default": ""},
+				"IntendedFor": {"$ref":"#/definitions/IntendedFor"},
 				"Modality": {"type": "string", "label": "Modality Label", "default": "epi",
 					"enum": [
 						"phasediff",
@@ -571,6 +580,16 @@
 					"$in": ["source code", "JSON"]
 				}
 			}
+		}
+	],
+	"resolvers": [
+		{
+			"id": "bids_intended_for",
+			"templates": [ "fieldmap_file", "fieldmap_phase_encoded_file" ],
+			"update": "file.info.IntendedFor",
+			"filter": "file.info.BIDS.IntendedFor",
+			"type": "file",
+			"format": "{file.info.BIDS.Folder}/{file.info.BIDS.Filename}"
 		}
 	]
 }
