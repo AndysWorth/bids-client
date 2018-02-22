@@ -1,6 +1,7 @@
 import collections
 import logging
 import copy
+import dateutil.parser
 from supporting_files import utils
 logger = logging.getLogger('curate-bids')
 
@@ -130,7 +131,12 @@ def get_project_tree(fw, project_id):
 
         # Get acquisitions within session
         session_acqs = fw.get_session_acquisitions(proj_ses['_id'])
+
+        # Prepare for sorting by converting timestamps to datetime
         for ses_acq in session_acqs:
+            format_acquisition_timestamps(ses_acq)
+
+        for ses_acq in sorted(session_acqs, compare_acquisitions):
             # Get true acquisition, in order to access file info
             acquisition_data = fw.get_acquisition(ses_acq['_id'])
             acquisition_node = TreeNode('acquisition', acquisition_data)
@@ -139,4 +145,18 @@ def get_project_tree(fw, project_id):
             session_node.children.append(acquisition_node)
 
     return project_node
+
+def format_acquisition_timestamps(acq):
+    timestamp = acq.get('timestamp')
+    if timestamp:
+        acq['timestamp'] = dateutil.parser.parse(timestamp)
+    acq['created'] = dateutil.parser.parse(acq['created'])
+
+def compare_acquisitions(acq1, acq2):
+    # Prefer timestamp over created
+    ts1 = acq1.get('timestamp')
+    ts2 = acq2.get('timestamp')
+    if ts1 and ts2:
+        return int((ts1 - ts2).total_seconds())
+    return int((acq1['created'] - acq2['created']).total_seconds())
 

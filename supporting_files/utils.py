@@ -87,4 +87,89 @@ def normalize_strings(obj):
         return type(obj)(map(normalize_strings, obj))
     return obj
 
+# process_string_template(template, context)
+# finds values in the context object and substitutes them into the string template
+# Use <path> for cases where you want the result converted to lowerCamelCase
+# Use {path} for cases where you want a literal value substitution
+# path uses dot notation to navigate the context for desired values
+# path examples:  <session.label>  returns session.label in lowercamelcase
+#                 {file.info.BIDS.Filename} returns the value of file.info.BIDS.Filename
+#                 {file.info.BIDS.Modality} returns Modality without modification
+# example template string:
+#       'sub-<subject.code>_ses-<session.label>_acq-<acquisition.label>_{file.info.BIDS.Modality}.nii.gz'
+
+def process_string_template(template, context):
+    tokens = re.compile('[^\[][A-Za-z0-9\.><}{-]+|\[[/A-Za-z0-9><}{_\.-]+\]')
+    values = re.compile('[{<][A-Za-z0-9\.-]+[>}]')
+
+    for token in tokens.findall(template):
+        if values.search(token):
+            replace_tokens = values.findall(token)
+            for replace_token in replace_tokens:
+                # Remove the {} or <> surrounding the replace_token
+                path = replace_token[1:-1]
+                # Get keys, if replace token has a . in it
+                keys = path.split(".")
+                result = context
+                for key in keys:
+                    if key in result:
+                        result = result[key]
+                    else:
+                        result = None
+                        break
+                # If value found replace it
+                if result:
+                    # If replace token is <>, need to check if in BIDS
+                    if replace_token[0] == '<':
+                        # Check if result is already in BIDS format...
+                        #   if so, split and grab only the label
+                        if re.match('(sub|ses)-[a-zA-Z0-9]+', result):
+                            label, result = result.split('-')
+                        # If not, take the entire result and remove underscores and dashes
+                        else:
+                            result = ''.join(x for x in result.replace('_', ' ').replace('-', ' ').title() if x.isalnum())
+                            result = result[0].lower() + result[1:]
+
+                    # Replace the token with the result
+                    template = template.replace(replace_token, str(result))
+                # If result not found, but the token is option, remove the token from the template
+                elif token[0] == '[':
+                    template = template.replace(token, '')
+
+                # TODO: Determine approach
+                # Else the value hasn't been found AND field is required, and so let's replace with 'UNKNOWN'
+                #elif token[0] != '[':
+                #    result = 'UNKNOWN'
+                #    template = template.replace(replace_token, result)
+        else:
+            pass
+
+    # Replace any [] from the string
+    processed_template = re.sub('\[|\]', '', template)
+
+    return processed_template
+
+
+class RunCounter:
+    def __init__(self):
+        self.current = 0
+
+    def next(self):
+        self.current = self.current + 1
+        return str(self.current)
+
+    def current(self):
+        return str(self.current)
+
+class RunCounterMap:
+    def __init__(self):
+        self.entries = {}
+
+    def __getitem__(self, key):
+        if key not in self.entries:
+            self.entries[key] = RunCounter()
+        return self.entries[key]
+
+    def __contains__(self, key):
+        return True
 

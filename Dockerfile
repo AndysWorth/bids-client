@@ -13,6 +13,7 @@ MAINTAINER Flywheel <support@flywheel.io>
 
 # Install jsonschema
 RUN pip install jsonschema==2.6.0
+RUN pip install python-dateutil==2.6.1
 
 # Install BIDS validator from INCF
 #     https://github.com/INCF/bids-validator
