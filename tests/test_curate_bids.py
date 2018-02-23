@@ -5,6 +5,7 @@ import unittest
 import flywheel
 
 import curate_bids
+from supporting_files import project_tree
 from supporting_files.templates import BIDS_TEMPLATE
 
 class BidsCurateTestCases(unittest.TestCase):
@@ -218,6 +219,35 @@ class BidsCurateTestCases(unittest.TestCase):
         self.assertTrue(meta_info['info']['BIDS']['valid'])
         # Assert error message is empty string
         self.assertEqual(meta_info['info']['BIDS']['error_message'], '')
+
+    def test_intended_for(self):
+        project = project_tree.TreeNode('project', { 'label': 'testProj' })
+
+        session = project_tree.TreeNode('session', { 'label': 'session1', 'subject': { 'code': 'subj1' } })
+        project.children.append(session)
+
+        acq1 = project_tree.TreeNode('acquisition', { 'label': 'acq1_LR', 'created': '2018-01-17T07:58:09.799Z' })
+        session.children.append(acq1)
+        file1 = project_tree.TreeNode('file', {
+            'name': 'fieldmap.nii.gz',
+            'type': 'nifti',
+            'measurements': ['field_map'] 
+        })
+        acq1.children.append(file1)
+
+        acq2 = project_tree.TreeNode('acquisition', { 'label': 'acq2_task-rest_run-1' })
+        session.children.append(acq2)
+        file2 = project_tree.TreeNode('file', {
+            'name': 'task1.nii.gz',
+            'type': 'nifti',
+            'measurements': ['functional']
+        })
+        acq2.children.append(file2)
+
+        curate_bids.curate_bids_tree(None, project, False, None, False)
+        self.assertIn('IntendedFor', file1['info'])
+        self.assertEqual(len(file1['info']['IntendedFor']), 1)
+        self.assertEqual(file1['info']['IntendedFor'][0], 'func/sub-subj1_ses-session1_task-rest_run-1_bold.nii.gz')
 
 
 if __name__ == "__main__":
