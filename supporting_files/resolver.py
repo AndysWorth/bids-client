@@ -2,10 +2,26 @@ import re
 import utils
 
 class Filter:
+    """
+    Simple wrapper for a matching filter that can be applied to a context.
+
+    Args:
+        fields(dict): The field to value(s) mapping.
+    """
     def __init__(self, fields):
         self.fields = fields
 
     def test(self, context):
+        """
+        Test context to see if it passes this filter. Top-level clauses (properties) are
+        logically ANDed, and lists of values are logically ORed.
+
+        Args:
+            context (dict): The context to check
+
+        Returns:
+            bool: True if every top level clause matched
+        """
         for prop, filter_value in self.fields.items():
             prop_val = utils.dict_lookup(context, prop)
             if isinstance(filter_value, list):
@@ -18,6 +34,22 @@ class Filter:
 
 
 class Resolver:
+    """
+    Compiled resolver rule
+
+    Args:
+        namespace (str): The template namespace
+        resolverDef (dict): The resolver properties dictionary
+
+    Attributes:
+        namespace: The template namespace
+        id: The optional resolver id
+        templates: The list of templates this resolver applies to
+        update_field: The field to be updated with the resolved result
+        filter_field: The field that contains the user-defined filter
+        container_type: The type of container this resolver should match
+        format: The format string for resolved values
+    """
     def __init__(self, namespace, resolverDef): 
         self.namespace = namespace
         self.id = resolverDef.get('id')
@@ -28,6 +60,13 @@ class Resolver:
         self.format = resolverDef.get('format')
 
     def resolve(self, session, context):
+        """
+        Resolve update_field for context by matching and formatting children of session.
+
+        Args:
+            session (TreeNode): The session to search within
+            context (dict): The context to update
+        """
         results = []
 
         # Determine filter fields, and add namespace prefix for matching
@@ -47,8 +86,5 @@ class Resolver:
         
         # Finally update the field specified
         utils.dict_set(context, self.update_field, results)
-
-
-    
 
     
