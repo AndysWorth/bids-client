@@ -333,12 +333,15 @@
 			"initialize": {
 				"Task": {
 					"acquisition.label": {
-						"$regex": "_task-(?P<value>[^-_]+)"
+						"$regex": "(^|_)task-(?P<value>[^-_]+)"
 					}
 				},
 				"Run": {
 					"acquisition.label": {
-						"$regex": "_run-(?P<value>\\d+)"
+						"$regex": "(^|_)run-(?P<value>[=+\\d]+)"
+					},
+					"$run_counter": {
+						"key": "anat.{file.info.BIDS.Task}"
 					}
 				}
 			}
@@ -358,12 +361,15 @@
 			"initialize": {
 				"Task": {
 					"acquisition.label": {
-						"$regex": "_task-(?P<value>[^-_]+)"
+						"$regex": "(^|_)task-(?P<value>[^-_]+)"
 					}
 				},
 				"Run": {
 					"acquisition.label": {
-						"$regex": "_run-(?P<value>\\d+)"
+						"$regex": "(^|_)run-(?P<value>[=+\\d]+)"
+					},
+					"$run_counter": {
+						"key": "functional.{file.info.BIDS.Task}"
 					}
 				},
 				"Modality": {
@@ -402,12 +408,15 @@
 			"initialize": {
 				"Task": {
 					"acquisition.label": {
-						"$regex": "_task-(?P<value>[^-_]+)"
+						"$regex": "(^|_)task-(?P<value>[^-_]+)"
 					}
 				},
 				"Run": {
 					"acquisition.label": {
-						"$regex": "_run-(?P<value>\\d+)"
+						"$regex": "(^|_)run-(?P<value>[=+\\d]+)"
+					},
+					"$run_counter": {
+						"key": "task_events.{file.info.BIDS.Task}"
 					}
 				}
 			}
@@ -427,7 +436,7 @@
 			"initialize": {
 				"Task": {
 					"acquisition.label": {
-						"$regex": "_task-(?P<value>[^-_]+)"
+						"$regex": "(^|_)task-(?P<value>[^-_]+)"
 					}
 				}
 			}
@@ -447,12 +456,15 @@
 			"initialize": {
 				"Task": {
 					"acquisition.label": {
-						"$regex": "_task-(?P<value>[^-_]+)"
+						"$regex": "(^|_)task-(?P<value>[^-_]+)"
 					}
 				},
 				"Run": {
 					"acquisition.label": {
-						"$regex": "_run-(?P<value>\\d+)"
+						"$regex": "(^|_)run-(?P<value>[=+\\d]+)"
+					},
+					"$run_counter": {
+						"key": "physio.{file.info.BIDS.Task}"
 					}
 				}
 			}
@@ -472,7 +484,10 @@
 			"initialize": {
 				"Run": {
 					"acquisition.label": {
-						"$regex": "_run-(?P<value>\\d+)"
+						"$regex": "(^|_)run-(?P<value>[=+\\d]+)"
+					},
+					"$run_counter": {
+						"key": "diffusion"
 					}
 				}
 			}
@@ -501,7 +516,10 @@
 				},
 				"Run": {
 					"acquisition.label": {
-						"$regex": "_run-(?P<value>\\d+)"
+						"$regex": "(^|_)run-(?P<value>[=+\\d]+)"
+					},
+					"$run_counter": {
+						"key": "field_map.{file.info.BIDS.Dir}"
 					}
 				}
 			}
@@ -521,7 +539,10 @@
 			"initialize": {
 				"Run": {
 					"acquisition.label": {
-						"$regex": "_run-(?P<value>\\d+)"
+						"$regex": "(^|_)run-(?P<value>[=+\\d+])"
+					},
+					"$run_counter": {
+						"key": "field_map"
 					}
 				}
 			}

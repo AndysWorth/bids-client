@@ -218,6 +218,8 @@ class Rule:
             if resolvedValue:
                 info[propName] = resolvedValue
 
+        self._handleRunCounters(info, context)
+
     def _handleSwitch(self, switchDef, context):
         value = utils.dict_lookup(context, switchDef['$on'])
         if isinstance(value, list):
@@ -232,6 +234,24 @@ class Rule:
                 return caseDef.get('$value')
 
         return None
+
+    def _handleRunCounters(self, info, context):
+        counter = context.get('run_counters')
+        if not counter:
+            return
+
+        for propName, propDef in self.initialize.items():
+            if isinstance(propDef, dict) and '$run_counter' in propDef:
+                current = info.get(propName)
+                if current == '+' or current == '=':
+                    key = propDef['$run_counter']['key']
+                    key = utils.process_string_template(key, context)
+
+                    counter = counter[key]                            
+                    if current == '+':
+                        info[propName] = counter.next()
+                    else:
+                        info[propName] = counter.current()
 
 
 def processValueMatch(value, match):

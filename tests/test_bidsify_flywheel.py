@@ -35,7 +35,7 @@ class BidsifyTestCases(unittest.TestCase):
         }
 
         # Call function
-        updated_string = bidsify_flywheel.process_string_template(auto_update_str, context)
+        updated_string = utils.process_string_template(auto_update_str, context)
 
         self.assertEqual(updated_string,
                 'sub-%s_ses-%s_bold.nii.gz' % (
@@ -60,7 +60,7 @@ class BidsifyTestCases(unittest.TestCase):
         }
 
         # Call function
-        updated_string = bidsify_flywheel.process_string_template(auto_update_str, context)
+        updated_string = utils.process_string_template(auto_update_str, context)
 
         self.assertEqual(updated_string,
                 '%s_%s_bold.nii.gz' % (
@@ -85,7 +85,7 @@ class BidsifyTestCases(unittest.TestCase):
         }
 
         # Call function
-        updated_string = bidsify_flywheel.process_string_template(auto_update_str, context)
+        updated_string = utils.process_string_template(auto_update_str, context)
         # Assert function honors the optional 'sub-<subject.code>'
         self.assertEqual(updated_string,
                 '_ses-%s_acq-%s_bold.nii.gz' % (
@@ -109,7 +109,7 @@ class BidsifyTestCases(unittest.TestCase):
         }
 
         # Call function
-        updated_string = bidsify_flywheel.process_string_template(auto_update_str, context)
+        updated_string = utils.process_string_template(auto_update_str, context)
         # Assert function honors the optional labels
         self.assertEqual(updated_string,
                 'sub-123_ses-456')
@@ -132,7 +132,7 @@ class BidsifyTestCases(unittest.TestCase):
         }
 
         # Call function
-        updated_string = bidsify_flywheel.process_string_template(auto_update_str, context)
+        updated_string = utils.process_string_template(auto_update_str, context)
         # Assert string as expected
         self.assertEqual(updated_string,
                 'sub-%s_ses-%s_task-%s_%s%s' % (
@@ -161,7 +161,7 @@ class BidsifyTestCases(unittest.TestCase):
         }
 
         # Call function
-        updated_string = bidsify_flywheel.process_string_template(auto_update_str, context)
+        updated_string = utils.process_string_template(auto_update_str, context)
         # Assert function honors the optional 'sub-<subject.code>'
         self.assertEqual(updated_string,
                 'sub-<subject.code>_ses-%s' % (
@@ -186,7 +186,7 @@ class BidsifyTestCases(unittest.TestCase):
         }
 
         # Call function
-        updated_string = bidsify_flywheel.process_string_template(auto_update_str, context)
+        updated_string = utils.process_string_template(auto_update_str, context)
         # Assert function honors the optional 'sub-<subject.code>'
         self.assertEqual(updated_string,
                 'sub-<subject.code>_ses-%s' % (
@@ -321,7 +321,8 @@ class BidsifyTestCases(unittest.TestCase):
             'project': None,
             'subject': {u'code': u'001'},
             'session': {u'label': u'sesTEST'},
-            'acquisition': {u'label': u'acqTEST'},
+            'run_counters': utils.RunCounterMap(),
+            'acquisition': {u'label': u'acq_task-TEST_run-+'},
             'file': {u'measurements': [u'functional'],
                     u'type': u'nifti',
                         },
@@ -334,10 +335,10 @@ class BidsifyTestCases(unittest.TestCase):
             'info': {
                 'BIDS': {
                     'template': 'func_file',
-                    'Filename': u'sub-001_ses-sestest_task-{file.info.BIDS.Task}_bold.nii.gz',
+                    'Filename': u'sub-001_ses-sestest_task-TEST_run-1_bold.nii.gz',
                     'Folder': 'func', 'Path': u'sub-001/ses-sestest/func',
-                    'Acq': '', 'Task': '', 'Modality': 'bold',
-                    'Rec': '', 'Run': '', 'Echo': ''
+                    'Acq': '', 'Task': 'TEST', 'Modality': 'bold',
+                    'Rec': '', 'Run': '1', 'Echo': ''
                     }
                 },
             u'measurements': [u'functional'], u'type': u'nifti'}

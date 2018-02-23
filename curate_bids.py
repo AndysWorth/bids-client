@@ -173,6 +173,9 @@ def curate_bids_tree(fw, project, reset=False, template_file=None, update=True):
             # Returns true if modified
             bidsify_flywheel.ensure_info_exists(context['session'], template)
 
+            # Add run_counter
+            context['run_counters'] = utils.RunCounterMap()
+
         elif ctype == 'file':
             if parent_ctype == 'project' and context['file']['name'] == PROJECT_TEMPLATE_FILE_NAME:
                 # Don't BIDSIFY project template
