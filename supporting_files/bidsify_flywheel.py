@@ -50,6 +50,8 @@ def add_properties(properties, obj, measurements):
                 obj[key] = "default"
         elif proptype == "object":
             obj[key] = properties[key].get('default', {})
+        elif 'default' in properties[key]:
+                obj[key] = properties[key]['default']
     return(obj)
 
 

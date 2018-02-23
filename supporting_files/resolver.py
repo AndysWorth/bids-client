@@ -71,18 +71,23 @@ class Resolver:
 
         # Determine filter fields, and add namespace prefix for matching
         filter_fields = utils.dict_lookup(context, self.filter_field, {})
-        fields = {}
+        base_fields = {}
         if self.container_type:
-            fields['container_type'] = self.container_type
-        for k, v in filter_fields.items():
-            key = '{}.info.{}.{}'.format(self.container_type, self.namespace, k)
-            fields[key] = v
-        filt = Filter(fields)
+            base_fields['container_type'] = self.container_type
+
+        filters = []
+        for entry in filter_fields:
+            fields = base_fields.copy()
+            for k, v in entry.items():
+                key = '{}.info.{}.{}'.format(self.container_type, self.namespace, k)
+                fields[key] = v
+            filters.append(Filter(fields))
 
         # Iterate through the contexts in the session, collecting matches
         for ctx in session.context_iter():
-            if filt.test(ctx):
-                results.append(utils.process_string_template(self.format, ctx))
+            for filt in filters:
+                if filt.test(ctx):
+                    results.append(utils.process_string_template(self.format, ctx))
         
         # Finally update the field specified
         utils.dict_set(context, self.update_field, results)

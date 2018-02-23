@@ -27,11 +27,12 @@
 			"minLength": 1
 		},
 		"IntendedFor": {
-			"type": "object",
+			"type": "array",
 			"title": "IntendedFor",
-			"default": {
-				"Folder": ["anat", "func"]
-			}
+			"default": [
+				{ "Folder": "anat" },
+				{ "Folder": "func" }
+			]
 		},
 		"Mod": {
 			"type": "string", 
