@@ -102,4 +102,14 @@ class RuleTestCases(unittest.TestCase):
         rule.initializeProperties(info, context)
         self.assertEqual( info, { 'Property': 'the_New_string'})
 
-
+    def test_rule_where_regex_match(self):
+        rule = templates.Rule({
+            'template': 'test',
+            'where': {
+                'x': {
+                    "$regex": "topup"
+                }
+            }
+        })
+        context = { 'x': 'string_with topup in it' }
+        self.assertTrue(rule.test(context))
