@@ -8,6 +8,7 @@ import sys
 import flywheel
 
 from supporting_files import bidsify_flywheel, utils, templates
+from supporting_files.project_tree import get_project_tree
 
 PROJECT_TEMPLATE_FILE_NAME = 'project-template.json'
 
@@ -124,7 +125,9 @@ def curate_bids_dir(fw, project_id, reset=False, template_file=None):
 
     """
     project = get_project_tree(fw, project_id)
+    curate_bids_tree(fw, project, reset, template_file, True)
 
+def curate_bids_tree(fw, project, reset=False, template_file=None, update=True):
     # Get project
     project_files = project.get('files', [])
 
@@ -181,11 +184,12 @@ def curate_bids_dir(fw, project_id, reset=False, template_file=None):
             validate_meta_info(context['file'], template)
 
     # 3. Send updates to server
-    for context in project.context_iter():
-        ctype = context['container_type']
-        node = context[ctype]
-        if node.is_dirty():
-            update_meta_info(fw, context)
+    if update:
+        for context in project.context_iter():
+            ctype = context['container_type']
+            node = context[ctype]
+            if node.is_dirty():
+                update_meta_info(fw, context)
 
 
 if __name__ == '__main__':
