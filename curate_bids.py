@@ -8,6 +8,7 @@ import sys
 import flywheel
 
 from supporting_files import bidsify_flywheel, utils, templates
+from supporting_files.project_tree import get_project_tree
 
 PROJECT_TEMPLATE_FILE_NAME = 'project-template.json'
 
@@ -123,22 +124,12 @@ def curate_bids_dir(fw, project_id, reset=False, template_file=None):
     project_id: project id of project to curate
 
     """
-    # Initialize context object
-    context = {
-        'container_type': None,
-        'parent_container_type': None,
-        'project': None,
-        'subject': None,
-        'session': None,
-        'acquisition': None,
-        'file': None,
-        'ext': None
-    }
+    project = get_project_tree(fw, project_id)
+    curate_bids_tree(fw, project, reset, template_file, True)
 
+def curate_bids_tree(fw, project, reset=False, template_file=None, update=True):
     # Get project
-    logger.info('Getting project...')
-    context['project'] = fw.get_project(project_id)
-    project_files = context['project'].get('files', [])
+    project_files = project.get('files', [])
 
     # Get template (for now, just use default)
     template = templates.DEFAULT_TEMPLATE
@@ -157,93 +148,49 @@ def curate_bids_dir(fw, project_id, reset=False, template_file=None):
     if template_file:
         template = templates.loadTemplate(template_file)
 
-    # Curate Project
-    context['container_type'] = 'project'
-    if reset:
-        clear_meta_info(context['project'], template)
+    ##
+    # Curation is now a 3-pass process
+    # 1. Do initial template matching and updating
+    # 2. Perform any path resolutions
+    # 3. Send updates to server
+    ##
 
-    bidsify_flywheel.process_matching_templates(context, template)
-    # Validate meta information
-    # TODO: Improve the validator to understand what is valid for dataset_description file...
-    #validate_meta_info(context['project'])
-    # Update project meta information
-    update_meta_info(fw, context)
+    # 1. Do initial template matching and updating
+    for context in project.context_iter():
+        ctype = context['container_type']
+        parent_ctype = context['parent_container_type']
 
-    # Iterate over all files within project
-    logger.info('Updating project files...')
-    for f in project_files:
-        if f['name'] == PROJECT_TEMPLATE_FILE_NAME:
-            continue
-
-        # Optionally reset meta info
         if reset:
-            clear_meta_info(f, template)
-        # Update the context for this file
-        context['file'] = f
-        context['container_type'] = 'file'
-        context['parent_container_type'] = 'project'
-        context['ext'] = utils.get_extension(f['name'])
-        # Identify the templates for the file and return file object
-        context['file'] = bidsify_flywheel.process_matching_templates(context, template)
-        # Validate meta information
-        validate_meta_info(context['file'], template)
-        # Update file meta information
-        update_meta_info(fw, context)
+            clear_meta_info(context[ctype], template)
 
-    # Iterate over all files within session
-    logger.info('Updating session files...')
-    # Get project sessions
-    project_sessions = fw.get_project_sessions(project_id)
-    for proj_ses in project_sessions:
-        # Get true session, in order to access file info
-        context['session'] = fw.get_session(proj_ses['_id'])
-        context['subject'] = context['session']['subject']
+        if ctype == 'project':
+            bidsify_flywheel.process_matching_templates(context, template)
+            # Validate meta information
+            # TODO: Improve the validator to understand what is valid for dataset_description file...
+            # validate_meta_info(context['project'])
 
-        context['container_type'] = 'session'
-        # Returns true if modified
-        if bidsify_flywheel.ensure_info_exists(context['session'], template):
-            update_meta_info(fw, context)
+        elif ctype == 'session':
+            # Returns true if modified
+            bidsify_flywheel.ensure_info_exists(context['session'], template)
 
-        # Iterate over any session files
-        for f in context['session'].get('files', []):
-            # Optionally reset meta info
-            if reset:
-                clear_meta_info(f, template)
-            # Update the context for this file
-            context['file'] = f
-            context['container_type'] = 'file'
-            context['parent_container_type'] = 'session'
-            context['ext'] = utils.get_extension(f['name'])
-            # Identify the templates for the file and return file object
+        elif ctype == 'file':
+            if parent_ctype == 'project' and context['file']['name'] == PROJECT_TEMPLATE_FILE_NAME:
+                # Don't BIDSIFY project template
+                continue
+
+            # Process matching
             context['file'] = bidsify_flywheel.process_matching_templates(context, template)
             # Validate meta information
             validate_meta_info(context['file'], template)
-            # Update file meta information
-            update_meta_info(fw, context)
 
-        # Iterate over all files within acquisition
-        logger.info('Updating acquisition files...')
-        # Get acquisitions within session
-        session_acqs = fw.get_session_acquisitions(context['session']['_id'])
-        for ses_acq in session_acqs:
-            # Get true acquisition, in order to access file info
-            context['acquisition'] = fw.get_acquisition(ses_acq['_id'])
-            # Iterate over acquistion files
-            for f in context['acquisition'].get('files', []):
-                # Optionally reset meta info
-                if reset:
-                    clear_meta_info(f, template)
-                # Update the context for this file
-                context['file'] = f
-                context['container_type'] = 'file'
-                context['parent_container_type'] = 'acquisition'
-                context['ext'] = utils.get_extension(f['name'])
-                # Identify the templates for the file and return file object
-                context['file'] = bidsify_flywheel.process_matching_templates(context, template)
-                # Validate meta information
-                validate_meta_info(context['file'], template)
-                # Update file meta info
+    # 3. Send updates to server
+    if update:
+        for context in project.context_iter():
+            ctype = context['container_type']
+            node = context[ctype]
+            if node.is_dirty():
                 update_meta_info(fw, context)
+
 
 if __name__ == '__main__':
     ### Read in arguments
