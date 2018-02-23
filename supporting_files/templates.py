@@ -73,7 +73,7 @@ class Template:
 
         # Extend rules, after filtering excluded rules
         filtered_rules = filter(lambda x: x.id not in self.exclude_rules, parent.rules)
-        self.rules = list(filtered_rules) + my_rules
+        self.rules = my_rules + list(filtered_rules)
 
         # Extend resolvers
         self.resolvers = my_resolvers + parent.resolvers
