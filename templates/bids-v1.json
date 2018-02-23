@@ -589,6 +589,7 @@
 			"templates": [ "fieldmap_file", "fieldmap_phase_encoded_file" ],
 			"update": "file.info.IntendedFor",
 			"filter": "file.info.BIDS.IntendedFor",
+			"resolveFor": "session",
 			"type": "file",
 			"format": "{file.info.BIDS.Folder}/{file.info.BIDS.Filename}"
 		}

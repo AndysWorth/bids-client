@@ -121,7 +121,7 @@ def process_matching_templates(context, template=templates.DEFAULT_TEMPLATE):
 
     return container
 
-def process_resolvers(session, context, template=templates.DEFAULT_TEMPLATE):
+def process_resolvers(context, template=templates.DEFAULT_TEMPLATE):
     """
     Perform second stage path resolution based on template rules
 
@@ -145,7 +145,7 @@ def process_resolvers(session, context, template=templates.DEFAULT_TEMPLATE):
 
     # Apply each resolver
     for resolver in resolvers:
-        resolver.resolve(session, context)
+        resolver.resolve(context)
 
 
 def ensure_info_exists(context, template=templates.DEFAULT_TEMPLATE):

@@ -48,6 +48,7 @@ class Resolver:
         update_field: The field to be updated with the resolved result
         filter_field: The field that contains the user-defined filter
         container_type: The type of container this resolver should match
+        resolve_for: The level that resolution for this resolver should take place (e.g. session)
         format: The format string for resolved values
     """
     def __init__(self, namespace, resolverDef): 
@@ -57,17 +58,21 @@ class Resolver:
         self.update_field = resolverDef.get('update')
         self.filter_field = resolverDef.get('filter')
         self.container_type = resolverDef.get('type')
+        self.resolve_for = resolverDef.get('resolveFor')
         self.format = resolverDef.get('format')
 
-    def resolve(self, session, context):
+    def resolve(self, context):
         """
         Resolve update_field for context by matching and formatting children of session.
 
         Args:
-            session (TreeNode): The session to search within
             context (dict): The context to update
         """
         results = []
+
+        parent = context.get(self.resolve_for)
+        if not parent:
+            return        
 
         # Determine filter fields, and add namespace prefix for matching
         filter_fields = utils.dict_lookup(context, self.filter_field, {})
@@ -84,7 +89,7 @@ class Resolver:
             filters.append(Filter(fields))
 
         # Iterate through the contexts in the session, collecting matches
-        for ctx in session.context_iter():
+        for ctx in parent.context_iter():
             for filt in filters:
                 if filt.test(ctx):
                     results.append(utils.process_string_template(self.format, ctx))

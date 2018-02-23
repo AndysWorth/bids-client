@@ -189,12 +189,8 @@ def curate_bids_tree(fw, project, reset=False, template_file=None, update=True):
     # 2. Perform any path resolutions
     session = None
     for context in project.context_iter():
-        ctype = context['container_type']
-        if ctype == 'session':
-            session = context['session']
-        if session is not None:
-            # Resolution
-            bidsify_flywheel.process_resolvers(session, context, template)
+        # Resolution
+        bidsify_flywheel.process_resolvers(context, template)
 
     # 3. Send updates to server
     if update:

@@ -67,9 +67,10 @@ class TreeNode(collections.MutableMapping):
         # Yield the current context before processing children
         yield context
 
+        context['parent_container_type'] = self.type
         for child in self.children:
-            context['parent_container_type'] = self.type
-            for ctx in child.context_iter(context):
+            context_copy = context.copy()
+            for ctx in child.context_iter(context_copy):
                 yield ctx
 
     def __len__(self):
