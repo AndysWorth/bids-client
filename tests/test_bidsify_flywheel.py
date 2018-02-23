@@ -553,7 +553,11 @@ class BidsifyTestCases(unittest.TestCase):
                     'template': 'fieldmap_file',
                     'Filename': u'sub-001_ses-sestest_fieldmap.nii.gz',
                     'Folder': 'fmap', 'Path': u'sub-001/ses-sestest/fmap',
-                    'Acq': '', 'Run': '', 'Dir': '', 'Modality': 'fieldmap'
+                    'Acq': '', 'Run': '', 'Dir': '', 'Modality': 'fieldmap',
+                    'IntendedFor': [
+                        {'Folder': 'anat'},
+                        {'Folder': 'func'}
+                    ]
                     }
                 },
             u'measurements': [u'field_map'], u'type': u'nifti'}
@@ -586,7 +590,11 @@ class BidsifyTestCases(unittest.TestCase):
                     'template': 'fieldmap_phase_encoded_file',
                     'Filename': u'sub-001_ses-sestest_dir-PA_epi.nii.gz',
                     'Folder': 'fmap', 'Path': u'sub-001/ses-sestest/fmap',
-                    'Acq': '', 'Run': '', 'Dir': 'PA', 'Modality': 'epi'
+                    'Acq': '', 'Run': '', 'Dir': 'PA', 'Modality': 'epi',
+                    'IntendedFor': [
+                        {'Folder': 'anat'},
+                        {'Folder': 'func'}
+                    ]
                     },
                     'PhaseEncodingDirection': 'j'
                 },

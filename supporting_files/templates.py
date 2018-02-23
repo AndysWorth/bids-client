@@ -1,6 +1,7 @@
 import os, os.path, json, re
 import utils
 import jsonschema
+from supporting_files import resolver
 
 DEFAULT_TEMPLATE_NAME = 'bids-v1'
 BIDS_TEMPLATE_NAME = 'bids-v1'
@@ -28,6 +29,7 @@ class Template:
             self.description = data.get('description', '')
             self.definitions = data.get('definitions', {})
             self.rules = data.get('rules', [])
+            self.resolvers = data.get('resolvers', [])
 
             self.extends = data.get('extends')
             self.exclude_rules = data.get('exclude_rules', [])
@@ -39,6 +41,7 @@ class Template:
 
         resolver = jsonschema.RefResolver.from_schema({'definitions': self.definitions})
         self.resolve_refs(resolver, self.definitions)
+        self.compile_resolvers()
         self.compile_rules()
 
     def do_extend(self, templates):
@@ -61,6 +64,7 @@ class Template:
 
         my_rules = self.rules
         my_defs = self.definitions
+        my_resolvers = self.resolvers
 
         # Extend definitions
         self.definitions = parent.definitions.copy()
@@ -71,6 +75,9 @@ class Template:
         filtered_rules = filter(lambda x: x.id not in self.exclude_rules, parent.rules)
         self.rules = list(filtered_rules) + my_rules
 
+        # Extend resolvers
+        self.resolvers = my_resolvers + parent.resolvers
+
     def compile_rules(self):
         """
         Converts the rule dictionaries on this object to Rule class objects.
@@ -79,6 +86,23 @@ class Template:
             rule = self.rules[i]
             if not isinstance(rule, Rule):
                 self.rules[i] = Rule(rule)
+
+    def compile_resolvers(self):
+        """
+        Walk through the definitions 
+        """
+        self.resolver_map = {}
+        for i in range(0, len(self.resolvers)):
+            res = self.resolvers[i]
+            if not isinstance(res, resolver.Resolver):
+                res = resolver.Resolver(self.namespace, res)
+
+            # Create a mapping of template id to resolver
+            for tmpl in res.templates:
+                if tmpl not in self.resolver_map:
+                    self.resolver_map[tmpl] = []
+                self.resolver_map[tmpl].append(res)
+
 
     def validate(self, templateDef, info):
         """
@@ -116,7 +140,6 @@ class Template:
         elif isinstance(obj, list):
             for i in xrange(len(obj)):
                 self.resolve_refs(resolver, obj[i], obj, i)
-
 
 class Rule:
     """

@@ -49,9 +49,9 @@ def add_properties(properties, obj, measurements):
             else:
                 obj[key] = "default"
         elif proptype == "object":
-            print 'Property {} is an object'.format(key)
-            obj[key] = {}
-            obj[key] = add_properties(properties[key]["properties"], obj[key], measurements)
+            obj[key] = properties[key].get('default', {})
+        elif 'default' in properties[key]:
+                obj[key] = properties[key]['default']
     return(obj)
 
 
@@ -67,9 +67,6 @@ def update_properties(properties, context, obj):
         if proptype == "string":
             if "auto_update" in properties[key]:
                 obj[key] = utils.process_string_template(properties[key]['auto_update'],context)
-        elif proptype == "object":
-            obj[key] = {}
-            obj[key] = update_properties(properties[key]["properties"], context, obj[key])
     return(obj)
 
 
@@ -123,6 +120,33 @@ def process_matching_templates(context, template=templates.DEFAULT_TEMPLATE):
             container['info'][namespace].update(data)
 
     return container
+
+def process_resolvers(context, template=templates.DEFAULT_TEMPLATE):
+    """
+    Perform second stage path resolution based on template rules
+
+    Args:
+        session (TreeNode): The session node to search within
+        context (dict): The context to perform path resolution on
+        template (Template): The template
+    """
+    namespace = template.namespace
+
+    container_type = context['container_type']
+    container = context[container_type]
+
+    if (('info' not in container) or (namespace not in container['info']) or ('template' not in container['info'][namespace])):
+        return
+    
+    # Determine the applied template name
+    template_name = container['info'][namespace]['template']
+    # Get a list of resolvers that apply to this template
+    resolvers = template.resolver_map.get(template_name, [])
+
+    # Apply each resolver
+    for resolver in resolvers:
+        resolver.resolve(context)
+
 
 def ensure_info_exists(context, template=templates.DEFAULT_TEMPLATE):
     """
