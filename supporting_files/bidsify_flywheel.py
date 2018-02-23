@@ -106,6 +106,8 @@ def process_matching_templates(context, template=templates.DEFAULT_TEMPLATE):
                 container['info'][namespace] = add_properties(templateDef['properties'], obj, container.get('measurements'))
                 obj['template'] = rule.template
                 rule.initializeProperties(obj, context)
+                if rule.id:
+                    template.apply_custom_initialization(rule.id, obj, context)
                 initial = False
                 break
         if not match:

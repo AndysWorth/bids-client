@@ -30,6 +30,7 @@ class Template:
             self.definitions = data.get('definitions', {})
             self.rules = data.get('rules', [])
             self.resolvers = data.get('resolvers', [])
+            self.custom_initializers = data.get('initializers', [])
 
             self.extends = data.get('extends')
             self.exclude_rules = data.get('exclude_rules', [])
@@ -43,6 +44,7 @@ class Template:
         self.resolve_refs(resolver, self.definitions)
         self.compile_resolvers()
         self.compile_rules()
+        self.compile_custom_initializers()
 
     def do_extend(self, templates):
         """
@@ -103,6 +105,36 @@ class Template:
                     self.resolver_map[tmpl] = []
                 self.resolver_map[tmpl].append(res)
 
+    def compile_custom_initializers(self):
+        """
+        Map custom initializers by rule id
+        """
+        self.initializer_map = {}
+        for init in self.custom_initializers:
+            rule = init.get('rule')
+            if not rule:
+                continue
+            del init['rule']
+            if rule not in self.initializer_map:
+                self.initializer_map[rule] = []
+            self.initializer_map[rule].append(init)
+
+    def apply_custom_initialization(self, rule_id, info, context):
+        """
+        Apply custom initialization templates for the given rule
+        
+        Args:
+            rule_id (str): The id of the matched rule
+            info (dict): The info object to update
+            context (dict): The current context
+        """
+        if rule_id in self.initializer_map:
+            for init in self.initializer_map[rule_id]:
+                if 'where' in init:
+                    if not test_where_clause(init['where'], context):
+                        continue
+
+                apply_initializers(init['initialize'], info, context)
 
     def validate(self, templateDef, info):
         """
@@ -174,27 +206,7 @@ class Rule:
         Returns:
             bool: True if the rule matches the given context.
         """
-        # Process matches
-        conditions = self.conditions
-
-        # Handle $or clauses at top-level
-        if '$or' in conditions:
-            for field, match in conditions['$or']:
-                value = utils.dict_lookup(context, field)
-                if processValueMatch(value, match):
-                    return True
-            return False
-
-        # Otherwise AND clauses
-        if '$and' in conditions:
-            conditions = conditions['$and']
-
-        for field, match in conditions.items():
-            value = utils.dict_lookup(context, field)
-            if not processValueMatch(value, match):
-                return False
-
-        return True
+        return test_where_clause(self.conditions, context)
 
     def initializeProperties(self, info, context):
         """
@@ -210,72 +222,111 @@ class Rule:
             context (dict): The full context object
             info (dict): The BIDS data to update, if matched
         """
-        for propName, propDef in self.initialize.items():
-            resolvedValue = None
+        apply_initializers(self.initialize, info, context)
+        handle_run_counter_initializer(self.initialize, info, context)
 
-            if isinstance(propDef, dict):
-                if '$switch' in propDef:
-                    resolvedValue = self._handleSwitch(propDef['$switch'], context)
-                else:
-                    for key, valueSpec in propDef.items():
-                        # Lookup the value of the key
-                        value = utils.dict_lookup(context, key)
-                        if value is not None:
-                            # Regex matching must provide a 'value' group
-                            if '$regex' in valueSpec:
-                                m = re.search(valueSpec['$regex'], value)
-                                if m is not None:
-                                    resolvedValue = m.group('value')
-                            # 'take' will just copy the value
-                            elif '$take' in valueSpec and valueSpec['$take']:
-                                resolvedValue = value
+def apply_initializers(initializers, info, context):
+    """
+    Attempts to resolve initial values of BIDS fields from context.
 
-                            if '$format' in valueSpec and resolvedValue:
-                                resolvedValue = formatValue(valueSpec['$format'], resolvedValue)
+    Args:
+        initializers (dict): The list of initializer specifications
+        context (dict): The full context object
+        info (dict): The BIDS data to update, if matched
+    """
+    for propName, propDef in initializers.items():
+        resolvedValue = None
 
-                            if resolvedValue:
-                                break
+        if isinstance(propDef, dict):
+            if '$switch' in propDef:
+                resolvedValue = handle_switch_initializer(propDef['$switch'], context)
             else:
-                resolvedValue = propDef
+                for key, valueSpec in propDef.items():
+                    # Lookup the value of the key
+                    value = utils.dict_lookup(context, key)
+                    if value is not None:
+                        # Regex matching must provide a 'value' group
+                        if '$regex' in valueSpec:
+                            m = re.search(valueSpec['$regex'], value)
+                            if m is not None:
+                                resolvedValue = m.group('value')
+                        # 'take' will just copy the value
+                        elif '$take' in valueSpec and valueSpec['$take']:
+                            resolvedValue = value
 
-            if resolvedValue:
-                info[propName] = resolvedValue
+                        if '$format' in valueSpec and resolvedValue:
+                            resolvedValue = formatValue(valueSpec['$format'], resolvedValue)
 
-        self._handleRunCounters(info, context)
+                        if resolvedValue:
+                            break
+        else:
+            resolvedValue = propDef
 
-    def _handleSwitch(self, switchDef, context):
-        value = utils.dict_lookup(context, switchDef['$on'])
-        if isinstance(value, list):
-            value = set(value)
+        if resolvedValue:
+            info[propName] = resolvedValue
 
-        for caseDef in switchDef['$cases']:
-            compValue = caseDef.get('$eq')
-            if isinstance(compValue, list):
-                compValue = set(compValue)
 
-            if '$default' in caseDef or value == compValue:
-                return caseDef.get('$value')
+def handle_switch_initializer(switchDef, context):
+    value = utils.dict_lookup(context, switchDef['$on'])
+    if isinstance(value, list):
+        value = set(value)
 
-        return None
+    for caseDef in switchDef['$cases']:
+        compValue = caseDef.get('$eq')
+        if isinstance(compValue, list):
+            compValue = set(compValue)
 
-    def _handleRunCounters(self, info, context):
-        counter = context.get('run_counters')
-        if not counter:
-            return
+        if '$default' in caseDef or value == compValue:
+            return caseDef.get('$value')
 
-        for propName, propDef in self.initialize.items():
-            if isinstance(propDef, dict) and '$run_counter' in propDef:
-                current = info.get(propName)
-                if current == '+' or current == '=':
-                    key = propDef['$run_counter']['key']
-                    key = utils.process_string_template(key, context)
+    return None
 
-                    counter = counter[key]                            
-                    if current == '+':
-                        info[propName] = counter.next()
-                    else:
-                        info[propName] = counter.current()
+def handle_run_counter_initializer(initializers, info, context):
+    counter = context.get('run_counters')
+    if not counter:
+        return
 
+    for propName, propDef in initializers.items():
+        if isinstance(propDef, dict) and '$run_counter' in propDef:
+            current = info.get(propName)
+            if current == '+' or current == '=':
+                key = propDef['$run_counter']['key']
+                key = utils.process_string_template(key, context)
+
+                counter = counter[key]                            
+                if current == '+':
+                    info[propName] = counter.next()
+                else:
+                    info[propName] = counter.current()
+
+def test_where_clause(conditions, context):
+    """
+    Test if the given context matches this rule.
+
+    Args:
+        context (dict): The context, which includes the hierarchy and current container
+
+    Returns:
+        bool: True if the rule matches the given context.
+    """
+    # Handle $or clauses at top-level
+    if '$or' in conditions:
+        for field, match in conditions['$or']:
+            value = utils.dict_lookup(context, field)
+            if processValueMatch(value, match):
+                return True
+        return False
+
+    # Otherwise AND clauses
+    if '$and' in conditions:
+        conditions = conditions['$and']
+
+    for field, match in conditions.items():
+        value = utils.dict_lookup(context, field)
+        if not processValueMatch(value, match):
+            return False
+
+    return True
 
 def processValueMatch(value, match):
     """
