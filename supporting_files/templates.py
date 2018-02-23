@@ -362,7 +362,8 @@ def processValueMatch(value, match):
                         return True
 
                 return False
-
+            if value is None:
+                return False
             return regex.search(value) is not None
 
     else:
