@@ -322,7 +322,7 @@ class BidsifyTestCases(unittest.TestCase):
             'subject': {u'code': u'001'},
             'session': {u'label': u'sesTEST'},
             'run_counters': utils.RunCounterMap(),
-            'acquisition': {u'label': u'acq_task-TEST_run-+'},
+            'acquisition': {u'label': u'acq_task-TEST_run+'},
             'file': {u'measurements': [u'functional'],
                     u'type': u'nifti',
                         },
