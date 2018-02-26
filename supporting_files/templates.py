@@ -90,9 +90,14 @@ class Template:
             if not isinstance(rule, Rule):
                 self.rules[i] = Rule(rule)
 
+        for i in range(0, len(self.upload_rules)):
+            upload_rule = self.upload_rules[i]
+            if not isinstance(upload_rule, Rule):
+                self.upload_rules[i] = Rule(upload_rule)
+
     def compile_resolvers(self):
         """
-        Walk through the definitions 
+        Walk through the definitions
         """
         self.resolver_map = {}
         for i in range(0, len(self.resolvers)):

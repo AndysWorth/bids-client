@@ -668,12 +668,17 @@ class BidsifyTestCases(unittest.TestCase):
             'project': {'label': 'testproject'},
             'subject': {'code': '12345'},
             'session': {'label': 'haha'},
-            'acquisition':{'label': 'blue'},
-            'file': {u'type': u'image'},
+            'acquisition':{'label': 'blue', u'_id': u'ID'},
+            'file': {u'type': u'image', u'name': u'fname'},
             'ext': '.jpg'
         }
-        # Call function
+        # Won't match if not on upload
         container = bidsify_flywheel.process_matching_templates(context)
+        # Define expected container
+        container_expected = {u'type': u'image', u'name': u'fname'}
+        self.assertEqual(container, container_expected)
+        # Call function
+        container = bidsify_flywheel.process_matching_templates(context, upload=True)
         # Define expected container
         container_expected = {
             'info': {
@@ -682,7 +687,9 @@ class BidsifyTestCases(unittest.TestCase):
                     'Filename': '', 'Folder': 'acq-blue', 'Path': 'sub-12345/ses-haha/acq-blue'
                     }
                 },
-            u'type': u'image'}
+            u'type': u'image',
+            u'name': u'fname'
+            }
         self.assertEqual(container, container_expected)
 
     def test_process_matching_templates_session_file(self):
