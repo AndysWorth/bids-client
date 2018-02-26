@@ -76,7 +76,7 @@ def update_properties(properties, context, obj):
 # Matching templates define rules for adding objects to the container's info object if they don't already exist
 # Matching templates with 'auto_update' rules will update existing info object values each time it is run.
 
-def process_matching_templates(context, template=templates.DEFAULT_TEMPLATE):
+def process_matching_templates(context, template=templates.DEFAULT_TEMPLATE, upload=False):
     namespace = template.namespace
 
     container_type = context['container_type']
@@ -91,7 +91,11 @@ def process_matching_templates(context, template=templates.DEFAULT_TEMPLATE):
     if initial:
         # Do initial rule matching
         match = False
-        for rule in template.rules:
+        rules = template.rules
+        # If matching on upload, test against upload_rules as well
+        if upload:
+            rules = rules + template.upload_rules
+        for rule in rules:
             if rule.test(context):
                 print 'matches template={0}'.format(rule.template)
                 match = True

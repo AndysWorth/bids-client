@@ -659,6 +659,38 @@ class BidsifyTestCases(unittest.TestCase):
             u'type': u'dicom'}
         self.assertEqual(container, container_expected)
 
+    def test_process_matching_templates_acquisition_file(self):
+        """ """
+        # Define context
+        context = {
+            'container_type': 'file',
+            'parent_container_type': 'acquisition',
+            'project': {'label': 'testproject'},
+            'subject': {'code': '12345'},
+            'session': {'label': 'haha'},
+            'acquisition':{'label': 'blue', u'_id': u'ID'},
+            'file': {u'type': u'image', u'name': u'fname'},
+            'ext': '.jpg'
+        }
+        # Won't match if not on upload
+        container = bidsify_flywheel.process_matching_templates(context)
+        # Define expected container
+        container_expected = {u'type': u'image', u'name': u'fname'}
+        self.assertEqual(container, container_expected)
+        # Call function
+        container = bidsify_flywheel.process_matching_templates(context, upload=True)
+        # Define expected container
+        container_expected = {
+            'info': {
+                'BIDS': {
+                    'template': 'acquisition_file',
+                    'Filename': '', 'Folder': 'acq-blue', 'Path': 'sub-12345/ses-haha/acq-blue'
+                    }
+                },
+            u'type': u'image',
+            u'name': u'fname'
+            }
+        self.assertEqual(container, container_expected)
 
     def test_process_matching_templates_session_file(self):
         """ """

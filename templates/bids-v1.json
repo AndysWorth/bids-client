@@ -94,7 +94,18 @@
 			},
 			"required": ["Filename"]
 		},
-		"anat_file": { 
+		"acquisition_file": {
+			"description": "BIDS acquisition file template",
+			"properties": {
+				"Filename": {"$ref": "#/definitions/Filename"},
+				"Folder": {"type": "string", "title": "Folder", "default": "",
+					"auto_update": "acq-<acquisition.label>"},
+				"Path": {"type": "string", "title": "Path", "default": "",
+					"auto_update": "sub-<subject.code>/ses-<session.label>/acq-<acquisition.label>"}
+			},
+			"required": ["Filename"]
+		},
+		"anat_file": {
 			"description": "BIDS template for anat files",
 			"properties": {
 				"Filename": {"type": "string", "title": "Filename", "default": "", "minLength": 1,
@@ -580,6 +591,16 @@
 	        	"file.type": {
 					"$in": ["source code", "JSON"]
 				}
+			}
+		}
+	],
+	"upload_rules": [
+		{
+			"id": "bids_acquisition_file",
+			"template": "acquisition_file",
+			"where": {
+				"container_type": "file",
+				"parent_container_type": "acquisition"
 			}
 		}
 	],
