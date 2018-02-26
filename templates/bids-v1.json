@@ -592,7 +592,9 @@
 					"$in": ["source code", "JSON"]
 				}
 			}
-		},
+		}
+	],
+	"upload_rules": [
 		{
 			"id": "bids_acquisition_file",
 			"template": "acquisition_file",

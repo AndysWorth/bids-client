@@ -29,6 +29,7 @@ class Template:
             self.description = data.get('description', '')
             self.definitions = data.get('definitions', {})
             self.rules = data.get('rules', [])
+            self.upload_rules = data.get('upload_rules', [])
             self.resolvers = data.get('resolvers', [])
             self.custom_initializers = data.get('initializers', [])
 
