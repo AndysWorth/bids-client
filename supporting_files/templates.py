@@ -253,9 +253,15 @@ def apply_initializers(initializers, info, context):
                     if value is not None:
                         # Regex matching must provide a 'value' group
                         if '$regex' in valueSpec:
-                            m = re.search(valueSpec['$regex'], value)
-                            if m is not None:
-                                resolvedValue = m.group('value')
+                            regex_list = valueSpec['$regex']
+                            if not isinstance(regex_list, list):
+                                regex_list = [regex_list]
+
+                            for regex in regex_list:
+                                m = re.search(regex, value)
+                                if m is not None:
+                                    resolvedValue = m.group('value')
+                                    break
                         # 'take' will just copy the value
                         elif '$take' in valueSpec and valueSpec['$take']:
                             resolvedValue = value
