@@ -38,6 +38,15 @@ jobs:
               if [ "$CIRCLE_TAG" ]; then
                 docker tag bids-client flywheel/bids-client:${CIRCLE_TAG}
                 docker push flywheel/bids-client:${CIRCLE_TAG}
+                # Also push to minor version (e.g. 0.3.3 -> 0.3)
+                (
+                  IFS='.' read -ra VER_PARTS <<< "${CIRCLE_TAG}"
+                  if [ "3" -eq "${#VER_PARTS[@]}" ]; then
+                    MINOR_TAG="${VER_PARTS[0]}.${VER_PARTS[1]}"
+                    docker tag bids-client flywheel/bids-client:${MINOR_TAG}
+                    docker push flywheel/bids-client:${MINOR_TAG}
+                  fi
+                )
               fi
               if [ "$CIRCLE_BRANCH" == "master" ]; then
                 docker tag bids-client flywheel/bids-client:latest
