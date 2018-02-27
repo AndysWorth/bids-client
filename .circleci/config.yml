@@ -4,9 +4,9 @@ workflows:
   build-workflow:
     jobs:
       - build:
-        filters:
-          tags:
-            only: /\d+\.\d+\.\d+/
+          filters:
+            tags:
+              only: /.*/
 jobs:
   build:
     docker:
