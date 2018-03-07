@@ -95,9 +95,9 @@
 			"properties": {
 				"Filename": {"$ref":"#/definitions/Filename"},
 				"Folder": {"type": "string", "title": "Folder", "default": "",
-					"auto_update": "ses-<session.info.BIDS.Label>"},
+					"auto_update": "[ses-<session.info.BIDS.Label>]"},
 				"Path": {"type": "string", "title": "Path", "default": "",
-					"auto_update": "sub-<subject.code>/ses-<session.info.BIDS.Label>"}
+					"auto_update": "sub-<subject.code>[/ses-<session.info.BIDS.Label>]"}
 			},
 			"required": ["Filename"]
 		},
@@ -108,7 +108,7 @@
 				"Folder": {"type": "string", "title": "Folder", "default": "",
 					"auto_update": "acq-<acquisition.label>"},
 				"Path": {"type": "string", "title": "Path", "default": "",
-					"auto_update": "sub-<subject.code>/ses-<session.info.BIDS.Label>/acq-<acquisition.label>"}
+					"auto_update": "sub-<subject.code>[/ses-<session.info.BIDS.Label>]/acq-<acquisition.label>"}
 			},
 			"required": ["Filename"]
 		},
