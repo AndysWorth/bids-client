@@ -258,7 +258,7 @@ class BidsifyTestCases(unittest.TestCase):
             'parent_container_type': 'acquisition',
             'project': None,
             'subject': {u'code': u'001'},
-            'session': {u'label': u'sesTEST'},
+            'session': {u'label': u'sesTEST', 'info': {'BIDS': {'Label': u'sesTEST'}}},
             'acquisition': {u'label': u'acqTEST'},
             'file': {u'measurements': [u'anatomy_t1w'],
                     u'type': u'nifti'
@@ -289,7 +289,7 @@ class BidsifyTestCases(unittest.TestCase):
             'parent_container_type': 'acquisition',
             'project': None,
             'subject': {u'code': u'001'},
-            'session': {u'label': u'sesTEST'},
+            'session': {u'label': u'sesTEST', 'info': {'BIDS': {'Label': u'sesTEST'}}},
             'acquisition': {u'label': u'acqTEST'},
             'file': {u'measurements': [u'anatomy_t2w'],
                     u'type': u'nifti'
@@ -320,7 +320,7 @@ class BidsifyTestCases(unittest.TestCase):
             'parent_container_type': 'acquisition',
             'project': None,
             'subject': {u'code': u'001'},
-            'session': {u'label': u'sesTEST'},
+            'session': {u'label': u'sesTEST', 'info': {'BIDS': {'Label': u'sesTEST'}}},
             'run_counters': utils.RunCounterMap(),
             'acquisition': {u'label': u'acq_task-TEST_run+'},
             'file': {u'measurements': [u'functional'],
@@ -352,7 +352,7 @@ class BidsifyTestCases(unittest.TestCase):
             'parent_container_type': 'acquisition',
             'project': None,
             'subject': {u'code': u'001'},
-            'session': {u'label': u'sesTEST'},
+            'session': {u'label': u'sesTEST', 'info': {'BIDS': {'Label': u'sesTEST'}}},
             'acquisition': {u'label': u'acqTEST'},
             'file': {u'measurements': [u'functional'],
                     u'type': u'tabular data',
@@ -383,7 +383,7 @@ class BidsifyTestCases(unittest.TestCase):
             'parent_container_type': 'acquisition',
             'project': None,
             'subject': {u'code': u'001'},
-            'session': {u'label': u'sesTEST'},
+            'session': {u'label': u'sesTEST', 'info': {'BIDS': {'Label': u'sesTEST'}}},
             'acquisition': {u'label': u'acqTEST'},
             'file': {u'measurements': [u'behavioral'],
                     u'type': u'tabular data',
@@ -412,7 +412,7 @@ class BidsifyTestCases(unittest.TestCase):
             'parent_container_type': 'acquisition',
             'project': None,
             'subject': {u'code': u'001'},
-            'session': {u'label': u'sesTEST'},
+            'session': {u'label': u'sesTEST', 'info': {'BIDS': {'Label': u'sesTEST'}}},
             'acquisition': {u'label': u'acqTEST'},
             'file': {u'measurements': [u'physio'],
                     u'type': u'tabular data',
@@ -447,7 +447,7 @@ class BidsifyTestCases(unittest.TestCase):
             'parent_container_type': 'acquisition',
             'project': None,
             'subject': {u'code': u'001'},
-            'session': {u'label': u'sesTEST'},
+            'session': {u'label': u'sesTEST', 'info': {'BIDS': {'Label': u'sesTEST'}}},
             'acquisition': {u'label': u'acqTEST'},
             'file': {u'measurements': [u'diffusion'],
                     u'type': u'nifti'
@@ -477,7 +477,7 @@ class BidsifyTestCases(unittest.TestCase):
             'parent_container_type': 'acquisition',
             'project': None,
             'subject': {u'code': u'001'},
-            'session': {u'label': u'sesTEST'},
+            'session': {u'label': u'sesTEST', 'info': {'BIDS': {'Label': u'sesTEST'}}},
             'acquisition': {u'label': u'acqTEST'},
             'file': {u'measurements': [u'diffusion'],
                     u'type': u'bval'
@@ -507,7 +507,7 @@ class BidsifyTestCases(unittest.TestCase):
             'parent_container_type': 'acquisition',
             'project': None,
             'subject': {u'code': u'001'},
-            'session': {u'label': u'sesTEST'},
+            'session': {u'label': u'sesTEST', 'info': {'BIDS': {'Label': u'sesTEST'}}},
             'acquisition': {u'label': u'acqTEST'},
             'file': {u'measurements': [u'diffusion'],
                     u'type': u'bvec'
@@ -537,7 +537,7 @@ class BidsifyTestCases(unittest.TestCase):
             'parent_container_type': 'acquisition',
             'project': None,
             'subject': {u'code': u'001'},
-            'session': {u'label': u'sesTEST'},
+            'session': {u'label': u'sesTEST', 'info': {'BIDS': {'Label': u'sesTEST'}}},
             'acquisition': {u'label': u'acqTEST'},
             'file': {u'measurements': [u'field_map'],
                     u'type': u'nifti',
@@ -571,7 +571,7 @@ class BidsifyTestCases(unittest.TestCase):
             'parent_container_type': 'acquisition',
             'project': None,
             'subject': {u'code': u'001'},
-            'session': {u'label': u'sesTEST'},
+            'session': {u'label': u'sesTEST', 'info': {'BIDS': {'Label': u'sesTEST'}}},
             'acquisition': {u'label': u'acqTEST PA'}, # Acquisition label needs to contain
             'file': {u'measurements': [u'field_map'],
                     u'type': u'nifti',
@@ -608,7 +608,7 @@ class BidsifyTestCases(unittest.TestCase):
             'parent_container_type': 'acquisition',
             'project': {u'label': 'hello'},
             'subject': {u'code': u'001'},
-            'session': {u'label': u'sesTEST'},
+            'session': {u'label': u'sesTEST', 'info': {'BIDS': {'Label': u'sesTEST'}}},
             'acquisition': {u'label': u'acqTEST'},
             'file': {
                 u'measurements': [u'diffusion'],
@@ -636,7 +636,7 @@ class BidsifyTestCases(unittest.TestCase):
             'parent_container_type': 'acquisition',
             'project': {u'label': 'hello'},
             'subject': {u'code': u'001'},
-            'session': {u'label': u'sesTEST'},
+            'session': {u'label': u'sesTEST', 'info': {'BIDS': {'Label': u'sesTEST'}}},
             'acquisition': {u'label': u'acqTEST'},
             'file': {
                 u'name': u'09 cmrr_mbepi_task-spatialfrequency_s6_2mm_66sl_PA_TR1.0.dcm.zip',
@@ -667,7 +667,7 @@ class BidsifyTestCases(unittest.TestCase):
             'parent_container_type': 'acquisition',
             'project': {'label': 'testproject'},
             'subject': {'code': '12345'},
-            'session': {'label': 'haha'},
+            'session': {'label': 'haha', 'info': {'BIDS': {'Label': 'haha'}}},
             'acquisition':{'label': 'blue', u'_id': u'ID'},
             'file': {u'type': u'image', u'name': u'fname'},
             'ext': '.jpg'
@@ -692,6 +692,33 @@ class BidsifyTestCases(unittest.TestCase):
             }
         self.assertEqual(container, container_expected)
 
+    def test_process_mathcing_templates_session(self):
+        """ """
+        # Define context
+        context = {
+            'container_type': 'session',
+            'parent_container_type': 'project',
+            'project': {'label': 'Project_Label_Test'},
+            'subject': None,
+            'session': {'label': 'Session_Label_Test'},
+            'acquisition': None,
+            'file': {},
+            'ext': '.zip'
+        }
+        # Call function
+        container = bidsify_flywheel.process_matching_templates(context)
+        # Define expected container
+        container_expected = {
+            'info': {
+                'BIDS': {
+                    'Label': 'Session_Label_Test',
+                    'template': 'session'
+                    }
+                },
+                'label': 'Session_Label_Test'
+            }
+        self.assertEqual(container, container_expected)
+
     def test_process_matching_templates_session_file(self):
         """ """
         # Define context
@@ -700,7 +727,7 @@ class BidsifyTestCases(unittest.TestCase):
             'parent_container_type': 'session',
             'project': {'label': 'testproject'},
             'subject': {'code': '12345'},
-            'session': {'label': 'haha'},
+            'session': {'label': u'sesTEST', 'info': {'BIDS': {'Label': u'sesTEST'}}},
             'acquisition': None,
             'file': {u'type': u'tabular'},
             'ext': '.tsv'
@@ -712,7 +739,7 @@ class BidsifyTestCases(unittest.TestCase):
             'info': {
                 'BIDS': {
                     'template': 'session_file',
-                    'Filename': '', 'Folder': 'ses-haha', 'Path': 'sub-12345/ses-haha'
+                    'Filename': '', 'Folder': 'ses-sestest', 'Path': 'sub-12345/ses-sestest'
                     }
                 },
             u'type': u'tabular'}
@@ -788,7 +815,7 @@ class BidsifyTestCases(unittest.TestCase):
             'parent_container_type': 'acquisition',
             'project': None,
             'subject': {u'code': u'001'},
-            'session': {u'label': u'sesTEST'},
+            'session': {u'label': u'sesTEST', 'info': {'BIDS': {'Label': u'sesTEST'}}},
             'acquisition': {u'label': u'acqTEST'},
             'file': {
                 u'measurements': [u'anatomy_t1w', u'anatomy_t2w'],
