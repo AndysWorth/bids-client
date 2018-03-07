@@ -466,6 +466,34 @@
 			}
 		},
 		{
+			"id": "bids_task_events_file_by_name",
+			"template": "task_events_file",
+			"where": {
+				"container_type": "file",
+				"file.name": {
+					"$regex": "^.*events\\.tsv$"
+				}
+			},
+			"initialize": {
+				"Task": {
+					"acquisition.label": {
+						"$regex": "(^|_)task-(?P<value>[^-_]+)"
+					}
+				},
+				"Run": {
+					"acquisition.label": {
+						"$regex": [
+							"(^|_)run-(?P<value>\\d+)",
+							"(^|_)run(?P<value>[=+])"
+						]
+					},
+					"$run_counter": {
+						"key": "task_events.{file.info.BIDS.Task}"
+					}
+				}
+			}
+		},
+		{
 			"id": "bids_beh_events_file",
 			"template": "beh_events_file",
 			"where": {
