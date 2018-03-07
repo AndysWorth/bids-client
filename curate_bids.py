@@ -173,8 +173,7 @@ def curate_bids_tree(fw, project, reset=False, template_file=None, update=True):
             # validate_meta_info(context['project'])
 
         elif ctype == 'session':
-            # Returns true if modified
-            bidsify_flywheel.ensure_info_exists(context['session'], template)
+            bidsify_flywheel.process_matching_templates(context, template)
 
             # Add run_counter
             context['run_counters'] = utils.RunCounterMap()
