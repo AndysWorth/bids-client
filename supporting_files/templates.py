@@ -358,6 +358,11 @@ def processValueMatch(value, match):
                     if item in match['$in']:
                         return True
                 return False
+            elif isinstance(value, str) or isinstance(value, unicode):
+                for item in match['$in']:
+                    if item in value:
+                        return True
+                return False
 
             return value in match['$in']
 
