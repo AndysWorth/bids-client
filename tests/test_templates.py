@@ -113,3 +113,30 @@ class RuleTestCases(unittest.TestCase):
         })
         context = { 'x': 'string_with topup in it' }
         self.assertTrue(rule.test(context))
+
+    def test_rule_in_string(self):
+        """ """
+        rule = templates.Rule({
+            'template': 'test',
+            'where': {
+                'x.l': {
+                    "$in": ["topup", "something_else"]
+                }
+            }
+        })
+        # Define context
+
+        context = { 'x': {'l':'string_with topup in it' }}
+        # Call function
+        self.assertTrue(rule.test(context))
+
+        rule = templates.Rule({
+            'template': 'test',
+            'where': {
+                'x': {
+                    "$in": ["not_topup", "something_else"]
+                }
+            }
+        })
+        # Call function
+        self.assertFalse(rule.test(context))
