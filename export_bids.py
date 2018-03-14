@@ -193,7 +193,21 @@ def download_bids_files(fw, filepath_downloads, dry_run):
 
         fw.download_file_from_acquisition(*args)
 
-def download_bids_dir(fw, project_id, outdir, src_data=False, 
+    # Creating all JSON sidecar files
+    logger.info('Creating sidecar files')
+    for f in filepath_downloads['sidecars']:
+        args = filepath_downloads['sidecars'][f]
+        # Download the file
+        logger.info('Creating sidecar file: {0}'.format(args[1]))
+
+        # For dry run, don't actually download
+        if dry_run:
+            logger.info('  to {0}'.format(args[1]))
+            continue
+
+        create_json(*args)
+
+def download_bids_dir(fw, project_id, outdir, src_data=False,
         dry_run=False, subjects=[], sessions=[], folders=[]):
     """
 
@@ -211,7 +225,8 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
     filepath_downloads = {
         'project':{},
         'session':{},
-        'acquisition':{}
+        'acquisition':{},
+        'sidecars':{}
     }
 
     # Get project
@@ -240,9 +255,9 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
 
         filepath_downloads['project'][path] = (project['_id'], f['name'], path)
 
-    ## Create dataset_description.json file
+    ## Create dataset_description.json filepath_download
     path = os.path.join(outdir, 'dataset_description.json')
-    create_json(project['info'][namespace], path, namespace)
+    filepath_downloads['sidecars'][path] = (project['info'][namespace], path, namespace)
 
     logger.info('Processing session files')
     # Get project sessions
@@ -312,8 +327,8 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
 
                 filepath_downloads['acquisition'][path] = (acq['_id'], f['name'], path)
 
-                # Create the sidecar JSON file
-                create_json(f['info'], path, namespace)
+                # Create the sidecar JSON filepath_download
+                filepath_downloads['sidecars'] = (f['info'], path, namespace)
 
     if not valid:
         sys.exit(1)
@@ -349,7 +364,7 @@ if __name__ == '__main__':
     project_id = utils.validate_project_label(fw, args.project_label)
 
     ### Download BIDS project
-    download_bids_dir(fw, project_id, args.bids_dir, src_data=args.source_data, 
+    download_bids_dir(fw, project_id, args.bids_dir, src_data=args.source_data,
             dry_run=args.dry_run, subjects=args.subjects, sessions=args.sessions, folders=args.folders)
 
     # Validate the downloaded directory
