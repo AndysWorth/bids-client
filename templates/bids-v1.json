@@ -638,10 +638,20 @@
 				"container_type": "file",
         		"file.type": {
 					"$in": ["dicom", "DICOM"]
+				},
+				"file.measurements": {
+					"$in": [
+						"anatomy_t1w", "anatomy_t2w", "anatomy_t1wrho",
+						"map_t1w", "map_t2w", "anatomy_t2star", "anatomy_flair",
+						"anatomy_flash", "anatomy_pd", "map_pd", "anatomy_pdt2",
+						"anatomy_t1w_inplane", "anatomy_t2w_inplane", "angio",
+						"defacemask", "swi", "functional", "behavioral",
+						"physio", "diffusion", "field_map"
+					]
 				}
 			},
 			"initialize": {
-				"Filename": { 
+				"Filename": {
 					"file.name": { "$take": true }
 				}
 			}

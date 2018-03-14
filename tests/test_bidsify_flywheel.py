@@ -629,6 +629,33 @@ class BidsifyTestCases(unittest.TestCase):
             u'type': u'dicom'}
         self.assertEqual(container, container_expected)
 
+    def test_process_matching_templates_non_bids_dicom(self):
+        # Define context
+        context = {
+            'container_type': 'file',
+            'parent_container_type': 'acquisition',
+            'project': {u'label': 'hello'},
+            'subject': {u'code': u'001'},
+            'session': {u'label': u'sesTEST', 'info': {'BIDS': {'Label': u'sesTEST'}}},
+            'acquisition': {u'label': u'acqTEST', u'_id': u'09090'},
+            'file': {
+                u'name': u'4784_1_1_localizer',
+                u'measurements': [u'localizer'],
+                u'type': u'dicom'
+            },
+            'ext': '.dcm.zip'
+        }
+        # Call function
+        container = bidsify_flywheel.process_matching_templates(context)
+        print container
+        # Define expected container
+        container_expected = {
+            u'name': u'4784_1_1_localizer',
+            u'measurements': [u'localizer'],
+            u'type': u'dicom'
+        }
+        self.assertEqual(container, container_expected)
+
     def test_resolve_initial_dicom_field_values_from_filename(self):
         # Define context
         context = {
