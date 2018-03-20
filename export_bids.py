@@ -328,7 +328,7 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
                 filepath_downloads['acquisition'][path] = (acq['_id'], f['name'], path)
 
                 # Create the sidecar JSON filepath_download
-                filepath_downloads['sidecars'] = (f['info'], path, namespace)
+                filepath_downloads['sidecars'][path] = (f['info'], path, namespace)
 
     if not valid:
         sys.exit(1)
