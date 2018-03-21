@@ -111,6 +111,8 @@ def process_matching_templates(context, template=templates.DEFAULT_TEMPLATE, upl
                 obj = container['info'].get(namespace, {})
                 container['info'][namespace] = add_properties(templateDef['properties'], obj, container.get('measurements'))
                 obj['template'] = rule.template
+                if container_type in ['session', 'acquisition', 'file']:
+                    obj['ignore'] = False
                 rule.initializeProperties(obj, context)
                 if rule.id:
                     template.apply_custom_initialization(rule.id, obj, context)

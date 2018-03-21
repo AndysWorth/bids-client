@@ -275,7 +275,8 @@ class BidsifyTestCases(unittest.TestCase):
                     'Filename': u'sub-001_ses-sestest_T1w.nii.gz',
                     'Path': u'sub-001/ses-sestest/anat', 'Folder': 'anat',
                     'Run': '', 'Acq': '', 'Ce': '', 'Rec': '',
-                    'Modality': 'T1w', 'Mod': ''
+                    'Modality': 'T1w', 'Mod': '',
+                    'ignore': False
                     }
                 },
             u'measurements': [u'anatomy_t1w'], u'type': u'nifti'}
@@ -306,7 +307,8 @@ class BidsifyTestCases(unittest.TestCase):
                     'Filename': u'sub-001_ses-sestest_T2w.nii.gz',
                     'Path': u'sub-001/ses-sestest/anat', 'Folder': 'anat',
                     'Run': '', 'Acq': '', 'Ce': '', 'Rec': '',
-                    'Modality': 'T2w', 'Mod': ''
+                    'Modality': 'T2w', 'Mod': '',
+                    'ignore': False
                     }
                 },
             u'measurements': [u'anatomy_t2w'], u'type': u'nifti'}
@@ -338,7 +340,8 @@ class BidsifyTestCases(unittest.TestCase):
                     'Filename': u'sub-001_ses-sestest_task-TEST_run-1_bold.nii.gz',
                     'Folder': 'func', 'Path': u'sub-001/ses-sestest/func',
                     'Acq': '', 'Task': 'TEST', 'Modality': 'bold',
-                    'Rec': '', 'Run': '1', 'Echo': ''
+                    'Rec': '', 'Run': '1', 'Echo': '',
+                    'ignore': False
                     }
                 },
             u'measurements': [u'functional'], u'type': u'nifti'}
@@ -369,7 +372,8 @@ class BidsifyTestCases(unittest.TestCase):
                     'Filename': u'sub-001_ses-sestest_task-{file.info.BIDS.Task}_events.tsv',
                     'Folder': 'func', 'Path': u'sub-001/ses-sestest/func',
                     'Acq': '', 'Task': '',
-                    'Rec': '', 'Run': '', 'Echo': ''
+                    'Rec': '', 'Run': '', 'Echo': '',
+                    'ignore': False
                     }
                 },
             u'measurements': [u'functional'], u'type': u'tabular data'}
@@ -398,7 +402,8 @@ class BidsifyTestCases(unittest.TestCase):
                 'BIDS': {
                     'template': 'beh_events_file',
                     'Filename': u'sub-001_ses-sestest_task-{file.info.BIDS.Task}_events.tsv',
-                    'Folder': 'beh', 'Path': u'sub-001/ses-sestest/beh', 'Task': ''
+                    'Folder': 'beh', 'Path': u'sub-001/ses-sestest/beh', 'Task': '',
+                    'ignore': False
                     }
                 },
             u'measurements': [u'behavioral'], u'type': u'tabular data'}
@@ -433,7 +438,8 @@ class BidsifyTestCases(unittest.TestCase):
                     'Rec': '',
                     'Recording': '',
                     'Run': '',
-                    'Echo': ''
+                    'Echo': '',
+                    'ignore': False
                     }
                 },
             u'measurements': [u'physio'], u'type': u'tabular data'}
@@ -463,7 +469,8 @@ class BidsifyTestCases(unittest.TestCase):
                     'template': 'diffusion_file',
                     'Filename': u'sub-001_ses-sestest_dwi.nii.gz',
                     'Path': u'sub-001/ses-sestest/dwi', 'Folder': 'dwi',
-                     'Modality': 'dwi', 'Acq': '', 'Run': ''
+                     'Modality': 'dwi', 'Acq': '', 'Run': '',
+                    'ignore': False
                     }
                 },
             u'measurements': [u'diffusion'], u'type': u'nifti'}
@@ -493,7 +500,8 @@ class BidsifyTestCases(unittest.TestCase):
                     'template': 'diffusion_file',
                     'Filename': u'sub-001_ses-sestest_dwi.bval',
                     'Path': u'sub-001/ses-sestest/dwi', 'Folder': 'dwi',
-                     'Modality': 'dwi', 'Acq': '', 'Run': ''
+                     'Modality': 'dwi', 'Acq': '', 'Run': '',
+                    'ignore': False
                     }
                 },
             u'measurements': [u'diffusion'], u'type': u'bval'}
@@ -523,7 +531,8 @@ class BidsifyTestCases(unittest.TestCase):
                     'template': 'diffusion_file',
                     'Filename': u'sub-001_ses-sestest_dwi.bvec',
                     'Path': u'sub-001/ses-sestest/dwi', 'Folder': 'dwi',
-                     'Modality': 'dwi', 'Acq': '', 'Run': ''
+                     'Modality': 'dwi', 'Acq': '', 'Run': '',
+                    'ignore': False
                     }
                 },
             u'measurements': [u'diffusion'], u'type': u'bvec'}
@@ -557,7 +566,8 @@ class BidsifyTestCases(unittest.TestCase):
                     'IntendedFor': [
                         {'Folder': 'anat'},
                         {'Folder': 'func'}
-                    ]
+                    ],
+                    'ignore': False
                     }
                 },
             u'measurements': [u'field_map'], u'type': u'nifti'}
@@ -594,7 +604,8 @@ class BidsifyTestCases(unittest.TestCase):
                     'IntendedFor': [
                         {'Folder': 'anat'},
                         {'Folder': 'func'}
-                    ]
+                    ],
+                    'ignore': False
                     },
                     'PhaseEncodingDirection': 'j'
                 },
@@ -623,7 +634,8 @@ class BidsifyTestCases(unittest.TestCase):
                 'template': 'dicom_file',
                 'Filename': '',
                 'Folder': 'sourcedata',
-                'Path': u'sourcedata/sub-001/ses-sestest'
+                'Path': u'sourcedata/sub-001/ses-sestest',
+                'ignore': False
                 }},
             u'measurements': [u'diffusion'],
             u'type': u'dicom'}
@@ -679,11 +691,39 @@ class BidsifyTestCases(unittest.TestCase):
                 'template': 'dicom_file',
                 'Filename': u'09 cmrr_mbepi_task-spatialfrequency_s6_2mm_66sl_PA_TR1.0.dcm.zip',
                 'Folder': 'sourcedata',
-                'Path': u'sourcedata/sub-001/ses-sestest'
+                'Path': u'sourcedata/sub-001/ses-sestest',
+                'ignore': False
                 }},
             u'name': u'09 cmrr_mbepi_task-spatialfrequency_s6_2mm_66sl_PA_TR1.0.dcm.zip',
             u'measurements': [u'diffusion'],
             u'type': u'dicom'}
+        self.assertEqual(container, container_expected)
+
+    def test_process_matching_template_acquisition(self):
+        """ """
+        # Define context
+        context = {
+            'container_type': 'acquisition',
+            'parent_container_type': 'session',
+            'project': {'label': 'Project_Label_Test'},
+            'subject': None,
+            'session': {'label': 'Session_Label_Test'},
+            'acquisition': {'label': 'Acquisition_Label_Test'},
+            'file': {},
+            'ext': '.zip'
+        }
+        # Call function
+        container = bidsify_flywheel.process_matching_templates(context)
+        # Define expected container
+        container_expected = {
+            'info': {
+                'BIDS': {
+                    'template': 'acquisition',
+                    'ignore': False
+                    }
+                },
+                'label': 'Acquisition_Label_Test'
+            }
         self.assertEqual(container, container_expected)
 
     def test_process_matching_templates_acquisition_file(self):
@@ -711,7 +751,8 @@ class BidsifyTestCases(unittest.TestCase):
             'info': {
                 'BIDS': {
                     'template': 'acquisition_file',
-                    'Filename': '', 'Folder': 'acq-blue', 'Path': 'sub-12345/ses-haha/acq-blue'
+                    'Filename': '', 'Folder': 'acq-blue', 'Path': 'sub-12345/ses-haha/acq-blue',
+                    'ignore': False
                     }
                 },
             u'type': u'image',
@@ -739,7 +780,8 @@ class BidsifyTestCases(unittest.TestCase):
             'info': {
                 'BIDS': {
                     'Label': 'Session_Label_Test',
-                    'template': 'session'
+                    'template': 'session',
+                    'ignore': False
                     }
                 },
                 'label': 'Session_Label_Test'
@@ -766,7 +808,8 @@ class BidsifyTestCases(unittest.TestCase):
             'info': {
                 'BIDS': {
                     'template': 'session_file',
-                    'Filename': '', 'Folder': 'ses-sestest', 'Path': 'sub-12345/ses-sestest'
+                    'Filename': '', 'Folder': 'ses-sestest', 'Path': 'sub-12345/ses-sestest',
+                    'ignore': False
                     }
                 },
             u'type': u'tabular'}
@@ -828,7 +871,8 @@ class BidsifyTestCases(unittest.TestCase):
             'info': {
                 'BIDS': {
                     'template': 'project_file',
-                    'Filename': '', 'Folder': '', 'Path': ''
+                    'Filename': '', 'Folder': '', 'Path': '',
+                    'ignore': False
                     }
                 },
             u'measurements': [u'unknown'], u'type': u'archive'}
@@ -860,7 +904,8 @@ class BidsifyTestCases(unittest.TestCase):
                     'Filename': u'sub-001_ses-sestest_T1w.nii.gz',
                     'Path': u'sub-001/ses-sestest/anat', 'Folder': 'anat',
                     'Run': '', 'Acq': '', 'Ce': '', 'Rec': '',
-                    'Modality': 'T1w', 'Mod': ''
+                    'Modality': 'T1w', 'Mod': '',
+                    'ignore': False
                     }
                 },
             u'measurements': [u'anatomy_t1w', u'anatomy_t2w'], u'type': u'nifti'}

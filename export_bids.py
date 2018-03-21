@@ -65,7 +65,7 @@ def is_file_excluded(f, namespace, src_data):
     if not metadata:
         return True
 
-    if parse_bool(metadata.get('exclude', False)):
+    if parse_bool(metadata.get('ignore', False)):
         return True
 
     if not src_data:
@@ -74,6 +74,11 @@ def is_file_excluded(f, namespace, src_data):
             return True
 
     return False
+
+def is_container_excluded(container, namespace):
+    meta_info = container.get('info', {}).get(namespace, {})
+    if isinstance(meta_info, dict):
+        return meta_info.get('ignore', False)
 
 def warn_if_bids_invalid(f, namespace):
     """
@@ -267,6 +272,10 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
         if sessions and proj_ses.get('label') not in sessions:
             continue
 
+        # Skip session if BIDS.Ignore is True
+        if is_container_excluded(proj_ses, namespace):
+            continue
+
         # Skip subject if we're filtering subjects
         if subjects:
             subj_code = proj_ses.get('subject', {}).get('code')
@@ -300,6 +309,10 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
         # Get acquisitions
         session_acqs = fw.get_session_acquisitions(proj_ses['_id'])
         for ses_acq in session_acqs:
+
+            # Skip if BIDS.Ignore is True
+            if is_container_excluded(ses_acq, namespace):
+                continue
             # Get true acquisition, in order to access file info
             acq = fw.get_acquisition(ses_acq['_id'])
             # Iterate over acquistion files

@@ -180,6 +180,49 @@ class BidsExportTestCases(unittest.TestCase):
         self.assertEqual(json_contents['TaskName'],
                 'testtaskname')
 
+    def test_exclude_containers(self):
+        container = {
+            'info': {
+                'BIDS': {
+                    'template': 'acquisition',
+                    'ignore': False
+                }
+            },
+            'label': 'Acquisition_Label_Test'
+        }
+        self.assertTrue(not export_bids.is_container_excluded(container, 'BIDS'))
+        container = {
+            'info': {
+                'BIDS': {
+                    'template': 'acquisition',
+                    'ignore': True
+                }
+            },
+            'label': 'Acquisition_Label_Test'
+        }
+        self.assertTrue(export_bids.is_container_excluded(container, 'BIDS'))
+
+    def test_exclude_ignored_files(self):
+        container = {
+            'info': {
+                'BIDS': {
+                    'template': 'func_file',
+                    'ignore': False
+                }
+            }
+        }
+        self.assertTrue(not export_bids.is_file_excluded(container, 'BIDS', True))
+        container = {
+            'info': {
+                'BIDS': {
+                    'template': 'func_file',
+                    'ignore': True
+                }
+            }
+        }
+        self.assertTrue(export_bids.is_file_excluded(container, 'BIDS', True))
+
+
 if __name__ == "__main__":
 
     unittest.main()
