@@ -574,7 +574,7 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
                         # Check if any acquisition files are of interest (to be parsed later)
                         #   interested in JSON files
                         if '.json' in fname:
-                            files_of_interest[val] = {
+                            files_of_interest[fname] = {
                                     '_id': context['acquisition']['_id'],
                                     'id_type': 'acquisition',
                                     'full_filename': full_fname
