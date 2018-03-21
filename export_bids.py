@@ -75,6 +75,9 @@ def is_file_excluded(f, namespace, src_data):
 
     return False
 
+def is_container_excluded(container, namespace):
+    return isinstance(container.get('info', {}).get(namespace, {}), dict) and container.get('info', {}).get(namespace, {}).get('Ignore')
+
 def warn_if_bids_invalid(f, namespace):
     """
     Logs a warning iff info.BIDS.valid = false
@@ -268,7 +271,7 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
             continue
 
         # Skip session if BIDS.Ignore is True
-        if isinstance(proj_ses.get('info', {}).get('BIDS', {}), dict) and proj_ses.get('info', {}).get('BIDS', {}).get('Ignore'):
+        if is_container_excluded(proj_ses, namespace):
             continue
 
         # Skip subject if we're filtering subjects
@@ -306,7 +309,7 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
         for ses_acq in session_acqs:
 
             # Skip if BIDS.Ignore is True
-            if isinstance(ses_acq.get('info', {}).get('BIDS', {}), dict) and ses_acq.get('info', {}).get('BIDS', {}).get('Ignore'):
+            if is_container_excluded(ses_acq, namespace):
                 continue
             # Get true acquisition, in order to access file info
             acq = fw.get_acquisition(ses_acq['_id'])

@@ -686,6 +686,33 @@ class BidsifyTestCases(unittest.TestCase):
             u'type': u'dicom'}
         self.assertEqual(container, container_expected)
 
+    def test_process_matching_template_acquisition(self):
+        """ """
+        # Define context
+        context = {
+            'container_type': 'acquisition',
+            'parent_container_type': 'session',
+            'project': {'label': 'Project_Label_Test'},
+            'subject': None,
+            'session': {'label': 'Session_Label_Test'},
+            'acquisition': {'label': 'Acquisition_Label_Test'},
+            'file': {},
+            'ext': '.zip'
+        }
+        # Call function
+        container = bidsify_flywheel.process_matching_templates(context)
+        # Define expected container
+        container_expected = {
+            'info': {
+                'BIDS': {
+                    'template': 'acquisition',
+                    'Ignore': False
+                    }
+                },
+                'label': 'Acquisition_Label_Test'
+            }
+        self.assertEqual(container, container_expected)
+
     def test_process_matching_templates_acquisition_file(self):
         """ """
         # Define context
@@ -739,7 +766,8 @@ class BidsifyTestCases(unittest.TestCase):
             'info': {
                 'BIDS': {
                     'Label': 'Session_Label_Test',
-                    'template': 'session'
+                    'template': 'session',
+                    'Ignore': False
                     }
                 },
                 'label': 'Session_Label_Test'
