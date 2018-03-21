@@ -14,11 +14,6 @@
 			"default": "",
 			"pattern": "^[a-zA-Z0-9]*$"
 		},
-		"Ignore": {
-			"type": "boolean",
-			"title": "Ignore",
-			"default": false
-		},
 		"Echo": {
 			"type": "string",
 			"title": "Echo Index",
@@ -91,8 +86,7 @@
 		"session": {
 			"description": "BIDS session template",
 			"properties": {
-				"Label": {"type": "string", "title": "Label", "default": "", "auto_update": "{session.label}"},
-				"Ignore": {"$ref": "#/definitions/Ignore"}
+				"Label": {"type": "string", "title": "Label", "default": "", "auto_update": "{session.label}"}
 			},
 			"required": []
 		},
@@ -110,7 +104,6 @@
 		"acquisition": {
 			"description": "BIDS session template",
 			"properties": {
-				"Ignore": {"$ref": "#/definitions/Ignore"}
 			},
 			"required": []
 		},

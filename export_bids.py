@@ -76,7 +76,9 @@ def is_file_excluded(f, namespace, src_data):
     return False
 
 def is_container_excluded(container, namespace):
-    return isinstance(container.get('info', {}).get(namespace, {}), dict) and container.get('info', {}).get(namespace, {}).get('Ignore')
+    meta_info = container.get('info', {}).get(namespace, {})
+    if isinstance(meta_info, dict):
+        return meta_info.get('ignore', False)
 
 def warn_if_bids_invalid(f, namespace):
     """

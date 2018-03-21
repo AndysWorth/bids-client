@@ -185,7 +185,7 @@ class BidsExportTestCases(unittest.TestCase):
             'info': {
                 'BIDS': {
                     'template': 'acquisition',
-                    'Ignore': False
+                    'ignore': False
                 }
             },
             'label': 'Acquisition_Label_Test'
@@ -195,7 +195,7 @@ class BidsExportTestCases(unittest.TestCase):
             'info': {
                 'BIDS': {
                     'template': 'acquisition',
-                    'Ignore': True
+                    'ignore': True
                 }
             },
             'label': 'Acquisition_Label_Test'
