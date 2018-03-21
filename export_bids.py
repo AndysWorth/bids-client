@@ -267,6 +267,10 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
         if sessions and proj_ses.get('label') not in sessions:
             continue
 
+        # Skip session if BIDS.Ignore is True
+        if isinstance(proj_ses.get('info', {}).get('BIDS', {}), dict) and proj_ses.get('info', {}).get('BIDS', {}).get('Ignore'):
+            continue
+
         # Skip subject if we're filtering subjects
         if subjects:
             subj_code = proj_ses.get('subject', {}).get('code')
@@ -300,6 +304,10 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
         # Get acquisitions
         session_acqs = fw.get_session_acquisitions(proj_ses['_id'])
         for ses_acq in session_acqs:
+
+            # Skip if BIDS.Ignore is True
+            if isinstance(ses_acq.get('info', {}).get('BIDS', {}), dict) and ses_acq.get('info', {}).get('BIDS', {}).get('Ignore'):
+                continue
             # Get true acquisition, in order to access file info
             acq = fw.get_acquisition(ses_acq['_id'])
             # Iterate over acquistion files

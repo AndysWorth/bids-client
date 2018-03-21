@@ -14,9 +14,14 @@
 			"default": "",
 			"pattern": "^[a-zA-Z0-9]*$"
 		},
+		"Ignore": {
+			"type": "boolean",
+			"title": "Ignore",
+			"default": false
+		},
 		"Echo": {
-			"type": "string", 
-			"title": "Echo Index", 
+			"type": "string",
+			"title": "Echo Index",
 			"default": "",
 			"pattern": "^[0-9]*$"
 		},
@@ -86,7 +91,8 @@
 		"session": {
 			"description": "BIDS session template",
 			"properties": {
-				"Label": {"type": "string", "title": "Label", "default": "", "auto_update": "{session.label}"}
+				"Label": {"type": "string", "title": "Label", "default": "", "auto_update": "{session.label}"},
+				"Ignore": {"$ref": "#/definitions/Ignore"}
 			},
 			"required": []
 		},
@@ -100,6 +106,13 @@
 					"auto_update": "sub-<subject.code>[/ses-<session.info.BIDS.Label>]"}
 			},
 			"required": ["Filename"]
+		},
+		"acquisition": {
+			"description": "BIDS session template",
+			"properties": {
+				"Ignore": {"$ref": "#/definitions/Ignore"}
+			},
+			"required": []
 		},
 		"acquisition_file": {
 			"description": "BIDS acquisition file template",
@@ -344,6 +357,13 @@
 			"where": {
 				"container_type": "file",
 				"parent_container_type": "session"
+			}
+		},
+		{
+			"id": "bids_acquisition",
+			"template": "acquisition",
+			"where": {
+				"container_type": "acquisition"
 			}
 		},
 		{

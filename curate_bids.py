@@ -114,6 +114,9 @@ def update_meta_info(fw, context):
     # Modify session
     elif context['container_type'] == 'session':
         fw.replace_session_info(context['session']['_id'], context['session']['info'])
+    # Modify acquisition
+    elif context['container_type'] == 'acquisition':
+        fw.replace_acquisition_info(context['acquisition']['_id'], context['acquisition']['info'])
     # Cannot determine container type
     else:
         logger.info('Cannot determine container type: ' + context['container_type'])
@@ -180,6 +183,9 @@ def curate_bids_tree(fw, project, reset=False, template_file=None, update=True):
 
             # Add run_counter
             context['run_counters'] = utils.RunCounterMap()
+
+        elif ctype == 'acquisition':
+            bidsify_flywheel.process_matching_templates(context, template)
 
         elif ctype == 'file':
             if parent_ctype == 'project' and PROJECT_TEMPLATE_FILE_NAME_REGEX.search(context['file']['name']):
