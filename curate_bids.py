@@ -166,6 +166,9 @@ def curate_bids_tree(fw, project, reset=False, template_file=None, update=True):
         if reset:
             clear_meta_info(context[ctype], template)
 
+        elif context[ctype].get('info',{}).get('BIDS') == 'NA':
+            continue
+
         if ctype == 'project':
             bidsify_flywheel.process_matching_templates(context, template)
             # Validate meta information

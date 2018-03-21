@@ -867,6 +867,33 @@ class BidsifyTestCases(unittest.TestCase):
         print container
         self.assertEqual(container, container_expected)
 
+    def test_process_matching_templates_BIDS_NA(self):
+        """ """
+        # Define context
+        context = {
+            'container_type': 'file',
+            'parent_container_type': 'acquisition',
+            'project': None,
+            'subject': {u'code': u'001'},
+            'session': {u'label': u'sesTEST', 'info': {'BIDS': {'Label': u'sesTEST'}}},
+            'run_counters': utils.RunCounterMap(),
+            'acquisition': {u'label': u'acq_task-TEST_run+'},
+            'file': {u'measurements': [u'functional'],
+                    u'type': u'nifti','info': {'BIDS': 'NA'}
+                        },
+            'ext': '.nii.gz'
+        }
+        # Call function
+        container = bidsify_flywheel.process_matching_templates(context)
+        # Define expected container
+        container_expected = {
+            u'measurements': [u'functional'],
+            u'type': u'nifti',
+            'info': {'BIDS': 'NA'}
+        }
+
+        self.assertEqual(container, container_expected)
+
     def assertEqual(self, a, b):
         a = utils.normalize_strings(a)
         b = utils.normalize_strings(b)
