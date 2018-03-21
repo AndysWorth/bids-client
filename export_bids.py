@@ -65,7 +65,7 @@ def is_file_excluded(f, namespace, src_data):
     if not metadata:
         return True
 
-    if parse_bool(metadata.get('exclude', False)):
+    if parse_bool(metadata.get('ignore', False)):
         return True
 
     if not src_data:

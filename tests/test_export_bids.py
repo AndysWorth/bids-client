@@ -202,6 +202,27 @@ class BidsExportTestCases(unittest.TestCase):
         }
         self.assertTrue(export_bids.is_container_excluded(container, 'BIDS'))
 
+    def test_exclude_ignored_files(self):
+        container = {
+            'info': {
+                'BIDS': {
+                    'template': 'func_file',
+                    'ignore': False
+                }
+            }
+        }
+        self.assertTrue(not export_bids.is_file_excluded(container, 'BIDS', True))
+        container = {
+            'info': {
+                'BIDS': {
+                    'template': 'func_file',
+                    'ignore': True
+                }
+            }
+        }
+        self.assertTrue(export_bids.is_file_excluded(container, 'BIDS', True))
+
+
 if __name__ == "__main__":
 
     unittest.main()
