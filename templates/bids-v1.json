@@ -698,7 +698,7 @@
 			"filter": "file.info.BIDS.IntendedFor",
 			"resolveFor": "session",
 			"type": "file",
-			"format": "{file.info.BIDS.Folder}/{file.info.BIDS.Filename}"
+			"format": "[ses-<session.info.BIDS.Label>/]{file.info.BIDS.Folder}/{file.info.BIDS.Filename}"
 		}
 	]
 }
