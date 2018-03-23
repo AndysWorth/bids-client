@@ -806,7 +806,7 @@ def attach_tsv(fw, file_info):
                     for key in info_object:
                         # If key is age, convert from years to seconds
                         if key == 'age':
-                            session_info['subject'][key] = info_object[key] * 31536000
+                            session_info['subject'][key] = int(info_object[key] * 31536000)
                         elif key in ['first name', 'last name', 'sex', 'race', 'ethnicity']:
                             session_info['subject'][key] = info_object[key]
                         else:
