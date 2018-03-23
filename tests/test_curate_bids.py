@@ -247,7 +247,7 @@ class BidsCurateTestCases(unittest.TestCase):
         curate_bids.curate_bids_tree(None, project, False, None, False)
         self.assertIn('IntendedFor', file1['info'])
         self.assertEqual(len(file1['info']['IntendedFor']), 1)
-        self.assertEqual(file1['info']['IntendedFor'][0], 'func/sub-subj1_ses-session1_task-rest_run-1_bold.nii.gz')
+        self.assertEqual(file1['info']['IntendedFor'][0], 'ses-session1/func/sub-subj1_ses-session1_task-rest_run-1_bold.nii.gz')
 
 
 if __name__ == "__main__":

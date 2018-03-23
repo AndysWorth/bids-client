@@ -26,8 +26,8 @@ RUN apt-get update && \
 
 ENV SRCDIR /src
 RUN mkdir -p ${SRCDIR}
-RUN wget -O - https://github.com/INCF/bids-validator/archive/0.24.0.tar.gz | tar xz -C ${SRCDIR}
-RUN npm install -g /src/bids-validator-0.24.0/
+RUN wget -O - https://github.com/INCF/bids-validator/archive/0.25.14.tar.gz | tar xz -C ${SRCDIR}
+RUN npm install -g /src/bids-validator-0.25.14/
 
 
 # Install python SDK
