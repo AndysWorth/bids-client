@@ -2,7 +2,12 @@ import collections
 import logging
 import copy
 import dateutil.parser
-from supporting_files import utils
+
+if __name__ == '__main__':
+    import utils
+else:
+    from supporting_files import utils
+
 logger = logging.getLogger('curate-bids')
 
 class TreeNode(collections.MutableMapping):
@@ -38,6 +43,20 @@ class TreeNode(collections.MutableMapping):
         """
         info = self.data.get('info')
         return info != self.original_info
+
+    def to_json(self):
+        return {
+            'type': self.type,
+            'data': self.data,
+            'children': [ x.to_json() for x in self.children ]
+        }
+
+    @staticmethod
+    def from_json(cls, data):
+        node = TreeNode(data['type'], data['data'])
+        for child in data.get('children', []):
+            node.children.append(TreeNode.from_json(child))
+        return node
 
     def context_iter(self, context=None):
         """
@@ -160,4 +179,26 @@ def compare_acquisitions(acq1, acq2):
     if ts1 and ts2:
         return int((ts1 - ts2).total_seconds())
     return int((acq1['created'] - acq2['created']).total_seconds())
+
+if __name__ == '__main__':
+    import argparse
+    import flywheel
+    import json
+
+    parser = argparse.ArgumentParser(description='Dump project tree to json')
+    parser.add_argument('--api-key', dest='api_key', action='store',
+            required=True, help='API key')
+    parser.add_argument('-p', dest='project_label', action='store',
+            required=False, default=None, help='Project Label on Flywheel instance')
+    parser.add_argument('output_file', help='The output file destination')
+
+    args = parser.parse_args()
+
+    fw = flywheel.Flywheel(args.api_key)
+    project_id = utils.validate_project_label(fw, args.project_label)
+
+    project_tree = get_project_tree(fw, project_id)
+
+    with open(args.output_file, 'w') as f:
+        json.dump(project_tree.to_json(), f, indent=2)
 
