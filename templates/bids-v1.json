@@ -1,6 +1,6 @@
 {
-    "namespace": "BIDS",
-    "description": "Namespace for BIDS info objects in Flywheel",
+	"namespace": "BIDS",
+	"description": "Namespace for BIDS info objects in Flywheel",
 	"definitions": {
 		"Acq": {
 			"type": "string",
@@ -35,8 +35,8 @@
 			]
 		},
 		"Mod": {
-			"type": "string", 
-			"title": "Mod Label", 
+			"type": "string",
+			"title": "Mod Label",
 			"default": "",
 			"pattern": "^[a-zA-Z0-9]*$"
 		},
@@ -60,7 +60,7 @@
 		},
 
 		"project": {
-	    	"description": "BIDS project template",
+			"description": "BIDS project template",
 			"properties": {
 				"Name": {"type": "string", "title": "Name", "default": "", "auto_update": "{project.label}"},
 				"BIDSVersion": {"type": "string", "title": "BIDS Version", "default": "1.0.2"},
@@ -368,15 +368,12 @@
 				"file.type": {
 					"$in": ["nifti", "NIfTI"]
 				},
-				"file.measurements": {
-					"$in": [
-						"anatomy_t1w", "anatomy_t2w", "anatomy_t1wrho",
-						"map_t1w", "map_t2w", "anatomy_t2star", "anatomy_flair",
-						"anatomy_flash", "anatomy_pd", "map_pd", "anatomy_pdt2",
-						"anatomy_t1w_inplane", "anatomy_t2w_inplane", "angio",
-						"defacemask", "swi"
-					]
-				}					
+				"file.classification.Contrast": {
+					"$in": [ "T1", "PD", "T2" ]
+				},
+				"file.classification.Intent": {
+					"$in" : [ "Structural" ]
+				}
 			},
 			"initialize": {
 				"Task": {
@@ -402,11 +399,11 @@
 			"template": "func_file",
 			"where": {
 				"container_type": "file",
-		        "file.type": {
+				"file.type": {
 					"$in": ["nifti", "NIfTI"]
 				},
-        		"file.measurements": {
-					"$in": ["functional"]
+				"file.classification.Intent": {
+					"$in" : [ "Functional" ]
 				}
 			},
 			"initialize": {
@@ -455,8 +452,8 @@
 				"file.type": {
 					"$in": ["tabular data", "Tabular Data"]
 				},
-				"file.measurements": {
-					"$in": ["functional"]
+				"file.classification.Intent": {
+					"$in" : [ "Functional" ]
 				}
 			},
 			"initialize": {
@@ -514,8 +511,8 @@
 				"file.type": {
 					"$in": ["tabular data", "Tabular Data"]
 				},
-				"file.measurements": {
-					"$in": ["behavioral"]
+				"file.classification.Custom": {
+					"$in" : [ "Behavioral" ]
 				}
 			},
 			"initialize": {
@@ -534,8 +531,8 @@
 				"file.type": {
 					"$in": ["tabular data", "Tabular Data"]
 				},
-				"file.measurements": {
-					"$in": ["physio"]
+				"file.classification.Custom": {
+					"$in" : [ "Physio" ]
 				}
 			},
 			"initialize": {
@@ -565,8 +562,11 @@
 				"file.type": {
 					"$in": ["nifti", "bvec", "bval", "NIfTI", "BVEC", "BVAL"]
 				},
-				"file.measurements": {
-					"$in": ["diffusion"]
+				"file.classification.Contrast": {
+					"$in": [ "Diffusion" ]
+				},
+				"file.classification.Intent": {
+					"$in" : [ "Structural" ]
 				}
 			},
 			"initialize": {
@@ -591,11 +591,11 @@
 				"file.type": {
 					"$in": ["nifti", "NIfTI"]
 				},
-				"file.measurements": {
-					"$in": ["field_map"]
+				"file.classification.Intent": {
+					"$in" : [ "Fieldmap" ]
 				},
-				"file.info.PhaseEncodingDirection": {
-					"$in": ["i", "j", "k", "i-", "j-", "k-"]
+				"acquisition.label": {
+					"$regex": "[T|t]opup"
 				}
 			},
 			"initialize": {
@@ -626,8 +626,8 @@
 				"file.type": {
 					"$in": ["nifti", "NIfTI"]
 				},
-				"file.measurements": {
-					"$in": ["field_map"]
+				"file.classification.Intent": {
+					"$in" : [ "Fieldmap" ]
 				}
 			},
 			"initialize": {
@@ -649,18 +649,11 @@
 			"template": "dicom_file",
 			"where": {
 				"container_type": "file",
-        		"file.type": {
+				"file.type": {
 					"$in": ["dicom", "DICOM"]
 				},
-				"file.measurements": {
-					"$in": [
-						"anatomy_t1w", "anatomy_t2w", "anatomy_t1wrho",
-						"map_t1w", "map_t2w", "anatomy_t2star", "anatomy_flair",
-						"anatomy_flash", "anatomy_pd", "map_pd", "anatomy_pdt2",
-						"anatomy_t1w_inplane", "anatomy_t2w_inplane", "angio",
-						"defacemask", "swi", "functional", "behavioral",
-						"physio", "diffusion", "field_map"
-					]
+				"file.classification.Intent": {
+					"$in": [ "Structural", "Fieldmap", "Functional" ]
 				}
 			},
 			"initialize": {
@@ -674,7 +667,7 @@
 			"template": "json_file",
 			"where": {
 				"container_type": "file",
-	        	"file.type": {
+				"file.type": {
 					"$in": ["source code", "JSON"]
 				}
 			}
