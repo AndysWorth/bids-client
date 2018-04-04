@@ -1,5 +1,5 @@
 import argparse
-import datetime
+import dateutil.parser
 import logging
 import json
 import os
@@ -32,13 +32,7 @@ def validate_dirname(dirname):
     if not os.path.exists(dirname):
         logger.info('Path (%s) does not exist. Making directory...' % dirname)
         os.mkdir(dirname)
-    # If directory does exist, let user know that file that have been changed will be replaced
-    # else:
-        # if os.listdir(dirname):
-        #     logger.warn('Directory (%s) is not empty. Exporter will replace any file that has been modified in flywheel or on the file system.' % dirname)
-        #     response = raw_input('Continue? (Y/n):\n\t') in ['Y', 'y', 'yes', 'Yes']
-            # if not response:
-            #     sys.exit(0)
+
 def parse_bool(v):
     if v is None:
         return False
@@ -79,16 +73,17 @@ def is_file_excluded_options(namespace, src_data, replace):
         # Check if file already exists
         if os.path.isfile(fpath):
             if not replace:
-                print '{} already exists, use --replace to keep up-to-date'.format(fpath)
                 return True
             # Check if the file already exists and whether it is up to date
-            time_since_epoch = int((datetime.datetime.strptime(f.get('modified'), '%Y-%m-%dT%H:%M:%S.%fZ')-datetime.datetime(1970,1,1)).total_seconds())
+            time_since_epoch = timestamp_to_int(f.get('modified'))
             if time_since_epoch == int(os.path.getmtime(fpath)):
-                print '{} already exists and is up to date'.format(fpath)
                 return True
 
         return False
     return is_file_excluded
+
+def timestamp_to_int(timestamp):
+    return int((dateutil.parser.parse(timestamp)-dateutil.parser.parse('1970-01-01 00:00:0Z')).total_seconds())
 
 def is_container_excluded(container, namespace):
     meta_info = container.get('info', {}).get(namespace, {})
@@ -181,7 +176,7 @@ def download_bids_files(fw, filepath_downloads, dry_run):
             continue
         fw.download_file_from_project(*args)
         # Set the mtime of the downloaded file to the 'modified' timestamp in seconds
-        modified_time = (datetime.datetime.strptime(modified, '%Y-%m-%dT%H:%M:%S.%fZ')-datetime.datetime(1970,1,1)).total_seconds()
+        modified_time = float(timestamp_to_int(modified))
         os.utime(f,(modified_time, modified_time))
 
         # If zipfile is attached to project, unzip...
@@ -207,7 +202,7 @@ def download_bids_files(fw, filepath_downloads, dry_run):
             continue
         fw.download_file_from_session(*args)
         # Set the mtime of the downloaded file to the 'modified' timestamp in seconds
-        modified_time = (datetime.datetime.strptime(modified, '%Y-%m-%dT%H:%M:%S.%fZ')-datetime.datetime(1970,1,1)).total_seconds()
+        modified_time = float(timestamp_to_int(modified))
         os.utime(f,(modified_time, modified_time))
 
 
@@ -226,7 +221,7 @@ def download_bids_files(fw, filepath_downloads, dry_run):
 
         fw.download_file_from_acquisition(*args)
         # Set the mtime of the downloaded file to the 'modified' timestamp in seconds
-        modified_time = (datetime.datetime.strptime(modified, '%Y-%m-%dT%H:%M:%S.%fZ')-datetime.datetime(1970,1,1)).total_seconds()
+        modified_time = float(timestamp_to_int(modified))
         os.utime(f,(modified_time, modified_time))
 
     # Creating all JSON sidecar files
