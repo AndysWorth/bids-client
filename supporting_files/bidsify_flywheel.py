@@ -4,17 +4,17 @@ import re
 
 import flywheel
 
-from supporting_files import classifications
+from supporting_files import enum_maps
 import templates
 import utils
 
 
-def determine_enum(theproperty, key, measurements):
+def determine_enum(theproperty, key, classifications):
     """
 
     obj:  {'Task': '', 'Run': '', 'Filename': '', 'Acq': '', 'Rec': '', 'Path': '', 'Folder': 'func', 'Echo': ''}
     property: {'default': 'bold', 'enum': ['bold', 'sbref', 'stim', 'physio'], 'type': 'string', 'label': 'Modality Label'}
-    measurements:  [u'functional']
+    classifications:  {u'Contrast': u'Functional'}
 
     """
     # Use the default value
@@ -23,11 +23,9 @@ def determine_enum(theproperty, key, measurements):
     if not enum_value:
         # If key is modality, iterate over classifications dict
         if key == 'Modality':
-            for k1 in classifications.classifications:
-                for k2 in classifications.classifications[k1]:
-                    if measurements[0] == classifications.classifications[k1][k2]:
-                        enum_value = k2
-                        break
+            for enum_value in theproperty.get('enum', []):
+                if utils.dict_match(enum_maps.MODALITY[enum_value], classifications):
+                    return enum_value
 
     return enum_value
 
@@ -37,13 +35,13 @@ def determine_enum(theproperty, key, measurements):
 # Properties may be of type string or object. Will add other types later.
 # Measurements passed through function so that Modality value can be determined
 
-def add_properties(properties, obj, measurements):
+def add_properties(properties, obj, classifications):
     for key in properties:
         proptype = properties[key]["type"]
         if proptype == "string":
             # If 'enum' in properties, seek to determine the value from enum list
             if "enum" in properties[key]:
-                obj[key] = determine_enum(properties[key], key, measurements)
+                obj[key] = determine_enum(properties[key], key, classifications)
             elif "default" in properties[key]:
                 obj[key] = properties[key]["default"]
             else:
@@ -109,8 +107,8 @@ def process_matching_templates(context, template=templates.DEFAULT_TEMPLATE, upl
                     container['info'] = {}
 
                 obj = container['info'].get(namespace, {})
-                container['info'][namespace] = add_properties(templateDef['properties'], obj, container.get('measurements'))
                 obj['template'] = rule.template
+                container['info'][namespace] = add_properties(templateDef['properties'], obj, container.get('classification'))
                 if container_type in ['session', 'acquisition', 'file']:
                     obj['ignore'] = False
                 rule.initializeProperties(obj, context)
@@ -147,7 +145,7 @@ def process_resolvers(context, template=templates.DEFAULT_TEMPLATE):
 
     if (('info' not in container) or (namespace not in container['info']) or ('template' not in container['info'][namespace])):
         return
-    
+
     # Determine the applied template name
     template_name = container['info'][namespace]['template']
     # Get a list of resolvers that apply to this template

@@ -582,7 +582,7 @@ class BidsifyTestCases(unittest.TestCase):
             'project': None,
             'subject': {u'code': u'001'},
             'session': {u'label': u'sesTEST', 'info': {'BIDS': {'Label': u'sesTEST'}}},
-            'acquisition': {u'label': u'acqTEST PA'}, # Acquisition label needs to contain
+            'acquisition': {u'label': u'acqTEST Topup PA'}, # Acquisition label needs to contain
             'file': {u'classification': {u'Intent': u'Fieldmap'},
                     u'type': u'nifti'
                     },
@@ -618,7 +618,7 @@ class BidsifyTestCases(unittest.TestCase):
             'session': {u'label': u'sesTEST', 'info': {'BIDS': {'Label': u'sesTEST'}}},
             'acquisition': {u'label': u'acqTEST'},
             'file': {
-                u'measurements': [u'diffusion'],
+                u'classification': {u'Contrast': u'Diffusion', u'Intent': u'Structural'},
                 u'type': u'dicom'
             },
             'ext': '.dcm.zip'
@@ -633,7 +633,7 @@ class BidsifyTestCases(unittest.TestCase):
                 'Path': u'sourcedata/sub-001/ses-sestest',
                 'ignore': False
                 }},
-            u'measurements': [u'diffusion'],
+            u'classification': {u'Contrast': u'Diffusion', u'Intent': u'Structural'},
             u'type': u'dicom'}
         self.assertEqual(container, container_expected)
 
@@ -648,7 +648,7 @@ class BidsifyTestCases(unittest.TestCase):
             'acquisition': {u'label': u'acqTEST', u'_id': u'09090'},
             'file': {
                 u'name': u'4784_1_1_localizer',
-                u'measurements': [u'localizer'],
+                u'classification': {u'Contrast': u'T2', u'Intent': u'Localizer'},
                 u'type': u'dicom'
             },
             'ext': '.dcm.zip'
@@ -659,7 +659,7 @@ class BidsifyTestCases(unittest.TestCase):
         # Define expected container
         container_expected = {
             u'name': u'4784_1_1_localizer',
-            u'measurements': [u'localizer'],
+            u'classification': {u'Contrast': u'T2', u'Intent': u'Localizer'},
             u'type': u'dicom'
         }
         self.assertEqual(container, container_expected)
@@ -675,7 +675,7 @@ class BidsifyTestCases(unittest.TestCase):
             'acquisition': {u'label': u'acqTEST'},
             'file': {
                 u'name': u'09 cmrr_mbepi_task-spatialfrequency_s6_2mm_66sl_PA_TR1.0.dcm.zip',
-                u'measurements': [u'diffusion'],
+                u'classification': {u'Contrast': u'Diffusion', u'Intent': u'Structural'},
                 u'type': u'dicom'
             },
             'ext': '.dcm.zip'
@@ -691,7 +691,7 @@ class BidsifyTestCases(unittest.TestCase):
                 'ignore': False
                 }},
             u'name': u'09 cmrr_mbepi_task-spatialfrequency_s6_2mm_66sl_PA_TR1.0.dcm.zip',
-            u'measurements': [u'diffusion'],
+            u'classification': {u'Contrast': u'Diffusion', u'Intent': u'Structural'},
             u'type': u'dicom'}
         self.assertEqual(container, container_expected)
 
@@ -856,7 +856,7 @@ class BidsifyTestCases(unittest.TestCase):
             'subject': None,
             'session': None,
             'acquisition': None,
-            'file': {u'measurements': [u'unknown'],
+            'file': {u'classification': {},
                     u'type': u'archive'},
             'ext': '.zip'
         }
@@ -871,10 +871,10 @@ class BidsifyTestCases(unittest.TestCase):
                     'ignore': False
                     }
                 },
-            u'measurements': [u'unknown'], u'type': u'archive'}
+            u'classification': {}, u'type': u'archive'}
         self.assertEqual(container, container_expected)
 
-    def test_process_matching_templates_project_file_multiple_measurements(self):
+    def test_process_matching_templates_project_file_multiple_contrasts(self):
         """ """
         # Define context
         context = {
@@ -919,7 +919,7 @@ class BidsifyTestCases(unittest.TestCase):
             'session': {u'label': u'sesTEST', 'info': {'BIDS': {'Label': u'sesTEST'}}},
             'run_counters': utils.RunCounterMap(),
             'acquisition': {u'label': u'acq_task-TEST_run+'},
-            'file': {u'measurements': [u'functional'],
+            'file': {u'classification': {u'Intent': u'Functional'},
                     u'type': u'nifti','info': {'BIDS': 'NA'}
                         },
             'ext': '.nii.gz'
@@ -928,7 +928,7 @@ class BidsifyTestCases(unittest.TestCase):
         container = bidsify_flywheel.process_matching_templates(context)
         # Define expected container
         container_expected = {
-            u'measurements': [u'functional'],
+            u'classification': {u'Intent': u'Functional'},
             u'type': u'nifti',
             'info': {'BIDS': 'NA'}
         }

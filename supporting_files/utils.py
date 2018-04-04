@@ -90,6 +90,24 @@ def dict_set(obj, key, value):
             raise ValueError('Could not set value for key: ' + key)
     curr[parts[-1]] = value
 
+def dict_match(matcher, matchee):
+    for key, val in matcher.iteritems():
+        if not matchee.get(key):
+            return False
+        elif not isinstance(matchee.get(key), list):
+            mval = [matchee.get(key)]
+        else:
+            mval = matchee.get(key)
+        if isinstance(val, list):
+            for item in val:
+                if item not in mval:
+                    return False
+        else:
+            if val not in mval:
+                return False
+
+    return True
+
 def normalize_strings(obj):
     if isinstance(obj, basestring):
         return str(obj)
