@@ -165,8 +165,8 @@ def handle_session(fw, project_id, session_name, subject_name):
         logger.info('Session (%s) not found. Creating new session for project %s.' % (session_name, project_id))
 
         session_id = fw.add_session({
-            'label': session_name, 
-            'project': project_id,                    
+            'label': session_name,
+            'project': project_id,
             'subject': {'code': subject_name},
             'info': { template.namespace: {} }
         })
@@ -227,9 +227,9 @@ def upload_acquisition_file(fw, context, full_fname):
     classification = classify_acquisition(full_fname)
 
     update = {}
-    
+
     if classification:
-        update['measurements'] = [classification]
+        update['classification'] = [classification]
 
     # Workaround for tsv tabular data (remove with mongo-filetypes branch)
     if context['file']['name'].endswith('.tsv') or context['file']['name'].endswith('.tsv.gz'):

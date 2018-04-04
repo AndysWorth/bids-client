@@ -16,15 +16,11 @@ MODALITY = {
     'defacemask': {'Custom': 'Defacemask'},
     'SWImagandphase': {'Custom': 'SWI'},
     'bold': {'Intent': 'Functional'},
-    'events': {'Intent': 'Functional'},
-    'sbref': {'Intent': 'Functional'},
-    'stim': {'Intent': 'Functional', 'Custom': 'Stim'},         # stimulus
-    'physio': {'Intent': 'Functional', 'Custom': 'Physio'} ,     # physio
-    'events': {'Custom': 'Behavioral'},
-    'stim': {'Custom': 'Stim'},    # stimulus
-    'physio': {'Custom': 'Physio'},       # physio
+    'events': [{'Intent': 'Functional'}, {'Custom': 'Behavioral'}],
+    'sbref': [{'Intent': 'Functional'}, {'Contrast': 'Diffusion', 'Intent':'Structural'}],
+    'stim': [{'Intent': 'Functional', 'Custom': 'Stim'}, {'Custom': 'Stim'}],         # stimulus
+    'physio': [{'Intent': 'Functional', 'Custom': 'Physio'}, {'Custom': 'Physio'}],     # physio
     'dwi': {'Contrast': 'Diffusion', 'Intent':'Structural'},
-    'sbref': {'Contrast': 'Diffusion', 'Intent':'Structural'},
     'phasediff': {'Contrast': 'B0', 'Intent': 'Fieldmap'},
     'magnitude1': {'Contrast': 'B0', 'Intent': 'Fieldmap'},
     'magnitude2': {'Contrast': 'B0', 'Intent': 'Fieldmap'},

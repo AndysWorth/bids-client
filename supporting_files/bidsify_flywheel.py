@@ -4,17 +4,17 @@ import re
 
 import flywheel
 
-from supporting_files import enum_maps
+from supporting_files import classifications
 import templates
 import utils
 
 
-def determine_enum(theproperty, key, classifications):
+def determine_enum(theproperty, key, classification):
     """
 
     obj:  {'Task': '', 'Run': '', 'Filename': '', 'Acq': '', 'Rec': '', 'Path': '', 'Folder': 'func', 'Echo': ''}
     property: {'default': 'bold', 'enum': ['bold', 'sbref', 'stim', 'physio'], 'type': 'string', 'label': 'Modality Label'}
-    classifications:  {u'Contrast': u'Functional'}
+    classification:  {u'Contrast': u'Functional'}
 
     """
     # Use the default value
@@ -23,9 +23,11 @@ def determine_enum(theproperty, key, classifications):
     if not enum_value:
         # If key is modality, iterate over classifications dict
         if key == 'Modality':
-            for enum_value in theproperty.get('enum', []):
-                if utils.dict_match(enum_maps.MODALITY[enum_value], classifications):
-                    return enum_value
+            for data_type in classifications.classifications.keys():
+                for enum_value in theproperty.get('enum', []):
+                    enum_req = classifications.classifications[data_type].get(enum_value)
+                    if enum_req and utils.dict_match(enum_req, classification):
+                        return enum_value
 
     return enum_value
 
@@ -35,13 +37,13 @@ def determine_enum(theproperty, key, classifications):
 # Properties may be of type string or object. Will add other types later.
 # Measurements passed through function so that Modality value can be determined
 
-def add_properties(properties, obj, classifications):
+def add_properties(properties, obj, classification):
     for key in properties:
         proptype = properties[key]["type"]
         if proptype == "string":
             # If 'enum' in properties, seek to determine the value from enum list
             if "enum" in properties[key]:
-                obj[key] = determine_enum(properties[key], key, classifications)
+                obj[key] = determine_enum(properties[key], key, classification)
             elif "default" in properties[key]:
                 obj[key] = properties[key]["default"]
             else:
