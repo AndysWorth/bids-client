@@ -14,7 +14,7 @@ def determine_enum(theproperty, key, classification):
 
     obj:  {'Task': '', 'Run': '', 'Filename': '', 'Acq': '', 'Rec': '', 'Path': '', 'Folder': 'func', 'Echo': ''}
     property: {'default': 'bold', 'enum': ['bold', 'sbref', 'stim', 'physio'], 'type': 'string', 'label': 'Modality Label'}
-    classification:  {u'Contrast': u'Functional'}
+    classification:  {u'Intent': u'Functional'}
 
     """
     # Use the default value
@@ -24,6 +24,7 @@ def determine_enum(theproperty, key, classification):
         # If key is modality, iterate over classifications dict
         if key == 'Modality':
             for data_type in classifications.classifications.keys():
+                # Loops through the enum values in the propdef, allows for prioritization
                 for enum_value in theproperty.get('enum', []):
                     enum_req = classifications.classifications[data_type].get(enum_value)
                     if enum_req and utils.dict_match(enum_req, classification):

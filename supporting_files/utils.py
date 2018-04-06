@@ -91,6 +91,9 @@ def dict_set(obj, key, value):
     curr[parts[-1]] = value
 
 def dict_match(matcher, matchee):
+    """
+    Returns True if each key,val pair is present in the matchee
+    """
     for key, val in matcher.iteritems():
         if not matchee.get(key):
             return False
