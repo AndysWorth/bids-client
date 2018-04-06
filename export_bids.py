@@ -1,4 +1,5 @@
 import argparse
+import dateutil.parser
 import logging
 import json
 import os
@@ -31,11 +32,6 @@ def validate_dirname(dirname):
     if not os.path.exists(dirname):
         logger.info('Path (%s) does not exist. Making directory...' % dirname)
         os.mkdir(dirname)
-    # If directory does exist, make sure it's empty
-    else:
-        if os.listdir(dirname):
-            logger.error('Directory (%s) is not empty. Exporter will not run.' % dirname)
-            sys.exit(1)
 
 def parse_bool(v):
     if v is None:
@@ -60,20 +56,34 @@ def get_metadata(ctx, namespace):
 
     return ctx['info'][namespace]
 
-def is_file_excluded(f, namespace, src_data):
-    metadata = get_metadata(f, namespace)
-    if not metadata:
-        return True
-
-    if parse_bool(metadata.get('ignore', False)):
-        return True
-
-    if not src_data:
-        path = metadata.get('Path')
-        if path and path.startswith('sourcedata'):
+def is_file_excluded_options(namespace, src_data, replace):
+    def is_file_excluded(f, fpath):
+        metadata = get_metadata(f, namespace)
+        if not metadata:
             return True
 
-    return False
+        if parse_bool(metadata.get('ignore', False)):
+            return True
+
+        if not src_data:
+            path = metadata.get('Path')
+            if path and path.startswith('sourcedata'):
+                return True
+
+        # Check if file already exists
+        if os.path.isfile(fpath):
+            if not replace:
+                return True
+            # Check if the file already exists and whether it is up to date
+            time_since_epoch = timestamp_to_int(f.get('modified'))
+            if time_since_epoch == int(os.path.getmtime(fpath)):
+                return True
+
+        return False
+    return is_file_excluded
+
+def timestamp_to_int(timestamp):
+    return int((dateutil.parser.parse(timestamp)-dateutil.parser.parse('1970-01-01 00:00:0Z')).total_seconds())
 
 def is_container_excluded(container, namespace):
     meta_info = container.get('info', {}).get(namespace, {})
@@ -151,16 +161,23 @@ def create_json(meta_info, path, namespace):
                 sort_keys=True, indent=4)
 
 def download_bids_files(fw, filepath_downloads, dry_run):
+    """
+    filepath_downloads: {container_type: {filepath: {'args': (tuple of args for sdk download function), 'modified': file modified attr}}}
+    """
     # Download all project files
     logger.info('Downloading project files')
     for f in filepath_downloads['project']:
-        args = filepath_downloads['project'][f]
+        args = filepath_downloads['project'][f]['args']
+        modified = filepath_downloads['project'][f]['modified']
         logger.info('Downloading project file: {0}'.format(args[1]))
         # For dry run, don't actually download
         if dry_run:
             logger.info('  to {0}'.format(args[2]))
             continue
         fw.download_file_from_project(*args)
+        # Set the mtime of the downloaded file to the 'modified' timestamp in seconds
+        modified_time = float(timestamp_to_int(modified))
+        os.utime(f,(modified_time, modified_time))
 
         # If zipfile is attached to project, unzip...
         path = args[2]
@@ -176,18 +193,24 @@ def download_bids_files(fw, filepath_downloads, dry_run):
     # Download all session files
     logger.info('Downloading session files')
     for f in filepath_downloads['session']:
-        args = filepath_downloads['session'][f]
+        args = filepath_downloads['session'][f]['args']
+        modified = filepath_downloads['session'][f]['modified']
         logger.info('Downloading session file: {0}'.format(args[1]))
         # For dry run, don't actually download
         if dry_run:
             logger.info('  to {0}'.format(args[2]))
             continue
         fw.download_file_from_session(*args)
+        # Set the mtime of the downloaded file to the 'modified' timestamp in seconds
+        modified_time = float(timestamp_to_int(modified))
+        os.utime(f,(modified_time, modified_time))
+
 
     # Download all acquisition files
     logger.info('Downloading acquisition files')
     for f in filepath_downloads['acquisition']:
-        args = filepath_downloads['acquisition'][f]
+        args = filepath_downloads['acquisition'][f]['args']
+        modified = filepath_downloads['acquisition'][f]['modified']
         # Download the file
         logger.info('Downloading acquisition file: {0}'.format(args[1]))
 
@@ -197,11 +220,14 @@ def download_bids_files(fw, filepath_downloads, dry_run):
             continue
 
         fw.download_file_from_acquisition(*args)
+        # Set the mtime of the downloaded file to the 'modified' timestamp in seconds
+        modified_time = float(timestamp_to_int(modified))
+        os.utime(f,(modified_time, modified_time))
 
     # Creating all JSON sidecar files
     logger.info('Creating sidecar files')
     for f in filepath_downloads['sidecars']:
-        args = filepath_downloads['sidecars'][f]
+        args = filepath_downloads['sidecars'][f]['args']
         # Download the file
         logger.info('Creating sidecar file: {0}'.format(args[1]))
 
@@ -213,7 +239,7 @@ def download_bids_files(fw, filepath_downloads, dry_run):
         create_json(*args)
 
 def download_bids_dir(fw, project_id, outdir, src_data=False,
-        dry_run=False, subjects=[], sessions=[], folders=[]):
+        dry_run=False, replace=False, subjects=[], sessions=[], folders=[]):
     """
 
     fw: Flywheel client
@@ -225,8 +251,9 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
 
     # Define namespace
     namespace = 'BIDS'
+    is_file_excluded = is_file_excluded_options(namespace, src_data, replace)
 
-    # Files and the corresponding download arguments
+    # Files and the corresponding download arguments separated by parent container
     filepath_downloads = {
         'project':{},
         'session':{},
@@ -241,11 +268,6 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
     # Iterate over any project files
     valid = True
     for f in project.get('files', []):
-        # Don't exclude any files that specify exclusion
-        if is_file_excluded(f, namespace, src_data):
-            continue
-
-        warn_if_bids_invalid(f, namespace)
 
         # Define path - ensure that the folder exists...
         path = define_path(outdir, f, namespace)
@@ -253,16 +275,23 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
         if not path:
             continue
 
+        # Don't exclude any files that specify exclusion
+        if is_file_excluded(f, path):
+            continue
+
+        warn_if_bids_invalid(f, namespace)
+
+
         # For dry run, don't actually download
         if path in filepath_downloads['project']:
             logger.error('Multiple files with path {0}:\n\t{1} and\n\t{2}'.format(path, f['name'], filepath_downloads['project'][path][1]))
             valid = False
 
-        filepath_downloads['project'][path] = (project['_id'], f['name'], path)
+        filepath_downloads['project'][path] = {'args': (project['_id'], f['name'], path), 'modified': f.get('modified')}
 
     ## Create dataset_description.json filepath_download
     path = os.path.join(outdir, 'dataset_description.json')
-    filepath_downloads['sidecars'][path] = (project['info'][namespace], path, namespace)
+    filepath_downloads['sidecars'][path] = {'args': (project['info'][namespace], path, namespace)}
 
     logger.info('Processing session files')
     # Get project sessions
@@ -287,11 +316,6 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
         # Check if session contains files
         # Iterate over any session files
         for f in session.get('files', []):
-            # Don't exclude any files that specify exclusion
-            if is_file_excluded(f, namespace, src_data):
-                continue
-
-            warn_if_bids_invalid(f, namespace)
 
             # Define path - ensure that the folder exists...
             path = define_path(outdir, f, namespace)
@@ -299,11 +323,18 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
             if not path:
                 continue
 
+            # Don't exclude any files that specify exclusion
+            if is_file_excluded(f, path):
+                continue
+
+            warn_if_bids_invalid(f, namespace)
+
+
             if path in filepath_downloads['session']:
                 logger.error('Multiple files with path {0}:\n\t{1} and\n\t{2}'.format(path, f['name'], filepath_downloads['session'][path][1]))
                 valid = False
 
-            filepath_downloads['session'][path] = (session['_id'], f['name'], path)
+            filepath_downloads['session'][path] = {'args': (session['_id'], f['name'], path), 'modified': f.get('modified')}
 
         logger.info('Processing acquisition files')
         # Get acquisitions
@@ -317,11 +348,6 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
             acq = fw.get_acquisition(ses_acq['_id'])
             # Iterate over acquistion files
             for f in acq.get('files', []):
-                # Don't exclude any files that specify exclusion
-                if is_file_excluded(f, namespace, src_data):
-                    continue
-
-                warn_if_bids_invalid(f, namespace)
 
                 # Skip any folders not in the skip-list (if there is a skip list)
                 if folders:
@@ -334,14 +360,21 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
                 # If path is not defined (an empty string) move onto next file
                 if not path:
                     continue
+
+                # Don't exclude any files that specify exclusion
+                if is_file_excluded(f, path):
+                    continue
+
+                warn_if_bids_invalid(f, namespace)
+
                 if path in filepath_downloads['acquisition']:
                     logger.error('Multiple files with path {0}:\n\t{1} and\n\t{2}'.format(path, f['name'], filepath_downloads['acquisition'][path][1]))
                     valid = False
 
-                filepath_downloads['acquisition'][path] = (acq['_id'], f['name'], path)
+                filepath_downloads['acquisition'][path] = {'args': (acq['_id'], f['name'], path), 'modified': f.get('modified')}
 
                 # Create the sidecar JSON filepath_download
-                filepath_downloads['sidecars'][path] = (f['info'], path, namespace)
+                filepath_downloads['sidecars'][path] = {'args': (f['info'], path, namespace)}
 
     if not valid:
         sys.exit(1)
@@ -360,6 +393,8 @@ if __name__ == '__main__':
             default=False, required=False, help='Include source data in BIDS export')
     parser.add_argument('--dry-run', dest='dry_run', action='store_true',
             default=False, required=False, help='Don\'t actually export any data, just print what would be exported')
+    parser.add_argument('--replace', dest='replace', action='store_true',
+            default=False, required=False, help='Replace files if the modified timestamps do not match')
     parser.add_argument('--subject', dest='subjects', action='append', help='Limit export to the given subject')
     parser.add_argument('--session', dest='sessions', action='append', help='Limit export to the given session name')
     parser.add_argument('--folder', dest='folders', action='append', help='Limit export to the given folder. (e.g. func)')
@@ -378,7 +413,7 @@ if __name__ == '__main__':
 
     ### Download BIDS project
     download_bids_dir(fw, project_id, args.bids_dir, src_data=args.source_data,
-            dry_run=args.dry_run, subjects=args.subjects, sessions=args.sessions, folders=args.folders)
+            dry_run=args.dry_run, replace=args.replace, subjects=args.subjects, sessions=args.sessions, folders=args.folders)
 
     # Validate the downloaded directory
     #   Go one more step into the hierarchy to pass to the validator...
