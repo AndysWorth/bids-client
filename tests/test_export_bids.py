@@ -235,7 +235,7 @@ class BidsExportTestCases(unittest.TestCase):
         container['info']['BIDS']['ignore'] = False
         open('filePath', 'a').close()
         os.utime('filePath', (modifiedSinceEpoch, modifiedSinceEpoch))
-        print os.path.getmtime('filePath')
+        print(os.path.getmtime('filePath'))
 
         self.assertTrue(is_file_excluded(container, 'filePath'))
 
