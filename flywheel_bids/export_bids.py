@@ -383,7 +383,7 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
 
     download_bids_files(fw, filepath_downloads, dry_run)
 
-if __name__ == '__main__':
+def main():
     ### Read in arguments
     parser = argparse.ArgumentParser(description='BIDS Directory Export')
     parser.add_argument('--bids-dir', dest='bids_dir', action='store',
@@ -421,3 +421,8 @@ if __name__ == '__main__':
     #   Go one more step into the hierarchy to pass to the validator...
     if not args.dry_run:
         utils.validate_bids(args.bids_dir)
+
+
+if __name__ == '__main__':
+    main()
+

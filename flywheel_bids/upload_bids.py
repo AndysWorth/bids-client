@@ -879,7 +879,7 @@ def parse_meta_files(fw, files_of_interest):
             logger.info('Do not recognize filetype')
 
 
-if __name__ == '__main__':
+def main():
     ### Read in arguments
     parser = argparse.ArgumentParser(description='BIDS Directory Upload')
     parser.add_argument('--bids-dir', dest='bids_dir', action='store',
@@ -920,3 +920,7 @@ if __name__ == '__main__':
     # Parse the BIDS meta files
     #    data_description.json, participants.tsv, *_sessions.tsv, *_scans.tsv
     parse_meta_files(fw, files_of_interest)
+
+if __name__ == '__main__':
+    main()
+

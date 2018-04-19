@@ -9,8 +9,8 @@ else
 fi
 
 docker build -t flywheel/bids-client .
-docker run -it --rm --net docker_back --link=docker_nginx_1 \
+docker run -it --rm --net host \
 	-v ${BIDS_DIR}:/local/bids \
 	flywheel/bids-client \
-	python code/export_bids.py --bids-dir /local/bids "$@"
+	export_bids --bids-dir /local/bids "$@"
 
