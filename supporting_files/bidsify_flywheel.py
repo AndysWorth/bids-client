@@ -5,8 +5,8 @@ import re
 import flywheel
 
 from supporting_files import classifications
-import templates
-import utils
+from . import templates
+from . import utils
 
 
 def determine_enum(theproperty, key, measurements):
@@ -99,7 +99,7 @@ def process_matching_templates(context, template=templates.DEFAULT_TEMPLATE, upl
             rules = rules + template.upload_rules
         for rule in rules:
             if rule.test(context):
-                print 'matches template={0}'.format(rule.template)
+                print('matches template={0}'.format(rule.template))
                 match = True
                 templateDef = template.definitions.get(rule.template)
                 if templateDef is None:
@@ -119,7 +119,7 @@ def process_matching_templates(context, template=templates.DEFAULT_TEMPLATE, upl
                 initial = False
                 break
         if not match:
-            print 'no template matched for {} in {} {}'.format(container['name'], context['parent_container_type'], context[context['parent_container_type']]['id'])
+            print('no template matched for {} in {} {}'.format(container['name'], context['parent_container_type'], context[context['parent_container_type']]['id']))
 
     if not initial:
         # Do auto_updates

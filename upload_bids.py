@@ -714,10 +714,10 @@ def convert_dtype(contents):
     """
     # Convert contents to array
     contents_arr = contents[1:]
-    cols = zip(*contents_arr)
+    cols = list(zip(*contents_arr))
 
     # Iterate over every column in array
-    for idx in xrange(len(cols)):
+    for idx in range(len(cols)):
         # Get column
         col = cols[idx]
 
@@ -753,7 +753,7 @@ def convert_dtype(contents):
                 else:
                     continue
         ### Take converted column and place back into the content list
-        for idxx in xrange(len(contents[1:])):
+        for idxx in range(len(contents[1:])):
             contents[idxx+1][idx] = col[idxx]
 
     return contents

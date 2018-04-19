@@ -659,7 +659,7 @@ class BidsifyTestCases(unittest.TestCase):
         }
         # Call function
         container = bidsify_flywheel.process_matching_templates(context)
-        print container
+        print(container)
         # Define expected container
         container_expected = {
             u'name': u'4784_1_1_localizer',
@@ -909,7 +909,7 @@ class BidsifyTestCases(unittest.TestCase):
                     }
                 },
             u'measurements': [u'anatomy_t1w', u'anatomy_t2w'], u'type': u'nifti'}
-        print container
+        print(container)
         self.assertEqual(container, container_expected)
 
     def test_process_matching_templates_BIDS_NA(self):

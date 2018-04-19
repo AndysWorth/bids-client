@@ -1,7 +1,9 @@
 import os, os.path, json, re
-import utils
 import jsonschema
-from supporting_files import resolver
+import six
+
+from . import utils
+from . import resolver
 
 DEFAULT_TEMPLATE_NAME = 'bids-v1'
 BIDS_TEMPLATE_NAME = 'bids-v1'
@@ -156,7 +158,7 @@ class Template:
         if '_validator' not in templateDef:
             templateDef['_validator'] = jsonschema.Draft4Validator(templateDef)
 
-        return list(templateDef['_validator'].iter_errors(info))
+        return list(sorted(templateDef['_validator'].iter_errors(info), key=str))
 
     def resolve_refs(self, resolver, obj, parent=None, key=None):
         """
@@ -176,7 +178,7 @@ class Template:
                 for k in obj.keys():
                     self.resolve_refs(resolver, obj[k], obj, k)
         elif isinstance(obj, list):
-            for i in xrange(len(obj)):
+            for i in range(len(obj)):
                 self.resolve_refs(resolver, obj[i], obj, i)
 
 class Rule:
@@ -358,7 +360,7 @@ def processValueMatch(value, match):
                     if item in match['$in']:
                         return True
                 return False
-            elif isinstance(value, str) or isinstance(value, unicode):
+            elif isinstance(value, six.string_types):
                 for item in match['$in']:
                     if item in value:
                         return True

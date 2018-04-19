@@ -1,5 +1,5 @@
 import re
-import utils
+from . import utils
 
 class Filter:
     """

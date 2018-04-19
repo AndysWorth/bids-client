@@ -1,5 +1,6 @@
 import logging
 import re
+import six
 import sys
 import subprocess
 import jsonschema
@@ -91,10 +92,10 @@ def dict_set(obj, key, value):
     curr[parts[-1]] = value
 
 def normalize_strings(obj):
-    if isinstance(obj, basestring):
+    if isinstance(obj, six.string_types):
         return str(obj)
     if isinstance(obj, collections.Mapping):
-        return dict(map(normalize_strings, obj.iteritems()))
+        return dict(map(normalize_strings, obj.items()))
     if isinstance(obj, collections.Iterable):
         return type(obj)(map(normalize_strings, obj))
     return obj
