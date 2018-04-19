@@ -14,6 +14,8 @@ from supporting_files import utils
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('bids-exporter')
 
+EPOCH = dateutil.parser.parse('1970-01-01 00:00:0Z')
+
 def validate_dirname(dirname):
     """
     Check the following criteria to ensure 'dirname' is valid
@@ -83,7 +85,7 @@ def is_file_excluded_options(namespace, src_data, replace):
     return is_file_excluded
 
 def timestamp_to_int(timestamp):
-    return int((dateutil.parser.parse(timestamp)-dateutil.parser.parse('1970-01-01 00:00:0Z')).total_seconds())
+    return int((timestamp-EPOCH).total_seconds())
 
 def is_container_excluded(container, namespace):
     meta_info = container.get('info', {}).get(namespace, {})
@@ -148,7 +150,7 @@ def create_json(meta_info, path, namespace):
     # If the file is functional,
     #   move the 'TaskName' from 'BIDS'
     #   to the top level
-    if '/func/' in path:
+    if '/func/' in path and 'Task' in ns_data:
          meta_info['TaskName'] = ns_data['Task']
 
     # Remove extension of path and replace with .json

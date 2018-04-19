@@ -1,7 +1,6 @@
 import collections
 import logging
 import copy
-import dateutil.parser
 
 if __name__ == '__main__':
     import utils
@@ -136,14 +135,14 @@ def get_project_tree(fw, project_id):
     """
     # Get project
     logger.info('Getting project...')
-    project_data = fw.get_project(project_id)
+    project_data = to_dict(fw, fw.get_project(project_id))
     project_node = TreeNode('project', project_data)
     add_file_nodes(project_node)
 
     # Get project sessions
     project_sessions = fw.get_project_sessions(project_id)
     for proj_ses in project_sessions:
-        session_data = fw.get_session(proj_ses['_id'])
+        session_data = to_dict(fw, fw.get_session(proj_ses['_id']))
         session_node = TreeNode('session', session_data)
         add_file_nodes(session_node)
 
@@ -152,25 +151,15 @@ def get_project_tree(fw, project_id):
         # Get acquisitions within session
         session_acqs = fw.get_session_acquisitions(proj_ses['_id'])
 
-        # Prepare for sorting by converting timestamps to datetime
-        for ses_acq in session_acqs:
-            format_acquisition_timestamps(ses_acq)
-
         for ses_acq in sorted(session_acqs, compare_acquisitions):
             # Get true acquisition, in order to access file info
-            acquisition_data = fw.get_acquisition(ses_acq['_id'])
+            acquisition_data = to_dict(fw, fw.get_acquisition(ses_acq['_id']))
             acquisition_node = TreeNode('acquisition', acquisition_data)
             add_file_nodes(acquisition_node)
 
             session_node.children.append(acquisition_node)
 
     return project_node
-
-def format_acquisition_timestamps(acq):
-    timestamp = acq.get('timestamp')
-    if timestamp:
-        acq['timestamp'] = dateutil.parser.parse(timestamp)
-    acq['created'] = dateutil.parser.parse(acq['created'])
 
 def compare_acquisitions(acq1, acq2):
     # Prefer timestamp over created
@@ -179,6 +168,9 @@ def compare_acquisitions(acq1, acq2):
     if ts1 and ts2:
         return int((ts1 - ts2).total_seconds())
     return int((acq1['created'] - acq2['created']).total_seconds())
+
+def to_dict(fw, obj):
+    return fw.api_client.sanitize_for_serialization(obj.to_dict())
 
 if __name__ == '__main__':
     import argparse

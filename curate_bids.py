@@ -88,21 +88,21 @@ def update_meta_info(fw, context):
         # Modify acquisition file
         if context['parent_container_type'] == 'acquisition':
             fw.set_acquisition_file_info(
-                    context['acquisition']['_id'],
+                    context['acquisition']['id'],
                     context['file']['name'],
                     context['file']['info']
                     )
         # Modify project file
         elif context['parent_container_type'] == 'project':
             fw.set_project_file_info(
-                    context['project']['_id'],
+                    context['project']['id'],
                     context['file']['name'],
                     context['file']['info']
                     )
         # Modify session file
         elif context['parent_container_type'] == 'session':
             fw.set_session_file_info(
-                    context['session']['_id'],
+                    context['session']['id'],
                     context['file']['name'],
                     context['file']['info']
                     )
@@ -110,13 +110,13 @@ def update_meta_info(fw, context):
             logger.info('Cannot determine file parent container type: ' + context['parent_container_type'])
     # Modify project
     elif context['container_type'] == 'project':
-        fw.replace_project_info(context['project']['_id'], context['project']['info'])
+        fw.replace_project_info(context['project']['id'], context['project']['info'])
     # Modify session
     elif context['container_type'] == 'session':
-        fw.replace_session_info(context['session']['_id'], context['session']['info'])
+        fw.replace_session_info(context['session']['id'], context['session']['info'])
     # Modify acquisition
     elif context['container_type'] == 'acquisition':
-        fw.replace_acquisition_info(context['acquisition']['_id'], context['acquisition']['info'])
+        fw.replace_acquisition_info(context['acquisition']['id'], context['acquisition']['info'])
     # Cannot determine container type
     else:
         logger.info('Cannot determine container type: ' + context['container_type'])

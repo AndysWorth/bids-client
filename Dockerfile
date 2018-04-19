@@ -12,8 +12,7 @@ FROM python:2.7
 MAINTAINER Flywheel <support@flywheel.io>
 
 # Install jsonschema
-RUN pip install jsonschema==2.6.0
-RUN pip install python-dateutil==2.6.1
+RUN pip install jsonschema==2.6.0 flywheel-sdk>=2.1.1
 
 # Install BIDS validator from INCF
 #     https://github.com/INCF/bids-validator
@@ -29,9 +28,6 @@ RUN mkdir -p ${SRCDIR}
 RUN wget -O - https://github.com/INCF/bids-validator/archive/0.25.14.tar.gz | tar xz -C ${SRCDIR}
 RUN npm install -g /src/bids-validator-0.25.14/
 
-
-# Install python SDK
-RUN pip install https://github.com/flywheel-io/sdk/releases/download/0.3.0/flywheel-0.3.0-py2-none-linux_x86_64.whl
 
 # Copy code into place
 ENV ROOTDIR /code

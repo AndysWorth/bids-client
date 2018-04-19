@@ -119,7 +119,7 @@ def process_matching_templates(context, template=templates.DEFAULT_TEMPLATE, upl
                 initial = False
                 break
         if not match:
-            print 'no template matched for {} in {} {}'.format(container['name'], context['parent_container_type'], context[context['parent_container_type']]['_id'])
+            print 'no template matched for {} in {} {}'.format(container['name'], context['parent_container_type'], context[context['parent_container_type']]['id'])
 
     if not initial:
         # Do auto_updates
