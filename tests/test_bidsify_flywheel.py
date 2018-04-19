@@ -645,7 +645,7 @@ class BidsifyTestCases(unittest.TestCase):
             'project': {u'label': 'hello'},
             'subject': {u'code': u'001'},
             'session': {u'label': u'sesTEST', 'info': {'BIDS': {'Label': u'sesTEST'}}},
-            'acquisition': {u'label': u'acqTEST', u'_id': u'09090'},
+            'acquisition': {u'label': u'acqTEST', u'id': u'09090'},
             'file': {
                 u'name': u'4784_1_1_localizer',
                 u'classification': {u'Contrast': u'T2', u'Intent': u'Localizer'},
@@ -731,7 +731,7 @@ class BidsifyTestCases(unittest.TestCase):
             'project': {'label': 'testproject'},
             'subject': {'code': '12345'},
             'session': {'label': 'haha', 'info': {'BIDS': {'Label': 'haha'}}},
-            'acquisition':{'label': 'blue', u'_id': u'ID'},
+            'acquisition':{'label': 'blue', u'id': u'ID'},
             'file': {u'type': u'image', u'name': u'fname'},
             'ext': '.jpg'
         }

@@ -32,7 +32,7 @@ def validate_project_label(fw, project_label):
     project_found = False
     for p in projects:
         if p['label'] == project_label:
-            project_id = p['_id']
+            project_id = p.id
             project_found = True
 
     if not project_found:
