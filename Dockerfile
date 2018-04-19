@@ -11,7 +11,7 @@
 FROM python:2.7-alpine3.7
 MAINTAINER Flywheel <support@flywheel.io>
 
-RUN apk add --no-cache nodejs build-base
+RUN apk add --no-cache nodejs bash
 
 # Install jsonschema
 RUN pip install jsonschema==2.6.0 flywheel-sdk>=2.1.1
