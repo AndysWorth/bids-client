@@ -212,7 +212,7 @@ def curate_bids_tree(fw, project, reset=False, template_file=None, update=True):
                 update_meta_info(fw, context)
 
 
-if __name__ == '__main__':
+def main():
     ### Read in arguments
     parser = argparse.ArgumentParser(description='BIDS Curation')
     parser.add_argument('--api-key', dest='api_key', action='store',
@@ -242,3 +242,7 @@ if __name__ == '__main__':
 
     ### Curate BIDS project
     curate_bids_dir(fw, project_id, reset=args.reset, template_file=args.template_file)
+
+if __name__ == '__main__':
+    main()
+
