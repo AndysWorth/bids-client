@@ -4,7 +4,7 @@ import re
 
 import flywheel
 
-from supporting_files import classifications
+from . import classifications
 from . import templates
 from . import utils
 

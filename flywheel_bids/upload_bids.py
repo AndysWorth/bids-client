@@ -9,8 +9,8 @@ import sys
 
 import flywheel
 
-from supporting_files import bidsify_flywheel, classifications, utils
-from supporting_files.templates import BIDS_TEMPLATE as template
+from .supporting_files import bidsify_flywheel, classifications, utils
+from .supporting_files.templates import BIDS_TEMPLATE as template
 
 
 logging.basicConfig(level=logging.INFO)
