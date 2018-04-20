@@ -16,7 +16,7 @@ VERSION = "0.0.1"
 # prerequisite: setuptools
 # http://pypi.python.org/pypi/setuptools
 
-REQUIRES = ["jsonschema==2.6.0", "flywheel-sdk >= 2.1.1"]
+REQUIRES = ["jsonschema>=2.6.0", "flywheel-sdk >= 2.1.1"]
 
 setup(
     name=NAME,

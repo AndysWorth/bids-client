@@ -6,7 +6,7 @@ import unittest
 
 import flywheel
 
-import upload_bids
+from flywheel_bids import upload_bids
 
 class BidsUploadTestCases(unittest.TestCase):
 

@@ -4,7 +4,7 @@ import re
 import shutil
 import unittest
 
-from supporting_files import utils, templates
+from flywheel_bids.supporting_files import utils, templates
 
 class RuleTestCases(unittest.TestCase):
 

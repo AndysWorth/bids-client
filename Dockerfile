@@ -13,13 +13,11 @@ MAINTAINER Flywheel <support@flywheel.io>
 
 RUN apk add --no-cache nodejs bash
 
-# Install jsonschema
-RUN pip install -qq jsonschema==2.6.0 flywheel-sdk>=2.1.1
+RUN npm install -g bids-validator@0.25.14
 
-ENV SRCDIR /src
-RUN mkdir -p ${SRCDIR}
-RUN wget -O - https://github.com/INCF/bids-validator/archive/0.25.14.tar.gz | tar xz -C ${SRCDIR}
-RUN npm install -g /src/bids-validator-0.25.14/
+# Install jsonschema
+COPY requirements.txt /var/flywheel/code/requirements.txt
+RUN pip install -qq -r /var/flywheel/code/requirements.txt
 
 COPY . /var/flywheel/code/bids-client
 RUN pip install --no-deps /var/flywheel/code/bids-client
