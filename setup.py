@@ -3,12 +3,14 @@
 """
     Flywheel Bids Client
 """
+import os
+import sys
 
-
-from setuptools import setup, find_packages  # noqa: H301
+from setuptools import setup, find_packages
+from setuptools.command.install import install
 
 NAME = "flywheel-bids"
-VERSION = "0.0.1"
+VERSION = "0.4.0"
 # To install the library, run the following
 #
 # python setup.py install
@@ -17,6 +19,15 @@ VERSION = "0.0.1"
 # http://pypi.python.org/pypi/setuptools
 
 REQUIRES = ["jsonschema>=2.6.0", "flywheel-sdk >= 2.1.1"]
+
+class VerifyVersionCommand(install):
+    """Custom command to verify that the git tag matches our version"""
+    description = 'Verify that the git tag matches our version'
+
+    def run(self):
+        tag = os.getenv('CIRCLE_TAG')
+        if tag != VERSION:
+            sys.exit('Git tag: {0} does not match version: {1}'.format(tag, VERSION))
 
 setup(
     name=NAME,
@@ -48,5 +59,8 @@ setup(
             'export_bids=flywheel_bids.export_bids:main',
             'upload_bids=flywheel_bids.upload_bids:main'
         ]
+    },
+    cmdclass = {
+        'verify': VerifyVersionCommand
     }
 )
