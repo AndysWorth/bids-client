@@ -8,7 +8,7 @@ import dateutil.parser
 
 import flywheel
 
-import export_bids
+from flywheel_bids import export_bids
 
 class BidsExportTestCases(unittest.TestCase):
 

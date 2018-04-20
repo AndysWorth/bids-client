@@ -4,9 +4,9 @@ import unittest
 
 import flywheel
 
-import curate_bids
-from supporting_files import project_tree
-from supporting_files.templates import BIDS_TEMPLATE
+from flywheel_bids import curate_bids
+from flywheel_bids.supporting_files import project_tree
+from flywheel_bids.supporting_files.templates import BIDS_TEMPLATE
 
 class BidsCurateTestCases(unittest.TestCase):
 

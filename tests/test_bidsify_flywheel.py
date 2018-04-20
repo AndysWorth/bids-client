@@ -4,7 +4,7 @@ import re
 import shutil
 import unittest
 
-from supporting_files import utils, bidsify_flywheel
+from flywheel_bids.supporting_files import utils, bidsify_flywheel
 
 class BidsifyTestCases(unittest.TestCase):
 
