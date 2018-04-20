@@ -5,7 +5,7 @@ import copy
 if __name__ == '__main__':
     import utils
 else:
-    from supporting_files import utils
+    from . import utils
 
 logger = logging.getLogger('curate-bids')
 

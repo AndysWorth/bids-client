@@ -8,8 +8,8 @@ import re
 
 import flywheel
 
-from supporting_files import bidsify_flywheel, utils, templates
-from supporting_files.project_tree import get_project_tree
+from .supporting_files import bidsify_flywheel, utils, templates
+from .supporting_files.project_tree import get_project_tree
 
 PROJECT_TEMPLATE_FILE_NAME_REGEX = re.compile('^([a-z0-9]+\-)*project-template\.json$')
 

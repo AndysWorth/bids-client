@@ -9,7 +9,7 @@ import zipfile
 
 import flywheel
 
-from supporting_files import utils
+from .supporting_files import utils
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('bids-exporter')
