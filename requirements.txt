@@ -1,2 +1,2 @@
 jsonschema>=2.6.0
-flywheel-sdk>=2.1.2rc1
+flywheel-sdk>=2.1.2rc2

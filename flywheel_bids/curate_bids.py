@@ -146,7 +146,7 @@ def curate_bids_tree(fw, project, reset=False, template_file=None, update=True):
                 os.close(fd)
 
                 logger.info('Using project template: {0}'.format(f['name']))
-                fw.download_file_from_project(project_id, f['name'], path)
+                fw.download_file_from_project(project['id'], f['name'], path)
                 template_file = path
                 # Don't look for another file that might match
                 break
