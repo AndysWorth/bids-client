@@ -298,12 +298,13 @@ def download_bids_dir(fw, container_id, container_type, outdir, src_data=False,
         # Get project sessions
         project_sessions = fw.get_project_sessions(project_id)
     elif container_type == 'session':
-        project_sessions = [fw.get_session(str(container_id))]
+        project_sessions = [fw.get_session(container_id)]
     else:
         project_sessions = []
 
     if project_sessions:
         logger.info('Processing session files')
+        all_acqs = []
         for proj_ses in project_sessions:
             # Skip session if we're filtering to the list of sessions
             if sessions and proj_ses.get('label') not in sessions:
@@ -347,46 +348,19 @@ def download_bids_dir(fw, container_id, container_type, outdir, src_data=False,
             logger.info('Processing acquisition files')
             # Get acquisitions
             session_acqs = fw.get_session_acquisitions(proj_ses['_id'])
-            for ses_acq in session_acqs:
-
-                # Skip if BIDS.Ignore is True
-                if is_container_excluded(ses_acq, namespace):
-                    continue
-                # Get true acquisition, in order to access file info
-                acq = fw.get_acquisition(ses_acq['_id'])
-                # Iterate over acquistion files
-                for f in acq.get('files', []):
-
-                    # Skip any folders not in the skip-list (if there is a skip list)
-                    if folders:
-                        folder = get_folder(f, namespace)
-                        if folder not in folders:
-                            continue
-
-                    # Define path - ensure that the folder exists...
-                    path = define_path(outdir, f, namespace)
-                    # If path is not defined (an empty string) move onto next file
-                    if not path:
-                        continue
-
-                    # Don't exclude any files that specify exclusion
-                    if is_file_excluded(f, path):
-                        continue
-
-                    warn_if_bids_invalid(f, namespace)
-
-                    if path in filepath_downloads['acquisition']:
-                        logger.error('Multiple files with path {0}:\n\t{1} and\n\t{2}'.format(path, f['name'], filepath_downloads['acquisition'][path][1]))
-                        valid = False
-
-                    filepath_downloads['acquisition'][path] = {'args': (acq['_id'], f['name'], path), 'modified': f.get('modified')}
-
-                    # Create the sidecar JSON filepath_download
-                    filepath_downloads['sidecars'][path] = {'args': (f['info'], path, namespace)}
+            all_acqs += session_acqs
     elif container_type == 'acquisition':
-        acq = fw.get_acquisition(container_id)
-        # Skip if BIDS.Ignore is True
-        if not is_container_excluded(acq, namespace):
+        all_acqs = [fw.get_acquisition(container_id)]
+    else:
+        all_acqs = []
+
+    if all_acqs:
+        for ses_acq in all_acqs:
+            # Skip if BIDS.Ignore is True
+            if is_container_excluded(ses_acq, namespace):
+                continue
+            # Get true acquisition, in order to access file info
+            acq = fw.get_acquisition(ses_acq['_id'])
             # Iterate over acquistion files
             for f in acq.get('files', []):
 
@@ -445,7 +419,7 @@ def main():
     parser.add_argument('-p', dest='project_label', action='store',
             required=False, default=None, help='Project Label on Flywheel instance')
     parser.add_argument('--container-type', dest='container_type', action='store', required=False, default=None,
-            help='Download single container (acquisition|sesssion|project) in BIDS format. Must provide --container-id.')
+            help='Download single container (acquisition|session|project) in BIDS format. Must provide --container-id.')
     parser.add_argument('--container-id', dest='container_id', action='store', required=False, default=None,
             help='Download single container in BIDS format. Must provide --container-type.')
     args = parser.parse_args()
@@ -463,9 +437,10 @@ def main():
         container_id = args.container_id
         container_type = args.container_type
     else:
-        if not (not container_type and not container_id):
-            logger.warn('Did not provide all options necessary to download single container')
-        if not project_label:
+        if bool(container_id) != bool(container_type):
+            logger.error('Did not provide all options necessary to download single container')
+            sys.exit(1)
+        elif not project_label:
             logger.error('Project label information not provided')
             sys.exit(1)
         # Get project Id from label
