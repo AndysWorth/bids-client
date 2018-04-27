@@ -4,10 +4,11 @@ import json
 import os
 import shutil
 import unittest
+import dateutil.parser
 
 import flywheel
 
-import export_bids
+from flywheel_bids import export_bids
 
 class BidsExportTestCases(unittest.TestCase):
 
@@ -204,7 +205,7 @@ class BidsExportTestCases(unittest.TestCase):
         self.assertTrue(export_bids.is_container_excluded(container, 'BIDS'))
 
     def test_exclude_files(self):
-        modifiedTimestamp = "2018-03-28T20:40:59.54Z"
+        modifiedTimestamp = dateutil.parser.parse("2018-03-28T20:40:59.54Z")
         is_file_excluded = export_bids.is_file_excluded_options('BIDS', True, False)
         # Test ignored files
         container = {
@@ -216,7 +217,7 @@ class BidsExportTestCases(unittest.TestCase):
             },
             'modified': modifiedTimestamp
         }
-        self.assertTrue(not is_file_excluded(container, 'filePath'))
+        self.assertFalse(is_file_excluded(container, 'filePath'))
         container = {
             'info': {
                 'BIDS': {
@@ -230,16 +231,18 @@ class BidsExportTestCases(unittest.TestCase):
 
         # Test up to date files that are already downloaded
         is_file_excluded = export_bids.is_file_excluded_options('BIDS', True, True)
-        modifiedSinceEpoch = (datetime.datetime.strptime(modifiedTimestamp, '%Y-%m-%dT%H:%M:%S.%fZ')-datetime.datetime(1970,1,1)).total_seconds()
+        modifiedSinceEpoch = (modifiedTimestamp-export_bids.EPOCH).total_seconds()
         container['info']['BIDS']['ignore'] = False
         open('filePath', 'a').close()
         os.utime('filePath', (modifiedSinceEpoch, modifiedSinceEpoch))
-        print os.path.getmtime('filePath')
+        print(os.path.getmtime('filePath'))
 
         self.assertTrue(is_file_excluded(container, 'filePath'))
 
-        container['modified'] = "2718-03-28T20:40:59.54Z" # 700 years in the future
+        container['modified'] = dateutil.parser.parse("2718-03-28T20:40:59.54Z") # 700 years in the future
         self.assertTrue(not is_file_excluded(container, 'filePath'))
+
+        os.remove('filePath')
 
 
 if __name__ == "__main__":

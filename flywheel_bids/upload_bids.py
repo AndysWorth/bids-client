@@ -9,8 +9,8 @@ import sys
 
 import flywheel
 
-from supporting_files import bidsify_flywheel, classifications, utils
-from supporting_files.templates import BIDS_TEMPLATE as template
+from .supporting_files import bidsify_flywheel, classifications, utils
+from .supporting_files.templates import BIDS_TEMPLATE as template
 
 
 logging.basicConfig(level=logging.INFO)
@@ -714,10 +714,10 @@ def convert_dtype(contents):
     """
     # Convert contents to array
     contents_arr = contents[1:]
-    cols = zip(*contents_arr)
+    cols = list(zip(*contents_arr))
 
     # Iterate over every column in array
-    for idx in xrange(len(cols)):
+    for idx in range(len(cols)):
         # Get column
         col = cols[idx]
 
@@ -753,7 +753,7 @@ def convert_dtype(contents):
                 else:
                     continue
         ### Take converted column and place back into the content list
-        for idxx in xrange(len(contents[1:])):
+        for idxx in range(len(contents[1:])):
             contents[idxx+1][idx] = col[idxx]
 
     return contents
@@ -879,7 +879,7 @@ def parse_meta_files(fw, files_of_interest):
             logger.info('Do not recognize filetype')
 
 
-if __name__ == '__main__':
+def main():
     ### Read in arguments
     parser = argparse.ArgumentParser(description='BIDS Directory Upload')
     parser.add_argument('--bids-dir', dest='bids_dir', action='store',
@@ -920,3 +920,7 @@ if __name__ == '__main__':
     # Parse the BIDS meta files
     #    data_description.json, participants.tsv, *_sessions.tsv, *_scans.tsv
     parse_meta_files(fw, files_of_interest)
+
+if __name__ == '__main__':
+    main()
+

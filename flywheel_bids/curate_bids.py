@@ -8,8 +8,8 @@ import re
 
 import flywheel
 
-from supporting_files import bidsify_flywheel, utils, templates
-from supporting_files.project_tree import get_project_tree
+from .supporting_files import bidsify_flywheel, utils, templates
+from .supporting_files.project_tree import get_project_tree
 
 PROJECT_TEMPLATE_FILE_NAME_REGEX = re.compile('^([a-z0-9]+\-)*project-template\.json$')
 
@@ -88,21 +88,21 @@ def update_meta_info(fw, context):
         # Modify acquisition file
         if context['parent_container_type'] == 'acquisition':
             fw.set_acquisition_file_info(
-                    context['acquisition']['_id'],
+                    context['acquisition']['id'],
                     context['file']['name'],
                     context['file']['info']
                     )
         # Modify project file
         elif context['parent_container_type'] == 'project':
             fw.set_project_file_info(
-                    context['project']['_id'],
+                    context['project']['id'],
                     context['file']['name'],
                     context['file']['info']
                     )
         # Modify session file
         elif context['parent_container_type'] == 'session':
             fw.set_session_file_info(
-                    context['session']['_id'],
+                    context['session']['id'],
                     context['file']['name'],
                     context['file']['info']
                     )
@@ -110,13 +110,13 @@ def update_meta_info(fw, context):
             logger.info('Cannot determine file parent container type: ' + context['parent_container_type'])
     # Modify project
     elif context['container_type'] == 'project':
-        fw.replace_project_info(context['project']['_id'], context['project']['info'])
+        fw.replace_project_info(context['project']['id'], context['project']['info'])
     # Modify session
     elif context['container_type'] == 'session':
-        fw.replace_session_info(context['session']['_id'], context['session']['info'])
+        fw.replace_session_info(context['session']['id'], context['session']['info'])
     # Modify acquisition
     elif context['container_type'] == 'acquisition':
-        fw.replace_acquisition_info(context['acquisition']['_id'], context['acquisition']['info'])
+        fw.replace_acquisition_info(context['acquisition']['id'], context['acquisition']['info'])
     # Cannot determine container type
     else:
         logger.info('Cannot determine container type: ' + context['container_type'])
@@ -146,7 +146,7 @@ def curate_bids_tree(fw, project, reset=False, template_file=None, update=True):
                 os.close(fd)
 
                 logger.info('Using project template: {0}'.format(f['name']))
-                fw.download_file_from_project(project_id, f['name'], path)
+                fw.download_file_from_project(project['id'], f['name'], path)
                 template_file = path
                 # Don't look for another file that might match
                 break
@@ -212,7 +212,7 @@ def curate_bids_tree(fw, project, reset=False, template_file=None, update=True):
                 update_meta_info(fw, context)
 
 
-if __name__ == '__main__':
+def main():
     ### Read in arguments
     parser = argparse.ArgumentParser(description='BIDS Curation')
     parser.add_argument('--api-key', dest='api_key', action='store',
@@ -242,3 +242,7 @@ if __name__ == '__main__':
 
     ### Curate BIDS project
     curate_bids_dir(fw, project_id, reset=args.reset, template_file=args.template_file)
+
+if __name__ == '__main__':
+    main()
+

@@ -4,7 +4,7 @@ import re
 import shutil
 import unittest
 
-from supporting_files import utils, bidsify_flywheel
+from flywheel_bids.supporting_files import utils, bidsify_flywheel
 
 class BidsifyTestCases(unittest.TestCase):
 
@@ -645,7 +645,7 @@ class BidsifyTestCases(unittest.TestCase):
             'project': {u'label': 'hello'},
             'subject': {u'code': u'001'},
             'session': {u'label': u'sesTEST', 'info': {'BIDS': {'Label': u'sesTEST'}}},
-            'acquisition': {u'label': u'acqTEST', u'_id': u'09090'},
+            'acquisition': {u'label': u'acqTEST', u'id': u'09090'},
             'file': {
                 u'name': u'4784_1_1_localizer',
                 u'classification': {u'Contrast': u'T2', u'Intent': u'Localizer'},
@@ -655,7 +655,7 @@ class BidsifyTestCases(unittest.TestCase):
         }
         # Call function
         container = bidsify_flywheel.process_matching_templates(context)
-        print container
+        print(container)
         # Define expected container
         container_expected = {
             u'name': u'4784_1_1_localizer',
@@ -731,7 +731,7 @@ class BidsifyTestCases(unittest.TestCase):
             'project': {'label': 'testproject'},
             'subject': {'code': '12345'},
             'session': {'label': 'haha', 'info': {'BIDS': {'Label': 'haha'}}},
-            'acquisition':{'label': 'blue', u'_id': u'ID'},
+            'acquisition':{'label': 'blue', u'id': u'ID'},
             'file': {u'type': u'image', u'name': u'fname'},
             'ext': '.jpg'
         }
@@ -905,7 +905,7 @@ class BidsifyTestCases(unittest.TestCase):
                     }
                 },
             u'classification': {u'Contrast': [u'T1', u'T2'], u'Intent': u'Structural'}, u'type': u'nifti'}
-        print container
+        print(container)
         self.assertEqual(container, container_expected)
 
     def test_process_matching_templates_BIDS_NA(self):
