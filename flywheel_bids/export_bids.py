@@ -241,8 +241,7 @@ def download_bids_files(fw, filepath_downloads, dry_run):
         create_json(*args)
 
 def download_bids_dir(fw, container_id, container_type, outdir, src_data=False,
-        dry_run=False, replace=False, subjects=[], sessions=[], folders=[],
-        container_type=None, container_id=None):
+        dry_run=False, replace=False, subjects=[], sessions=[], folders=[]):
     """
 
     fw: Flywheel client
@@ -263,6 +262,7 @@ def download_bids_dir(fw, container_id, container_type, outdir, src_data=False,
         'acquisition':{},
         'sidecars':{}
     }
+    valid = True
 
     if container_type == 'project':
         # Get project
@@ -270,7 +270,6 @@ def download_bids_dir(fw, container_id, container_type, outdir, src_data=False,
 
         logger.info('Processing project files')
         # Iterate over any project files
-        valid = True
         for f in project.get('files', []):
 
             # Define path - ensure that the folder exists...
@@ -299,7 +298,7 @@ def download_bids_dir(fw, container_id, container_type, outdir, src_data=False,
         # Get project sessions
         project_sessions = fw.get_project_sessions(project_id)
     elif container_type == 'session':
-        project_sessions = list(fw.get_session(container_id))
+        project_sessions = [fw.get_session(str(container_id))]
     else:
         project_sessions = []
 
@@ -386,35 +385,37 @@ def download_bids_dir(fw, container_id, container_type, outdir, src_data=False,
                     filepath_downloads['sidecars'][path] = {'args': (f['info'], path, namespace)}
     elif container_type == 'acquisition':
         acq = fw.get_acquisition(container_id)
-        # Iterate over acquistion files
-        for f in acq.get('files', []):
+        # Skip if BIDS.Ignore is True
+        if not is_container_excluded(acq, namespace):
+            # Iterate over acquistion files
+            for f in acq.get('files', []):
 
-            # Skip any folders not in the skip-list (if there is a skip list)
-            if folders:
-                folder = get_folder(f, namespace)
-                if folder not in folders:
+                # Skip any folders not in the skip-list (if there is a skip list)
+                if folders:
+                    folder = get_folder(f, namespace)
+                    if folder not in folders:
+                        continue
+
+                # Define path - ensure that the folder exists...
+                path = define_path(outdir, f, namespace)
+                # If path is not defined (an empty string) move onto next file
+                if not path:
                     continue
 
-            # Define path - ensure that the folder exists...
-            path = define_path(outdir, f, namespace)
-            # If path is not defined (an empty string) move onto next file
-            if not path:
-                continue
+                # Don't exclude any files that specify exclusion
+                if is_file_excluded(f, path):
+                    continue
 
-            # Don't exclude any files that specify exclusion
-            if is_file_excluded(f, path):
-                continue
+                warn_if_bids_invalid(f, namespace)
 
-            warn_if_bids_invalid(f, namespace)
+                if path in filepath_downloads['acquisition']:
+                    logger.error('Multiple files with path {0}:\n\t{1} and\n\t{2}'.format(path, f['name'], filepath_downloads['acquisition'][path][1]))
+                    valid = False
 
-            if path in filepath_downloads['acquisition']:
-                logger.error('Multiple files with path {0}:\n\t{1} and\n\t{2}'.format(path, f['name'], filepath_downloads['acquisition'][path][1]))
-                valid = False
+                filepath_downloads['acquisition'][path] = {'args': (acq['_id'], f['name'], path), 'modified': f.get('modified')}
 
-            filepath_downloads['acquisition'][path] = {'args': (acq['_id'], f['name'], path), 'modified': f.get('modified')}
-
-            # Create the sidecar JSON filepath_download
-            filepath_downloads['sidecars'][path] = {'args': (f['info'], path, namespace)}
+                # Create the sidecar JSON filepath_download
+                filepath_downloads['sidecars'][path] = {'args': (f['info'], path, namespace)}
     else:
         logger.error('{} is not a valid containertype'.format(container_type))
         valid = False
