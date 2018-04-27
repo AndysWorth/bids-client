@@ -266,7 +266,7 @@ def download_bids_dir(fw, container_id, container_type, outdir, src_data=False,
 
     if container_type == 'project':
         # Get project
-        project = fw.get_project(project_id)
+        project = fw.get_project(container_id)
 
         logger.info('Processing project files')
         # Iterate over any project files
@@ -296,7 +296,7 @@ def download_bids_dir(fw, container_id, container_type, outdir, src_data=False,
         path = os.path.join(outdir, 'dataset_description.json')
         filepath_downloads['sidecars'][path] = {'args': (project['info'][namespace], path, namespace)}
         # Get project sessions
-        project_sessions = fw.get_project_sessions(project_id)
+        project_sessions = fw.get_project_sessions(container_id)
     elif container_type == 'session':
         project_sessions = [fw.get_session(container_id)]
     else:
@@ -446,7 +446,7 @@ def main():
         if bool(container_id) != bool(container_type):
             logger.error('Did not provide all options necessary to download single container')
             sys.exit(1)
-        elif not project_label:
+        elif not args.project_label:
             logger.error('Project label information not provided')
             sys.exit(1)
         # Get project Id from label

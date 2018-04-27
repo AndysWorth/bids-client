@@ -226,18 +226,13 @@ def upload_acquisition_file(fw, context, full_fname):
     # Get classification based on filename
     classification = classify_acquisition(full_fname)
 
-    update = {}
-
-    if classification:
-        update['classification'] = [classification]
-
-    # Workaround for tsv tabular data (remove with mongo-filetypes branch)
-    if context['file']['name'].endswith('.tsv') or context['file']['name'].endswith('.tsv.gz'):
-        update['type'] = 'tabular data'
-
     # Assign classification
-    if update:
-        fw.modify_acquisition_file(context['acquisition']['_id'],
+    if classification:
+        update = {
+            'modality': 'MR',
+            'replace': classification
+        }
+        fw.modify_acquisition_file_classification(context['acquisition']['_id'],
               context['file']['name'], update)
 
     # Get acquisition
@@ -279,7 +274,15 @@ def classify_acquisition(full_fname):
     # remove extension
     modality = modality_ext.split('.')[0]
 
-    return classifications.classifications.get(folder).get(modality)
+    result = classifications.classifications.get(folder).get(modality)
+
+    if result:
+        for k in result.keys():
+            v = result[k]
+            if not isinstance(v, list):
+                result[k] = [v]
+
+    return result
 
 
 
