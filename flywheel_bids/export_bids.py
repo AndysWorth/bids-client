@@ -240,7 +240,7 @@ def download_bids_files(fw, filepath_downloads, dry_run):
 
         create_json(*args)
 
-def download_bids_dir(fw, project_id, outdir, src_data=False,
+def download_bids_dir(fw, container_id, container_type, outdir, src_data=False,
         dry_run=False, replace=False, subjects=[], sessions=[], folders=[]):
     """
 
@@ -262,62 +262,15 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
         'acquisition':{},
         'sidecars':{}
     }
-
-    # Get project
-    project = fw.get_project(project_id)
-
-    logger.info('Processing project files')
-    # Iterate over any project files
     valid = True
-    for f in project.get('files', []):
 
-        # Define path - ensure that the folder exists...
-        path = define_path(outdir, f, namespace)
-        # If path is not defined (an empty string) move onto next file
-        if not path:
-            continue
+    if container_type == 'project':
+        # Get project
+        project = fw.get_project(project_id)
 
-        # Don't exclude any files that specify exclusion
-        if is_file_excluded(f, path):
-            continue
-
-        warn_if_bids_invalid(f, namespace)
-
-
-        # For dry run, don't actually download
-        if path in filepath_downloads['project']:
-            logger.error('Multiple files with path {0}:\n\t{1} and\n\t{2}'.format(path, f['name'], filepath_downloads['project'][path][1]))
-            valid = False
-
-        filepath_downloads['project'][path] = {'args': (project['_id'], f['name'], path), 'modified': f.get('modified')}
-
-    ## Create dataset_description.json filepath_download
-    path = os.path.join(outdir, 'dataset_description.json')
-    filepath_downloads['sidecars'][path] = {'args': (project['info'][namespace], path, namespace)}
-
-    logger.info('Processing session files')
-    # Get project sessions
-    project_sessions = fw.get_project_sessions(project_id)
-    for proj_ses in project_sessions:
-        # Skip session if we're filtering to the list of sessions
-        if sessions and proj_ses.get('label') not in sessions:
-            continue
-
-        # Skip session if BIDS.Ignore is True
-        if is_container_excluded(proj_ses, namespace):
-            continue
-
-        # Skip subject if we're filtering subjects
-        if subjects:
-            subj_code = proj_ses.get('subject', {}).get('code')
-            if subj_code not in subjects:
-                continue
-
-        # Get true session, in order to access file info
-        session = fw.get_session(proj_ses['_id'])
-        # Check if session contains files
-        # Iterate over any session files
-        for f in session.get('files', []):
+        logger.info('Processing project files')
+        # Iterate over any project files
+        for f in project.get('files', []):
 
             # Define path - ensure that the folder exists...
             path = define_path(outdir, f, namespace)
@@ -332,22 +285,88 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
             warn_if_bids_invalid(f, namespace)
 
 
-            if path in filepath_downloads['session']:
-                logger.error('Multiple files with path {0}:\n\t{1} and\n\t{2}'.format(path, f['name'], filepath_downloads['session'][path][1]))
+            # For dry run, don't actually download
+            if path in filepath_downloads['project']:
+                logger.error('Multiple files with path {0}:\n\t{1} and\n\t{2}'.format(path, f['name'], filepath_downloads['project'][path][1]))
                 valid = False
 
-            filepath_downloads['session'][path] = {'args': (session['_id'], f['name'], path), 'modified': f.get('modified')}
+            filepath_downloads['project'][path] = {'args': (project['_id'], f['name'], path), 'modified': f.get('modified')}
 
-        logger.info('Processing acquisition files')
-        # Get acquisitions
-        session_acqs = fw.get_session_acquisitions(proj_ses['_id'])
-        for ses_acq in session_acqs:
+        ## Create dataset_description.json filepath_download
+        path = os.path.join(outdir, 'dataset_description.json')
+        filepath_downloads['sidecars'][path] = {'args': (project['info'][namespace], path, namespace)}
+        # Get project sessions
+        project_sessions = fw.get_project_sessions(project_id)
+    elif container_type == 'session':
+        project_sessions = [fw.get_session(container_id)]
+    else:
+        project_sessions = []
 
+    if project_sessions:
+        logger.info('Processing session files')
+        all_acqs = []
+        for proj_ses in project_sessions:
+            # Skip session if we're filtering to the list of sessions
+            if sessions and proj_ses.get('label') not in sessions:
+                continue
+
+            # Skip session if BIDS.Ignore is True
+            if is_container_excluded(proj_ses, namespace):
+                continue
+
+            # Skip subject if we're filtering subjects
+            if subjects:
+                subj_code = proj_ses.get('subject', {}).get('code')
+                if subj_code not in subjects:
+                    continue
+
+            # Get true session if files aren't already retrieved, in order to access file info
+            if proj_ses.get('files'):
+                session = proj_ses
+            else:
+                session = fw.get_session(proj_ses['_id'])
+            # Check if session contains files
+            # Iterate over any session files
+            for f in session.get('files', []):
+
+                # Define path - ensure that the folder exists...
+                path = define_path(outdir, f, namespace)
+                # If path is not defined (an empty string) move onto next file
+                if not path:
+                    continue
+
+                # Don't exclude any files that specify exclusion
+                if is_file_excluded(f, path):
+                    continue
+
+                warn_if_bids_invalid(f, namespace)
+
+
+                if path in filepath_downloads['session']:
+                    logger.error('Multiple files with path {0}:\n\t{1} and\n\t{2}'.format(path, f['name'], filepath_downloads['session'][path][1]))
+                    valid = False
+
+                filepath_downloads['session'][path] = {'args': (session['_id'], f['name'], path), 'modified': f.get('modified')}
+
+            logger.info('Processing acquisition files')
+            # Get acquisitions
+            session_acqs = fw.get_session_acquisitions(proj_ses['_id'])
+            all_acqs += session_acqs
+    elif container_type == 'acquisition':
+        all_acqs = [fw.get_acquisition(container_id)]
+    else:
+        all_acqs = []
+
+    if all_acqs:
+        for ses_acq in all_acqs:
             # Skip if BIDS.Ignore is True
             if is_container_excluded(ses_acq, namespace):
                 continue
-            # Get true acquisition, in order to access file info
-            acq = fw.get_acquisition(ses_acq['_id'])
+            # Get true acquisition if files aren't already retrieved, in order to access file info
+            if acq.get('files'):
+                acq = ses_acq
+            else:
+                acq = fw.get_acquisition(ses_acq['_id'])
             # Iterate over acquistion files
             for f in acq.get('files', []):
 
@@ -377,6 +396,9 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
 
                 # Create the sidecar JSON filepath_download
                 filepath_downloads['sidecars'][path] = {'args': (f['info'], path, namespace)}
+    else:
+        logger.error('{} is not a valid containertype'.format(container_type))
+        valid = False
 
     if not valid:
         sys.exit(1)
@@ -402,6 +424,10 @@ def main():
     parser.add_argument('--folder', dest='folders', action='append', help='Limit export to the given folder. (e.g. func)')
     parser.add_argument('-p', dest='project_label', action='store',
             required=False, default=None, help='Project Label on Flywheel instance')
+    parser.add_argument('--container-type', dest='container_type', action='store', required=False, default=None,
+            help='Download single container (acquisition|session|project) in BIDS format. Must provide --container-id.')
+    parser.add_argument('--container-id', dest='container_id', action='store', required=False, default=None,
+            help='Download single container in BIDS format. Must provide --container-type.')
     args = parser.parse_args()
 
     ### Prep
@@ -410,12 +436,27 @@ def main():
     # Check API key - raises Error if key is invalid
     fw = flywheel.Flywheel(args.api_key)
 
-    # Get project Id from label
-    project_id = utils.validate_project_label(fw, args.project_label)
+    # Check that container args are valid
+    container_id = container_type = None
+    if args.container_type and args.container_id:
+        # Download single container
+        container_id = args.container_id
+        container_type = args.container_type
+    else:
+        if bool(container_id) != bool(container_type):
+            logger.error('Did not provide all options necessary to download single container')
+            sys.exit(1)
+        elif not project_label:
+            logger.error('Project label information not provided')
+            sys.exit(1)
+        # Get project Id from label
+        container_id = utils.validate_project_label(fw, args.project_label)
+        container_type = 'project'
 
     ### Download BIDS project
-    download_bids_dir(fw, project_id, args.bids_dir, src_data=args.source_data,
-            dry_run=args.dry_run, replace=args.replace, subjects=args.subjects, sessions=args.sessions, folders=args.folders)
+    download_bids_dir(fw, container_id, container_type, args.bids_dir,
+            src_data=args.source_data, dry_run=args.dry_run, replace=args.replace,
+            subjects=args.subjects, sessions=args.sessions, folders=args.folders)
 
     # Validate the downloaded directory
     #   Go one more step into the hierarchy to pass to the validator...
