@@ -320,8 +320,11 @@ def download_bids_dir(fw, container_id, container_type, outdir, src_data=False,
                 if subj_code not in subjects:
                     continue
 
-            # Get true session, in order to access file info
-            session = fw.get_session(proj_ses['_id'])
+            # Get true session if files aren't already retrieved, in order to access file info
+            if proj_ses.get('files'):
+                session = proj_ses
+            else:
+                session = fw.get_session(proj_ses['_id'])
             # Check if session contains files
             # Iterate over any session files
             for f in session.get('files', []):
@@ -359,8 +362,11 @@ def download_bids_dir(fw, container_id, container_type, outdir, src_data=False,
             # Skip if BIDS.Ignore is True
             if is_container_excluded(ses_acq, namespace):
                 continue
-            # Get true acquisition, in order to access file info
-            acq = fw.get_acquisition(ses_acq['_id'])
+            # Get true acquisition if files aren't already retrieved, in order to access file info
+            if acq.get('files'):
+                acq = ses_acq
+            else:
+                acq = fw.get_acquisition(ses_acq['_id'])
             # Iterate over acquistion files
             for f in acq.get('files', []):
 
