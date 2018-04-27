@@ -10,7 +10,7 @@ from setuptools import setup, find_packages
 from setuptools.command.install import install
 
 NAME = "flywheel-bids"
-VERSION = "0.4.0.dev3"
+VERSION = "0.5.0"
 # To install the library, run the following
 #
 # python setup.py install
