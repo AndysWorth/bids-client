@@ -4,9 +4,9 @@ import unittest
 
 import flywheel
 
-import curate_bids
-from supporting_files import project_tree
-from supporting_files.templates import BIDS_TEMPLATE
+from flywheel_bids import curate_bids
+from flywheel_bids.supporting_files import project_tree
+from flywheel_bids.supporting_files.templates import BIDS_TEMPLATE
 
 class BidsCurateTestCases(unittest.TestCase):
 
@@ -100,7 +100,7 @@ class BidsCurateTestCases(unittest.TestCase):
         self.assertFalse(meta_info['info']['BIDS']['valid'])
         # Assert error message is correct
         self.assertEqual(meta_info['info']['BIDS']['error_message'],
-               u"'Modality' is a required property\nFilename '' is too short") 
+               u"Filename '' is too short\n'Modality' is a required property") 
 
     def test_validate_meta_info_invalid3(self):
         """ """
@@ -129,8 +129,8 @@ class BidsCurateTestCases(unittest.TestCase):
 
     def test_validate_meta_info_invalid5(self):
         """ """
-        # Define meta information - Task is empty, 
-        meta_info = {'info': {'BIDS': {'template': 'func_file', 'Filename': 'example.nii.gz', 
+        # Define meta information - Task is empty,
+        meta_info = {'info': {'BIDS': {'template': 'func_file', 'Filename': 'example.nii.gz',
             'Modality': 'sbref', 'Task': '', 'Rec': '', 'Run': '01', 'Echo': 'AA'}}}
         # Call function
         curate_bids.validate_meta_info(meta_info, BIDS_TEMPLATE)
@@ -138,7 +138,7 @@ class BidsCurateTestCases(unittest.TestCase):
         self.assertFalse(meta_info['info']['BIDS']['valid'])
         # Assert error message is correct
         self.assertEqual(meta_info['info']['BIDS']['error_message'],
-                "Task '' does not match '^[a-zA-Z0-9]+$'\nEcho 'AA' does not match '^[0-9]*$'") 
+                "Task '' does not match '^[a-zA-Z0-9]+$'\nEcho 'AA' does not match '^[0-9]*$'")
 
     def test_validate_meta_info_invalid_characters1(self):
         """ """
@@ -156,11 +156,11 @@ class BidsCurateTestCases(unittest.TestCase):
         self.assertFalse(meta_info['info']['BIDS']['valid'])
         # Assert error message is correct
         self.assertEqual(meta_info['info']['BIDS']['error_message'],
-                "Ce 'invalid2.' does not match '^[a-zA-Z0-9]*$'\n"+\
                 "Filename '' is too short\n"+\
+                "Mod '_invalid2' does not match '^[a-zA-Z0-9]*$'\n"+\
                 "Modality 'invalid._#$*%' is not one of ['T1w', 'T2w', 'T1rho', 'T1map', 'T2map', 'FLAIR', 'FLASH', 'PD'"+\
                 ", 'PDmap', 'PDT2', 'inplaneT1', 'inplaneT2', 'angio', 'defacemask', 'SWImagandphase']\n"+\
-                "Mod '_invalid2' does not match '^[a-zA-Z0-9]*$'")
+                "Ce 'invalid2.' does not match '^[a-zA-Z0-9]*$'")
 
     def test_validate_meta_info_no_BIDS(self):
         """ """
@@ -231,7 +231,7 @@ class BidsCurateTestCases(unittest.TestCase):
         file1 = project_tree.TreeNode('file', {
             'name': 'fieldmap.nii.gz',
             'type': 'nifti',
-            'measurements': ['field_map'] 
+            'classification': {'Intent': 'Fieldmap'}
         })
         acq1.children.append(file1)
 
@@ -240,7 +240,7 @@ class BidsCurateTestCases(unittest.TestCase):
         file2 = project_tree.TreeNode('file', {
             'name': 'task1.nii.gz',
             'type': 'nifti',
-            'measurements': ['functional']
+            'classification': {'Intent': 'Functional'}
         })
         acq2.children.append(file2)
 

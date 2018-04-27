@@ -4,7 +4,7 @@ import shutil
 import unittest
 
 import flywheel
-from supporting_files import utils
+from flywheel_bids.supporting_files import utils
 
 class UtilsTestCases(unittest.TestCase):
 

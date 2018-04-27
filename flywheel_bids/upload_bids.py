@@ -9,8 +9,8 @@ import sys
 
 import flywheel
 
-from supporting_files import bidsify_flywheel, classifications, utils
-from supporting_files.templates import BIDS_TEMPLATE as template
+from .supporting_files import bidsify_flywheel, classifications, utils
+from .supporting_files.templates import BIDS_TEMPLATE as template
 
 
 logging.basicConfig(level=logging.INFO)
@@ -165,8 +165,8 @@ def handle_session(fw, project_id, session_name, subject_name):
         logger.info('Session (%s) not found. Creating new session for project %s.' % (session_name, project_id))
 
         session_id = fw.add_session({
-            'label': session_name, 
-            'project': project_id,                    
+            'label': session_name,
+            'project': project_id,
             'subject': {'code': subject_name},
             'info': { template.namespace: {} }
         })
@@ -227,9 +227,9 @@ def upload_acquisition_file(fw, context, full_fname):
     classification = classify_acquisition(full_fname)
 
     update = {}
-    
+
     if classification:
-        update['measurements'] = [classification]
+        update['classification'] = [classification]
 
     # Workaround for tsv tabular data (remove with mongo-filetypes branch)
     if context['file']['name'].endswith('.tsv') or context['file']['name'].endswith('.tsv.gz'):
@@ -714,10 +714,10 @@ def convert_dtype(contents):
     """
     # Convert contents to array
     contents_arr = contents[1:]
-    cols = zip(*contents_arr)
+    cols = list(zip(*contents_arr))
 
     # Iterate over every column in array
-    for idx in xrange(len(cols)):
+    for idx in range(len(cols)):
         # Get column
         col = cols[idx]
 
@@ -753,7 +753,7 @@ def convert_dtype(contents):
                 else:
                     continue
         ### Take converted column and place back into the content list
-        for idxx in xrange(len(contents[1:])):
+        for idxx in range(len(contents[1:])):
             contents[idxx+1][idx] = col[idxx]
 
     return contents
@@ -879,7 +879,7 @@ def parse_meta_files(fw, files_of_interest):
             logger.info('Do not recognize filetype')
 
 
-if __name__ == '__main__':
+def main():
     ### Read in arguments
     parser = argparse.ArgumentParser(description='BIDS Directory Upload')
     parser.add_argument('--bids-dir', dest='bids_dir', action='store',
@@ -920,3 +920,7 @@ if __name__ == '__main__':
     # Parse the BIDS meta files
     #    data_description.json, participants.tsv, *_sessions.tsv, *_scans.tsv
     parse_meta_files(fw, files_of_interest)
+
+if __name__ == '__main__':
+    main()
+

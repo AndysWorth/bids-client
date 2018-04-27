@@ -6,7 +6,7 @@ import unittest
 
 import flywheel
 
-import upload_bids
+from flywheel_bids import upload_bids
 
 class BidsUploadTestCases(unittest.TestCase):
 
@@ -371,13 +371,13 @@ class BidsUploadTestCases(unittest.TestCase):
         """ Assert T1w image classified as anatomy_t1w """
         full_fname = '/sub-01/ses-123/anat/sub-01_ses-123_T1w.nii.gz'
         classification = upload_bids.classify_acquisition(full_fname)
-        self.assertEqual('anatomy_t1w', classification)
+        self.assertEqual({'Intent': 'Structural', 'Contrast': 'T1'}, classification)
 
     def test_classify_acquisition_T2w(self):
         """ Assert T2w image classified as anatomy_t2w """
         full_fname = '/sub-01/anat/sub-01_T2w.nii.gz'
         classification = upload_bids.classify_acquisition(full_fname)
-        self.assertEqual('anatomy_t2w', classification)
+        self.assertEqual({'Intent': 'Structural', 'Contrast': 'T2'}, classification)
 
 
     def test_fill_in_properties_anat(self):

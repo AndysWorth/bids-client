@@ -9,10 +9,12 @@ import zipfile
 
 import flywheel
 
-from supporting_files import utils
+from .supporting_files import utils
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('bids-exporter')
+
+EPOCH = dateutil.parser.parse('1970-01-01 00:00:0Z')
 
 def validate_dirname(dirname):
     """
@@ -83,7 +85,7 @@ def is_file_excluded_options(namespace, src_data, replace):
     return is_file_excluded
 
 def timestamp_to_int(timestamp):
-    return int((dateutil.parser.parse(timestamp)-dateutil.parser.parse('1970-01-01 00:00:0Z')).total_seconds())
+    return int((timestamp-EPOCH).total_seconds())
 
 def is_container_excluded(container, namespace):
     meta_info = container.get('info', {}).get(namespace, {})
@@ -148,7 +150,7 @@ def create_json(meta_info, path, namespace):
     # If the file is functional,
     #   move the 'TaskName' from 'BIDS'
     #   to the top level
-    if '/func/' in path:
+    if '/func/' in path and 'Task' in ns_data:
          meta_info['TaskName'] = ns_data['Task']
 
     # Remove extension of path and replace with .json
@@ -381,7 +383,7 @@ def download_bids_dir(fw, project_id, outdir, src_data=False,
 
     download_bids_files(fw, filepath_downloads, dry_run)
 
-if __name__ == '__main__':
+def main():
     ### Read in arguments
     parser = argparse.ArgumentParser(description='BIDS Directory Export')
     parser.add_argument('--bids-dir', dest='bids_dir', action='store',
@@ -419,3 +421,8 @@ if __name__ == '__main__':
     #   Go one more step into the hierarchy to pass to the validator...
     if not args.dry_run:
         utils.validate_bids(args.bids_dir)
+
+
+if __name__ == '__main__':
+    main()
+

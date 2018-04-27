@@ -1,5 +1,6 @@
 import logging
 import re
+import six
 import sys
 import subprocess
 import jsonschema
@@ -32,7 +33,7 @@ def validate_project_label(fw, project_label):
     project_found = False
     for p in projects:
         if p['label'] == project_label:
-            project_id = p['_id']
+            project_id = p.id
             project_found = True
 
     if not project_found:
@@ -90,11 +91,32 @@ def dict_set(obj, key, value):
             raise ValueError('Could not set value for key: ' + key)
     curr[parts[-1]] = value
 
+def dict_match(matcher, matchee):
+    """
+    Returns True if each key,val pair is present in the matchee
+    """
+    for key, val in matcher.iteritems():
+        if not matchee.get(key):
+            return False
+        elif not isinstance(matchee.get(key), list):
+            mval = [matchee.get(key)]
+        else:
+            mval = matchee.get(key)
+        if isinstance(val, list):
+            for item in val:
+                if item not in mval:
+                    return False
+        else:
+            if val not in mval:
+                return False
+
+    return True
+
 def normalize_strings(obj):
-    if isinstance(obj, basestring):
+    if isinstance(obj, six.string_types):
         return str(obj)
     if isinstance(obj, collections.Mapping):
-        return dict(map(normalize_strings, obj.iteritems()))
+        return dict(map(normalize_strings, obj.items()))
     if isinstance(obj, collections.Iterable):
         return type(obj)(map(normalize_strings, obj))
     return obj

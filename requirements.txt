@@ -1,4 +1,2 @@
-jsonschema==2.6.0
-python-dateutil==2.6.1
-https://github.com/flywheel-io/sdk/releases/download/0.3.0/flywheel-0.3.0-py2-none-linux_x86_64.whl
-pytest==3.2.5
+jsonschema>=2.6.0
+flywheel-sdk==2.2.0a1
