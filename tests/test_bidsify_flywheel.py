@@ -104,7 +104,7 @@ class BidsifyTestCases(unittest.TestCase):
             'subject': {u'code': u'123'},
             'session': {u'label': u'456'},
             'acquisition': {u'label': u'acq222'},
-            'file': {u'classification': {u'Contrast': u'T1', u'Intent': u'Structural'}},
+            'file': {u'classification': {u'Measurement': u'T1', u'Intent': u'Structural'}},
             'ext': '.nii.gz'
         }
 
@@ -233,7 +233,7 @@ class BidsifyTestCases(unittest.TestCase):
             'project': None, 'subject': {u'code': u'001'},
             'session': {u'label': u'sesTEST'}, 'acquisition': {u'label': u'acqTEST'},
             'file': {
-                u'classification': {u'Contrast': u'T1', u'Intent': u'Structural'},
+                u'classification': {u'Measurement': u'T1', u'Intent': u'Structural'},
                 u'type': u'nifti'
             },
             'ext': '.nii.gz'
@@ -260,7 +260,7 @@ class BidsifyTestCases(unittest.TestCase):
             'subject': {u'code': u'001'},
             'session': {u'label': u'sesTEST', 'info': {'BIDS': {'Label': u'sesTEST'}}},
             'acquisition': {u'label': u'acqTEST'},
-            'file': {u'classification': {u'Contrast': u'T1', u'Intent': u'Structural'},
+            'file': {u'classification': {u'Measurement': u'T1', u'Intent': u'Structural'},
                     u'type': u'nifti'
                         },
             'ext': '.nii.gz'
@@ -279,7 +279,7 @@ class BidsifyTestCases(unittest.TestCase):
                     'ignore': False
                     }
                 },
-            u'classification': {u'Contrast': u'T1', u'Intent': u'Structural'}, u'type': u'nifti'}
+            u'classification': {u'Measurement': u'T1', u'Intent': u'Structural'}, u'type': u'nifti'}
         self.assertEqual(container, container_expected)
 
     def test_process_matching_templates_anat_t2w(self):
@@ -292,7 +292,7 @@ class BidsifyTestCases(unittest.TestCase):
             'subject': {u'code': u'001'},
             'session': {u'label': u'sesTEST', 'info': {'BIDS': {'Label': u'sesTEST'}}},
             'acquisition': {u'label': u'acqTEST'},
-            'file': {u'classification': {u'Contrast': u'T2', u'Intent': u'Structural'},
+            'file': {u'classification': {u'Measurement': u'T2', u'Intent': u'Structural'},
                     u'type': u'nifti'
                         },
             'ext': '.nii.gz'
@@ -311,7 +311,7 @@ class BidsifyTestCases(unittest.TestCase):
                     'ignore': False
                     }
                 },
-            u'classification': {u'Contrast': u'T2', u'Intent': u'Structural'}, u'type': u'nifti'}
+            u'classification': {u'Measurement': u'T2', u'Intent': u'Structural'}, u'type': u'nifti'}
         self.assertEqual(container, container_expected)
 
     def test_process_matching_templates_func(self):
@@ -455,7 +455,7 @@ class BidsifyTestCases(unittest.TestCase):
             'subject': {u'code': u'001'},
             'session': {u'label': u'sesTEST', 'info': {'BIDS': {'Label': u'sesTEST'}}},
             'acquisition': {u'label': u'acqTEST'},
-            'file': {u'classification': {u'Contrast': u'Diffusion', u'Intent': u'Structural'},
+            'file': {u'classification': {u'Measurement': u'Diffusion', u'Intent': u'Structural'},
                     u'type': u'nifti'
                         },
             'ext': '.nii.gz'
@@ -473,7 +473,7 @@ class BidsifyTestCases(unittest.TestCase):
                     'ignore': False
                     }
                 },
-            u'classification': {u'Contrast': u'Diffusion', u'Intent': u'Structural'}, u'type': u'nifti'}
+            u'classification': {u'Measurement': u'Diffusion', u'Intent': u'Structural'}, u'type': u'nifti'}
         self.assertEqual(container, container_expected)
 
     def test_process_matching_templates_dwi_bval(self):
@@ -486,7 +486,7 @@ class BidsifyTestCases(unittest.TestCase):
             'subject': {u'code': u'001'},
             'session': {u'label': u'sesTEST', 'info': {'BIDS': {'Label': u'sesTEST'}}},
             'acquisition': {u'label': u'acqTEST'},
-            'file': {u'classification': {u'Contrast': u'Diffusion', u'Intent': u'Structural'},
+            'file': {u'classification': {u'Measurement': u'Diffusion', u'Intent': u'Structural'},
                     u'type': u'bval'
                         },
             'ext': '.bval'
@@ -504,7 +504,7 @@ class BidsifyTestCases(unittest.TestCase):
                     'ignore': False
                     }
                 },
-            u'classification': {u'Contrast': u'Diffusion', u'Intent': u'Structural'}, u'type': u'bval'}
+            u'classification': {u'Measurement': u'Diffusion', u'Intent': u'Structural'}, u'type': u'bval'}
         self.assertEqual(container, container_expected)
 
     def test_process_matching_templates_dwi_bvec(self):
@@ -517,7 +517,7 @@ class BidsifyTestCases(unittest.TestCase):
             'subject': {u'code': u'001'},
             'session': {u'label': u'sesTEST', 'info': {'BIDS': {'Label': u'sesTEST'}}},
             'acquisition': {u'label': u'acqTEST'},
-            'file': {u'classification': {u'Contrast': u'Diffusion', u'Intent': u'Structural'},
+            'file': {u'classification': {u'Measurement': u'Diffusion', u'Intent': u'Structural'},
                     u'type': u'bvec'
                         },
             'ext': '.bvec'
@@ -535,7 +535,7 @@ class BidsifyTestCases(unittest.TestCase):
                     'ignore': False
                     }
                 },
-            u'classification': {u'Contrast': u'Diffusion', u'Intent': u'Structural'}, u'type': u'bvec'}
+            u'classification': {u'Measurement': u'Diffusion', u'Intent': u'Structural'}, u'type': u'bvec'}
         self.assertEqual(container, container_expected)
 
     def test_process_matching_templates_fieldmap(self):
@@ -618,7 +618,7 @@ class BidsifyTestCases(unittest.TestCase):
             'session': {u'label': u'sesTEST', 'info': {'BIDS': {'Label': u'sesTEST'}}},
             'acquisition': {u'label': u'acqTEST'},
             'file': {
-                u'classification': {u'Contrast': u'Diffusion', u'Intent': u'Structural'},
+                u'classification': {u'Measurement': u'Diffusion', u'Intent': u'Structural'},
                 u'type': u'dicom'
             },
             'ext': '.dcm.zip'
@@ -633,7 +633,7 @@ class BidsifyTestCases(unittest.TestCase):
                 'Path': u'sourcedata/sub-001/ses-sestest',
                 'ignore': False
                 }},
-            u'classification': {u'Contrast': u'Diffusion', u'Intent': u'Structural'},
+            u'classification': {u'Measurement': u'Diffusion', u'Intent': u'Structural'},
             u'type': u'dicom'}
         self.assertEqual(container, container_expected)
 
@@ -648,7 +648,7 @@ class BidsifyTestCases(unittest.TestCase):
             'acquisition': {u'label': u'acqTEST', u'id': u'09090'},
             'file': {
                 u'name': u'4784_1_1_localizer',
-                u'classification': {u'Contrast': u'T2', u'Intent': u'Localizer'},
+                u'classification': {u'Measurement': u'T2', u'Intent': u'Localizer'},
                 u'type': u'dicom'
             },
             'ext': '.dcm.zip'
@@ -659,7 +659,7 @@ class BidsifyTestCases(unittest.TestCase):
         # Define expected container
         container_expected = {
             u'name': u'4784_1_1_localizer',
-            u'classification': {u'Contrast': u'T2', u'Intent': u'Localizer'},
+            u'classification': {u'Measurement': u'T2', u'Intent': u'Localizer'},
             u'type': u'dicom'
         }
         self.assertEqual(container, container_expected)
@@ -675,7 +675,7 @@ class BidsifyTestCases(unittest.TestCase):
             'acquisition': {u'label': u'acqTEST'},
             'file': {
                 u'name': u'09 cmrr_mbepi_task-spatialfrequency_s6_2mm_66sl_PA_TR1.0.dcm.zip',
-                u'classification': {u'Contrast': u'Diffusion', u'Intent': u'Structural'},
+                u'classification': {u'Measurement': u'Diffusion', u'Intent': u'Structural'},
                 u'type': u'dicom'
             },
             'ext': '.dcm.zip'
@@ -691,7 +691,7 @@ class BidsifyTestCases(unittest.TestCase):
                 'ignore': False
                 }},
             u'name': u'09 cmrr_mbepi_task-spatialfrequency_s6_2mm_66sl_PA_TR1.0.dcm.zip',
-            u'classification': {u'Contrast': u'Diffusion', u'Intent': u'Structural'},
+            u'classification': {u'Measurement': u'Diffusion', u'Intent': u'Structural'},
             u'type': u'dicom'}
         self.assertEqual(container, container_expected)
 
@@ -874,7 +874,7 @@ class BidsifyTestCases(unittest.TestCase):
             u'classification': {}, u'type': u'archive'}
         self.assertEqual(container, container_expected)
 
-    def test_process_matching_templates_project_file_multiple_contrasts(self):
+    def test_process_matching_templates_project_file_multiple_measurements(self):
         """ """
         # Define context
         context = {
@@ -885,7 +885,7 @@ class BidsifyTestCases(unittest.TestCase):
             'session': {u'label': u'sesTEST', 'info': {'BIDS': {'Label': u'sesTEST'}}},
             'acquisition': {u'label': u'acqTEST'},
             'file': {
-                u'classification': {u'Contrast': [u'T1', u'T2'], u'Intent': u'Structural'},
+                u'classification': {u'Measurement': [u'T1', u'T2'], u'Intent': u'Structural'},
                 u'type': u'nifti'
             },
             'ext': '.nii.gz'
@@ -904,7 +904,7 @@ class BidsifyTestCases(unittest.TestCase):
                     'ignore': False
                     }
                 },
-            u'classification': {u'Contrast': [u'T1', u'T2'], u'Intent': u'Structural'}, u'type': u'nifti'}
+            u'classification': {u'Measurement': [u'T1', u'T2'], u'Intent': u'Structural'}, u'type': u'nifti'}
         print(container)
         self.assertEqual(container, container_expected)
 
