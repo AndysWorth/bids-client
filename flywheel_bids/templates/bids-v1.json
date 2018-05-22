@@ -368,7 +368,7 @@
 				"file.type": {
 					"$in": ["nifti", "NIfTI"]
 				},
-				"file.classification.Contrast": {
+				"file.classification.Measurement": {
 					"$in": [ "T1", "PD", "T2" ]
 				},
 				"file.classification.Intent": {
@@ -562,7 +562,7 @@
 				"file.type": {
 					"$in": ["nifti", "bvec", "bval", "NIfTI", "BVEC", "BVAL"]
 				},
-				"file.classification.Contrast": {
+				"file.classification.Measurement": {
 					"$in": [ "Diffusion" ]
 				},
 				"file.classification.Intent": {

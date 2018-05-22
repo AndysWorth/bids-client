@@ -1,18 +1,18 @@
 classifications = {
         'anat': {
-            'T1w': {'Contrast': 'T1', 'Intent':'Structural'},
-            'T2w': {'Contrast': 'T2', 'Intent':'Structural'},
+            'T1w': {'Measurement': 'T1', 'Intent':'Structural'},
+            'T2w': {'Measurement': 'T2', 'Intent':'Structural'},
             'T1rho': {'Custom': 'T1rho'},
-            'T1map': {'Contrast': 'T1', 'Intent':'Structural', 'Features': 'Quantitative'},
-            'T2map': {'Contrast': 'T2', 'Intent':'Structural', 'Features': 'Quantitative'},
-            'T2star': {'Contrast': 'T2*', 'Intent':'Structural'},
+            'T1map': {'Measurement': 'T1', 'Intent':'Structural', 'Features': 'Quantitative'},
+            'T2map': {'Measurement': 'T2', 'Intent':'Structural', 'Features': 'Quantitative'},
+            'T2star': {'Measurement': 'T2*', 'Intent':'Structural'},
             'FLAIR': {'Custom': 'FLAIR'},
             'FLASH': {'Custom': 'FLASH'},
-            'PD': {'Contrast': 'PD', 'Intent':'Structural'},
+            'PD': {'Measurement': 'PD', 'Intent':'Structural'},
             'PDmap': {'Custom': 'PD-Map'},
-            'PDT2': {'Contrast': ['PD', 'T2'], 'Intent':'Structural'},
-            'inplaneT1': {'Contrast': 'T1', 'Intent':'Structural', 'Features': 'In-Plane'},
-            'inplaneT2': {'Contrast': 'T2', 'Intent':'Structural', 'Features': 'In-Plane'},
+            'PDT2': {'Measurement': ['PD', 'T2'], 'Intent':'Structural'},
+            'inplaneT1': {'Measurement': 'T1', 'Intent':'Structural', 'Features': 'In-Plane'},
+            'inplaneT2': {'Measurement': 'T2', 'Intent':'Structural', 'Features': 'In-Plane'},
             'angio': {'Custom': 'Angio'},
             'defacemask': {'Custom': 'Defacemask'},
             'SWImagandphase': {'Custom': 'SWI'},
@@ -30,18 +30,18 @@ classifications = {
             'physio': {'Custom': 'Physio'}     # physio
         },
         'dwi' : {
-            'dwi': {'Contrast': 'Diffusion', 'Intent':'Structural'},
-            'sbref': {'Contrast': 'Diffusion', 'Intent':'Structural'}
+            'dwi': {'Measurement': 'Diffusion', 'Intent':'Structural'},
+            'sbref': {'Measurement': 'Diffusion', 'Intent':'Structural'}
         },
         'fmap': {
-            'phasediff': {'Contrast': 'B0', 'Intent': 'Fieldmap'},
-            'magnitude1': {'Contrast': 'B0', 'Intent': 'Fieldmap'},
-            'magnitude2': {'Contrast': 'B0', 'Intent': 'Fieldmap'},
-            'phase1': {'Contrast': 'B0', 'Intent': 'Fieldmap'},
-            'phase2': {'Contrast': 'B0', 'Intent': 'Fieldmap'},
-            'magnitude': {'Contrast': 'B0', 'Intent': 'Fieldmap'},
-            'fieldmap': {'Contrast': 'B0', 'Intent': 'Fieldmap'},
-            'epi': {'Contrast': 'B0', 'Intent': 'Fieldmap'},
+            'phasediff': {'Measurement': 'B0', 'Intent': 'Fieldmap'},
+            'magnitude1': {'Measurement': 'B0', 'Intent': 'Fieldmap'},
+            'magnitude2': {'Measurement': 'B0', 'Intent': 'Fieldmap'},
+            'phase1': {'Measurement': 'B0', 'Intent': 'Fieldmap'},
+            'phase2': {'Measurement': 'B0', 'Intent': 'Fieldmap'},
+            'magnitude': {'Measurement': 'B0', 'Intent': 'Fieldmap'},
+            'fieldmap': {'Measurement': 'B0', 'Intent': 'Fieldmap'},
+            'epi': {'Measurement': 'B0', 'Intent': 'Fieldmap'},
         }
     }
 
