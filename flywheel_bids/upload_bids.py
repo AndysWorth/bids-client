@@ -9,6 +9,8 @@ import sys
 
 import flywheel
 
+from six.moves import reduce
+
 from .supporting_files import bidsify_flywheel, classifications, utils
 from .supporting_files.templates import BIDS_TEMPLATE as template
 
