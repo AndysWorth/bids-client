@@ -881,6 +881,28 @@ def parse_meta_files(fw, files_of_interest):
         else:
             logger.info('Do not recognize filetype')
 
+def upload_bids(fw, bids_dir, group_id, project_label=None, hierarchy_type='Flywheel', validate=True):
+    ### Prep
+    # Check directory name - ensure it exists
+    validate_dirname(bids_dir)
+
+    ### Read in hierarchy & Validate as BIDS
+    # parse BIDS dir
+    bids_hierarchy = parse_bids_dir(bids_dir)
+    # TODO: Determine if project label are present
+    bids_hierarchy, rootdir = handle_project_label(bids_hierarchy, project_label, bids_dir)
+
+    # Determine if hierarchy is valid BIDS
+    if validate:
+        utils.validate_bids(rootdir)
+
+    ### Upload BIDS directory
+    # upload bids dir (and get files of interest and project id)
+    files_of_interest = upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type)
+
+    # Parse the BIDS meta files
+    #    data_description.json, participants.tsv, *_sessions.tsv, *_scans.tsv
+    parse_meta_files(fw, files_of_interest)
 
 def main():
     ### Read in arguments
@@ -898,31 +920,10 @@ def main():
             help="Hierarchy to load into, either 'BIDS' or 'Flywheel'")
     args = parser.parse_args()
 
-    ### Prep
-    # Check directory name - ensure it exists
-    validate_dirname(args.bids_dir)
     # Check API key - raises Error if key is invalid
     fw = flywheel.Flywheel(args.api_key)
 
-    ### Read in hierarchy & Validate as BIDS
-    # parse BIDS dir
-    bids_hierarchy = parse_bids_dir(args.bids_dir)
-    # TODO: Determine if project label are present
-    bids_hierarchy, rootdir = handle_project_label(bids_hierarchy, args.project_label, args.bids_dir)
-
-    # Determine if hierarchy is valid BIDS
-    utils.validate_bids(rootdir)
-
-    ### Upload BIDS directory
-    # upload bids dir (and get files of interest and project id)
-    files_of_interest = upload_bids_dir(
-            fw, bids_hierarchy, args.group_id,
-            rootdir, args.hierarchy_type
-            )
-
-    # Parse the BIDS meta files
-    #    data_description.json, participants.tsv, *_sessions.tsv, *_scans.tsv
-    parse_meta_files(fw, files_of_interest)
+    upload_bids(fw, args.bids_dir, args.group_id, project_label=args.project_label, hierarchy_type=args.hierarchy_type)
 
 if __name__ == '__main__':
     main()

@@ -405,6 +405,40 @@ def download_bids_dir(fw, container_id, container_type, outdir, src_data=False,
 
     download_bids_files(fw, filepath_downloads, dry_run)
 
+def export_bids(fw, bids_dir, project_label, subjects=None, sessions=None, folders=None, replace=False, 
+        dry_run=False, container_type=None, container_id=None, source_data=False, validate=True):
+
+    ### Prep
+    # Check directory name - ensure it exists
+    validate_dirname(bids_dir)
+
+    # Check that container args are valid
+    container_id = container_type = None
+    if container_type and container_id:
+        # Download single container
+        container_id = container_id
+        container_type = container_type
+    else:
+        if bool(container_id) != bool(container_type):
+            logger.error('Did not provide all options necessary to download single container')
+            sys.exit(1)
+        elif not project_label:
+            logger.error('Project label information not provided')
+            sys.exit(1)
+        # Get project Id from label
+        container_id = utils.validate_project_label(fw, project_label)
+        container_type = 'project'
+
+    ### Download BIDS project
+    download_bids_dir(fw, container_id, container_type, bids_dir,
+            src_data=source_data, dry_run=dry_run, replace=replace,
+            subjects=subjects, sessions=sessions, folders=folders)
+
+    # Validate the downloaded directory
+    #   Go one more step into the hierarchy to pass to the validator...
+    if validate and not dry_run:
+        utils.validate_bids(bids_dir)
+
 def main():
     ### Read in arguments
     parser = argparse.ArgumentParser(description='BIDS Directory Export')
@@ -430,39 +464,11 @@ def main():
             help='Download single container in BIDS format. Must provide --container-type.')
     args = parser.parse_args()
 
-    ### Prep
-    # Check directory name - ensure it exists
-    validate_dirname(args.bids_dir)
     # Check API key - raises Error if key is invalid
     fw = flywheel.Flywheel(args.api_key)
 
-    # Check that container args are valid
-    container_id = container_type = None
-    if args.container_type and args.container_id:
-        # Download single container
-        container_id = args.container_id
-        container_type = args.container_type
-    else:
-        if bool(container_id) != bool(container_type):
-            logger.error('Did not provide all options necessary to download single container')
-            sys.exit(1)
-        elif not args.project_label:
-            logger.error('Project label information not provided')
-            sys.exit(1)
-        # Get project Id from label
-        container_id = utils.validate_project_label(fw, args.project_label)
-        container_type = 'project'
-
-    ### Download BIDS project
-    download_bids_dir(fw, container_id, container_type, args.bids_dir,
-            src_data=args.source_data, dry_run=args.dry_run, replace=args.replace,
-            subjects=args.subjects, sessions=args.sessions, folders=args.folders)
-
-    # Validate the downloaded directory
-    #   Go one more step into the hierarchy to pass to the validator...
-    if not args.dry_run:
-        utils.validate_bids(args.bids_dir)
-
+    export_bids(fw, args.bids_dir, args.project_label, subjects=args.subjects, sessions=args.sessions, folders=args.folders, replace=args.replace,
+            dry_run=args.dry_run, container_type=args.container_type, container_id=args.container_id, source_data=args.source_data)
 
 if __name__ == '__main__':
     main()
