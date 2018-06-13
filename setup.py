@@ -10,7 +10,7 @@ from setuptools import setup, find_packages
 from setuptools.command.install import install
 
 NAME = "flywheel-bids"
-VERSION = "0.6.0"
+VERSION = "0.6.1"
 # To install the library, run the following
 #
 # python setup.py install
@@ -18,7 +18,7 @@ VERSION = "0.6.0"
 # prerequisite: setuptools
 # http://pypi.python.org/pypi/setuptools
 
-REQUIRES = ["jsonschema>=2.6.0", "flywheel-sdk==2.2.0rc5"]
+REQUIRES = ["jsonschema>=2.6.0", "flywheel-sdk==2.3.0"]
 
 class VerifyVersionCommand(install):
     """Custom command to verify that the git tag matches our version"""
@@ -46,13 +46,6 @@ setup(
     project_urls={
         'Source': 'https://github.com/flywheel-io/bids-client'
     },
-    long_description="""\
-    Flywheel BIDS Client
-    ============
-
-    An SDK for interacting with BIDS formatted data on a Flywheel instance. 
-
-    """,
     entry_points = {
         'console_scripts': [
             'curate_bids=flywheel_bids.curate_bids:main',
@@ -62,5 +55,12 @@ setup(
     },
     cmdclass = {
         'verify': VerifyVersionCommand
-    }
+    },
+    long_description=
+'''
+Flywheel BIDS Client
+============
+
+An SDK for interacting with BIDS formatted data on a Flywheel instance.
+'''
 )
