@@ -363,10 +363,8 @@ def download_bids_dir(fw, container_id, container_type, outdir, src_data=False,
             if is_container_excluded(ses_acq, namespace):
                 continue
             # Get true acquisition if files aren't already retrieved, in order to access file info
-            if ses_acq.get('files'):
-                acq = ses_acq
-            else:
-                acq = fw.get_acquisition(ses_acq['_id'])
+
+            acq = fw.get_acquisition(ses_acq['_id'])
             # Iterate over acquistion files
             for f in acq.get('files', []):
 
