@@ -403,6 +403,17 @@ def formatValue(params, value):
     for param in params:
         if "$replace" in param:
             value = re.sub(param["$replace"].get('$pattern'), param["$replace"].get('$replacement'), value)
+        elif "$lower" in param:
+            if "$pattern" in param["$lower"]:
+                value = re.sub(param["$lower"].get('$pattern'), lambda m: m.group(0).lower(), value)
+            else:
+                value = value.lower()
+        elif "$upper" in param:
+            if "$pattern" in param["$upper"]:
+                value = re.sub(param["$upper"].get('$pattern'), lambda m: m.group(0).upper(), value)
+            else:
+                value = value.upper()
+
     return value
 
 def loadTemplates(templates_dir=None):
