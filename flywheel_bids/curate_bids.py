@@ -211,6 +211,21 @@ def curate_bids_tree(fw, project, reset=False, template_file=None, update=True):
             if node.is_dirty():
                 update_meta_info(fw, context)
 
+def main_with_args(api_key, session_id, reset):
+
+    ### Prep
+    # Check API key - raises Error if key is invalid
+    fw = flywheel.Flywheel(api_key)
+    if session_id:
+        project_id = utils.get_project_id_from_session_id(fw, session_id)
+    else:
+        print('Session id is required!')
+        sys.exit(1)
+
+
+    ### Curate BIDS project
+    curate_bids_dir(fw, project_id, reset=reset)
+
 
 def main():
     ### Read in arguments
