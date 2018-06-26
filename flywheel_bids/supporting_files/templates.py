@@ -130,7 +130,7 @@ class Template:
     def apply_custom_initialization(self, rule_id, info, context):
         """
         Apply custom initialization templates for the given rule
-        
+
         Args:
             rule_id (str): The id of the matched rule
             info (dict): The info object to update
@@ -307,7 +307,7 @@ def handle_run_counter_initializer(initializers, info, context):
                 key = propDef['$run_counter']['key']
                 key = utils.process_string_template(key, context)
 
-                counter = counter[key]                            
+                counter = counter[key]
                 if current == '+':
                     info[propName] = counter.next()
                 else:
@@ -395,6 +395,9 @@ def processValueMatch(value, match):
 
         return value == match
 
+def get_pattern(format_params):
+    return format_params.get("$pattern")
+
 def formatValue(params, value):
     """
     Formats a string value based on given parameters i.e. {"$replace": {"$pattern": "ab", "$replacement": "c"}}
@@ -402,7 +405,18 @@ def formatValue(params, value):
     """
     for param in params:
         if "$replace" in param:
-            value = re.sub(param["$replace"].get('$pattern'), param["$replace"].get('$replacement'), value)
+            value = re.sub(get_pattern(param["$replace"]), param["$replace"].get('$replacement'), value)
+        elif "$lower" in param:
+            if isinstance(param['$lower'], dict) and get_pattern(param["$lower"]):
+                value = re.sub(get_pattern(param["$lower"]), lambda m: m.group(0).lower(), value)
+            else:
+                value = value.lower()
+        elif "$upper" in param:
+            if isinstance(param['$upper'], dict) and get_pattern(param["$upper"]):
+                value = re.sub(get_pattern(param["$upper"]), lambda m: m.group(0).upper(), value)
+            else:
+                value = value.upper()
+
     return value
 
 def loadTemplates(templates_dir=None):
