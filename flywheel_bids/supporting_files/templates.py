@@ -395,6 +395,9 @@ def processValueMatch(value, match):
 
         return value == match
 
+def get_pattern(format_params):
+    return format_params.get("$pattern")
+
 def formatValue(params, value):
     """
     Formats a string value based on given parameters i.e. {"$replace": {"$pattern": "ab", "$replacement": "c"}}
@@ -402,15 +405,15 @@ def formatValue(params, value):
     """
     for param in params:
         if "$replace" in param:
-            value = re.sub(param["$replace"].get('$pattern'), param["$replace"].get('$replacement'), value)
+            value = re.sub(get_pattern(param["$replace"]), param["$replace"].get('$replacement'), value)
         elif "$lower" in param:
-            if "$pattern" in param["$lower"]:
-                value = re.sub(param["$lower"].get('$pattern'), lambda m: m.group(0).lower(), value)
+            if isinstance(param['$lower'], dict) and get_pattern(param["$lower"]):
+                value = re.sub(get_pattern(param["$lower"]), lambda m: m.group(0).lower(), value)
             else:
                 value = value.lower()
         elif "$upper" in param:
-            if "$pattern" in param["$upper"]:
-                value = re.sub(param["$upper"].get('$pattern'), lambda m: m.group(0).upper(), value)
+            if isinstance(param['$upper'], dict) and get_pattern(param["$upper"]):
+                value = re.sub(get_pattern(param["$upper"]), lambda m: m.group(0).upper(), value)
             else:
                 value = value.upper()
 

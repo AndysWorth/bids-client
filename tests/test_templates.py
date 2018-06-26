@@ -97,10 +97,30 @@ class RuleTestCases(unittest.TestCase):
                 }
             }
         })
+        rule2 = templates.Rule({
+            'template': 'test',
+            'where': { 'x': True },
+            'initialize': {
+                'Property': {
+                    'value': {
+                        '$take': True,
+                        '$format': [
+                            # Use regex to find patterns
+                            {'$replace': {'$pattern': '[A-Z]+', '$replacement': 'UPPER_12_key'}},
+                            # Chain formatting operations
+                            {'$lower': True}
+                        ]
+                    }
+                }
+            }
+        })
         context = { 'value': 'the_OLD_string' }
         info = { }
         rule.initializeProperties(info, context)
         self.assertEqual( info, { 'Property': 'the_New_string'})
+        info = { }
+        rule2.initializeProperties(info, context)
+        self.assertEqual( info, { 'Property': 'the_upper_12_key_string'})
 
     def test_rule_where_regex_match(self):
         rule = templates.Rule({
