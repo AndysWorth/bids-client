@@ -130,7 +130,7 @@ class Template:
     def apply_custom_initialization(self, rule_id, info, context):
         """
         Apply custom initialization templates for the given rule
-        
+
         Args:
             rule_id (str): The id of the matched rule
             info (dict): The info object to update
@@ -307,7 +307,7 @@ def handle_run_counter_initializer(initializers, info, context):
                 key = propDef['$run_counter']['key']
                 key = utils.process_string_template(key, context)
 
-                counter = counter[key]                            
+                counter = counter[key]
                 if current == '+':
                     info[propName] = counter.next()
                 else:

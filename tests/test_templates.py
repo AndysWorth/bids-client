@@ -91,7 +91,7 @@ class RuleTestCases(unittest.TestCase):
                             # Use regex to find patterns
                             {'$replace': {'$pattern': '[A-Z]+', '$replacement': 'NEW'}},
                             # Chain formatting operations
-                            {'$replace': {'$pattern': 'EW', '$replacement': 'ew'}}
+                            {'$lower': {'$pattern': 'EW'}}
                         ]
                     }
                 }
