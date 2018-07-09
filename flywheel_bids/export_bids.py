@@ -287,7 +287,7 @@ def download_bids_dir(fw, container_id, container_type, outdir, src_data=False,
 
             # For dry run, don't actually download
             if path in filepath_downloads['project']:
-                logger.error('Multiple files with path {0}:\n\t{1} and\n\t{2}'.format(path, f['name'], filepath_downloads['project'][path][1]))
+                logger.error('Multiple files with path {0}:\n\t{1} and\n\t{2}'.format(path, f['name'], filepath_downloads['project'][path]['args'][1]))
                 valid = False
 
             filepath_downloads['project'][path] = {'args': (project['_id'], f['name'], path), 'modified': f.get('modified')}
@@ -343,7 +343,7 @@ def download_bids_dir(fw, container_id, container_type, outdir, src_data=False,
 
 
                 if path in filepath_downloads['session']:
-                    logger.error('Multiple files with path {0}:\n\t{1} and\n\t{2}'.format(path, f['name'], filepath_downloads['session'][path][1]))
+                    logger.error('Multiple files with path {0}:\n\t{1} and\n\t{2}'.format(path, f['name'], filepath_downloads['session'][path]['args'][1]))
                     valid = False
 
                 filepath_downloads['session'][path] = {'args': (session['_id'], f['name'], path), 'modified': f.get('modified')}
@@ -387,7 +387,7 @@ def download_bids_dir(fw, container_id, container_type, outdir, src_data=False,
                 warn_if_bids_invalid(f, namespace)
 
                 if path in filepath_downloads['acquisition']:
-                    logger.error('Multiple files with path {0}:\n\t{1} and\n\t{2}'.format(path, f['name'], filepath_downloads['acquisition'][path][1]))
+                    logger.error('Multiple files with path {0}:\n\t{1} and\n\t{2}'.format(path, f['name'], filepath_downloads['acquisition'][path]['args'][1]))
                     valid = False
 
                 filepath_downloads['acquisition'][path] = {'args': (acq['_id'], f['name'], path), 'modified': f.get('modified')}
