@@ -50,6 +50,7 @@ class Resolver:
         container_type: The type of container this resolver should match
         resolve_for: The level that resolution for this resolver should take place (e.g. session)
         format: The format string for resolved values
+        value: The path to the value to copy, if not using a format string
     """
     def __init__(self, namespace, resolverDef): 
         self.namespace = namespace
@@ -60,6 +61,10 @@ class Resolver:
         self.container_type = resolverDef.get('type')
         self.resolve_for = resolverDef.get('resolveFor')
         self.format = resolverDef.get('format')
+        self.value = resolverDef.get('value')
+
+        if self.format and self.value:
+            print('WARNING: Because "format" is specified, "value" will be ignored for resolver: {}'.format(self.id))
 
     def resolve(self, context):
         """
@@ -92,9 +97,15 @@ class Resolver:
         for ctx in parent.context_iter():
             for filt in filters:
                 if filt.test(ctx):
-                    results.append(utils.process_string_template(self.format, ctx))
+                    if self.format:
+                        results.append(utils.process_string_template(self.format, ctx))
+                    elif self.value:
+                        value = utils.dict_lookup(ctx, self.value, None)
+                        if value:
+                            if results and results != value:
+                                print('WARNING: multiple different matches when resolving results, will take last match!')
+                            results = value
         
         # Finally update the field specified
         utils.dict_set(context, self.update_field, results)
-
     
