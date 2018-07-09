@@ -151,7 +151,7 @@ def get_project_tree(fw, project_id):
         # Get acquisitions within session
         session_acqs = fw.get_session_acquisitions(proj_ses['_id'])
 
-        for ses_acq in sorted(session_acqs, compare_acquisitions):
+        for ses_acq in sorted(session_acqs, key=AcquisitionSortKey):
             # Get true acquisition, in order to access file info
             acquisition_data = to_dict(fw, fw.get_acquisition(ses_acq['_id']))
             acquisition_node = TreeNode('acquisition', acquisition_data)
@@ -161,13 +161,27 @@ def get_project_tree(fw, project_id):
 
     return project_node
 
-def compare_acquisitions(acq1, acq2):
-    # Prefer timestamp over created
-    ts1 = acq1.get('timestamp')
-    ts2 = acq2.get('timestamp')
-    if ts1 and ts2:
-        return int((ts1 - ts2).total_seconds())
-    return int((acq1['created'] - acq2['created']).total_seconds())
+class AcquisitionSortKey(object):
+    def __init__(self, acq, **args):
+        self.acq = acq
+    def __lt__(self, other):
+        return self._cmp(other) < 0
+    def __gt__(self, other):
+        return self._cmp(other) > 0
+    def __eq__(self, other):
+        return self._cmp(other) == 0
+    def __le__(self, other):
+        return self._cmp(other) <= 0
+    def __ge__(self, other):
+        return self._cmp(other) >= 0
+    def __ne__(self, other):
+        return self._cmp(other) != 0
+    def _cmp(self, other):
+        ts1 = self.acq.get('timestamp')
+        ts2 = other.acq.get('timestamp')
+        if ts1 and ts2:
+            return int((ts1 - ts2).total_seconds())
+        return int((self.acq['created'] - other.acq['created']).total_seconds())
 
 def to_dict(fw, obj):
     return fw.api_client.sanitize_for_serialization(obj.to_dict())

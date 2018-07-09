@@ -101,7 +101,7 @@ def dict_match(matcher, matchee):
     """
     Returns True if each key,val pair is present in the matchee
     """
-    for key, val in matcher.iteritems():
+    for key, val in matcher.items():
         if not matchee.get(key):
             return False
         elif not isinstance(matchee.get(key), list):
