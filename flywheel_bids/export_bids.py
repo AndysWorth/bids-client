@@ -153,6 +153,13 @@ def create_json(meta_info, path, namespace):
     if '/func/' in path and 'Task' in ns_data:
          meta_info['TaskName'] = ns_data['Task']
 
+    # Perform delete and updates
+    for key in ns_data.get('delete_info', []):
+        meta_info.pop(key, None)
+
+    for key, value in ns_data.get('set_info', {}).items():
+        meta_info[key] = value
+
     # Remove extension of path and replace with .json
     ext = utils.get_extension(path)
     new_path = re.sub(ext, '.json', path)
