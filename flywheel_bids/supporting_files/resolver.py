@@ -64,7 +64,7 @@ class Resolver:
         self.value = resolverDef.get('value')
 
         if self.format and self.value:
-            print('WARNING: Do not set both "format" and "value" for resolver!')
+            print('WARNING: Because "format" is specified, "value" will be ignored for resolver: {}'.format(self.id))
 
     def resolve(self, context):
         """
