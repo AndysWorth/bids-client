@@ -10,7 +10,7 @@ from setuptools import setup, find_packages
 from setuptools.command.install import install
 
 NAME = "flywheel-bids"
-VERSION = "0.6.4"
+VERSION = "0.6.5"
 # To install the library, run the following
 #
 # python setup.py install
@@ -18,7 +18,7 @@ VERSION = "0.6.4"
 # prerequisite: setuptools
 # http://pypi.python.org/pypi/setuptools
 
-REQUIRES = ["jsonschema>=2.6.0", "flywheel-sdk==2.3.0"]
+REQUIRES = ["jsonschema>=2.6.0", "flywheel-sdk>=2.4.0"]
 
 class VerifyVersionCommand(install):
     """Custom command to verify that the git tag matches our version"""
