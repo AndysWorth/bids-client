@@ -257,6 +257,9 @@ def download_bids_dir(fw, container_id, container_type, outdir, src_data=False,
     src_data: Option to include sourcedata when downloading
 
     """
+    if container_type not in ['project', 'session', 'acquisition']:
+        logger.error('{} is not a valid container type'.format(container_type))
+        valid = False
 
     # Define namespace
     namespace = 'BIDS'
@@ -402,7 +405,7 @@ def download_bids_dir(fw, container_id, container_type, outdir, src_data=False,
                 # Create the sidecar JSON filepath_download
                 filepath_downloads['sidecars'][path] = {'args': (f['info'], path, namespace)}
     else:
-        logger.error('{} is not a valid containertype'.format(container_type))
+        logger.warn('No acquisitions found'.format(container_type))
         valid = False
 
     if not valid:
