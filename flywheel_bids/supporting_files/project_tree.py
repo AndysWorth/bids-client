@@ -1,6 +1,7 @@
 import collections
 import logging
 import copy
+import sys
 
 if __name__ == '__main__':
     import utils
@@ -137,6 +138,9 @@ def get_project_tree(fw, project_id, session_id=None, session_only=False):
     """
     if session_only and session_id:
         logger.info('Running in single session mode! (session_id={})'.format(session_id))
+    elif session_only:
+        logger.error('Session only was specified, but no session id was given!')
+        sys.exit(1)
     else:
         session_id = None
 
