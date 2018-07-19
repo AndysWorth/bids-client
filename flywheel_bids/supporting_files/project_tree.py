@@ -122,17 +122,24 @@ def add_file_nodes(parent):
     for f in parent.get('files', []):
         parent.children.append(TreeNode('file', f))
 
-def get_project_tree(fw, project_id):
+def get_project_tree(fw, project_id, session_id=None, session_only=False):
     """
     Construct a project tree from the given project_id.
 
     Args:
         fw: Flywheel client
         project_id (str): project id of project to curate
+        session_id (str): Optional session_id if session_only
+        session_only (bool): Set to true to only get session identified by session_id
 
     Returns:
         TreeNode: The project (root) tree node
     """
+    if session_only and session_id:
+        logger.info('Running in single session mode! (session_id={})'.format(session_id))
+    else:
+        session_id = None
+
     # Get project
     logger.info('Getting project...')
     project_data = to_dict(fw, fw.get_project(project_id))
@@ -142,6 +149,9 @@ def get_project_tree(fw, project_id):
     # Get project sessions
     project_sessions = fw.get_project_sessions(project_id)
     for proj_ses in project_sessions:
+        if session_id and session_id != proj_ses['_id']:
+            continue
+
         session_data = to_dict(fw, fw.get_session(proj_ses['_id']))
         session_node = TreeNode('session', session_data)
         add_file_nodes(session_node)
