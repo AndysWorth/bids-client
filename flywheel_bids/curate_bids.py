@@ -121,14 +121,18 @@ def update_meta_info(fw, context):
     else:
         logger.info('Cannot determine container type: ' + context['container_type'])
 
-def curate_bids_dir(fw, project_id, reset=False, template_file=None):
+def curate_bids_dir(fw, project_id, session_id=None, reset=False, template_file=None, session_only=False):
     """
 
     fw: Flywheel client
     project_id: project id of project to curate
+    session_id: The optional session id to curate
+    reset: Whether or not to reset bids info before curation
+    template_file: The template file to use
+    session_only: If true, then only curate the provided session
 
     """
-    project = get_project_tree(fw, project_id)
+    project = get_project_tree(fw, project_id, session_id=session_id, session_only=session_only)
     curate_bids_tree(fw, project, reset, template_file, True)
 
 def curate_bids_tree(fw, project, reset=False, template_file=None, update=True):
@@ -211,7 +215,7 @@ def curate_bids_tree(fw, project, reset=False, template_file=None, update=True):
             if node.is_dirty():
                 update_meta_info(fw, context)
 
-def main_with_args(api_key, session_id, reset):
+def main_with_args(api_key, session_id, reset, session_only):
 
     ### Prep
     # Check API key - raises Error if key is invalid
@@ -222,9 +226,8 @@ def main_with_args(api_key, session_id, reset):
         print('Session id is required!')
         sys.exit(1)
 
-
     ### Curate BIDS project
-    curate_bids_dir(fw, project_id, reset=reset)
+    curate_bids_dir(fw, project_id, session_id, reset=reset, session_only=session_only)
 
 
 def main():
@@ -236,8 +239,10 @@ def main():
             required=False, default=None, help='Project Label on Flywheel instance')
     parser.add_argument('--session', dest='session_id', action='store',
             required=False, default=None, help='Session ID, used to look up project if project label is not readily available')
-    parser.add_argument('--reset', dest='reset', action='store_true', 
+    parser.add_argument('--reset', dest='reset', action='store_true',
             default=False, help='Reset BIDS data before running')
+    parser.add_argument('--session-only', dest='session_only', action='store_true',
+            default=False, help='Only curate the session identified by --session')
     parser.add_argument('--template-file', dest='template_file', action='store',
             default=None, help='Template file to use')
     args = parser.parse_args()
@@ -254,9 +259,8 @@ def main():
         print('Either project label or session id is required!')
         sys.exit(1)
 
-
     ### Curate BIDS project
-    curate_bids_dir(fw, project_id, reset=args.reset, template_file=args.template_file)
+    curate_bids_dir(fw, project_id, args.session_id, reset=args.reset, template_file=args.template_file, session_only=args.session_only)
 
 if __name__ == '__main__':
     main()
