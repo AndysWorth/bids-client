@@ -269,7 +269,7 @@ def apply_initializers(initializers, info, context):
                             resolvedValue = value
 
                         if '$format' in valueSpec and resolvedValue:
-                            resolvedValue = formatValue(valueSpec['$format'], resolvedValue)
+                            resolvedValue = utils.format_value(valueSpec['$format'], resolvedValue)
 
                         if resolvedValue:
                             break
@@ -398,26 +398,6 @@ def processValueMatch(value, match):
 def get_pattern(format_params):
     return format_params.get("$pattern")
 
-def formatValue(params, value):
-    """
-    Formats a string value based on given parameters i.e. {"$replace": {"$pattern": "ab", "$replacement": "c"}}
-    will return "dcf" from "dabf"
-    """
-    for param in params:
-        if "$replace" in param:
-            value = re.sub(get_pattern(param["$replace"]), param["$replace"].get('$replacement'), value)
-        elif "$lower" in param:
-            if isinstance(param['$lower'], dict) and get_pattern(param["$lower"]):
-                value = re.sub(get_pattern(param["$lower"]), lambda m: m.group(0).lower(), value)
-            else:
-                value = value.lower()
-        elif "$upper" in param:
-            if isinstance(param['$upper'], dict) and get_pattern(param["$upper"]):
-                value = re.sub(get_pattern(param["$upper"]), lambda m: m.group(0).upper(), value)
-            else:
-                value = value.upper()
-
-    return value
 
 def loadTemplates(templates_dir=None):
     """

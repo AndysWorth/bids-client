@@ -168,7 +168,7 @@ def process_string_template(template, context):
                         # If not, take the entire result and remove underscores and dashes
                         else:
                             result = ''.join(x for x in result.replace('_', ' ').replace('-', ' ').title() if x.isalnum())
-                            result = result[0].lower() + result[1:]
+                            result = result[0] + result[1:]
 
                     # Replace the token with the result
                     template = template.replace(replace_token, str(result))
@@ -188,6 +188,28 @@ def process_string_template(template, context):
     processed_template = re.sub('\[|\]', '', template)
 
     return processed_template
+
+
+def format_value(params, value):
+    """
+    Formats a string value based on list of given parameters i.e. [{"$replace": {"$pattern": "ab", "$replacement": "c"}}]
+    will return "dcf" from "dabf"
+    """
+    for param in params:
+        if "$replace" in param:
+            value = re.sub(get_pattern(param["$replace"]), param["$replace"].get('$replacement'), value)
+        elif "$lower" in param:
+            if isinstance(param['$lower'], dict) and get_pattern(param["$lower"]):
+                value = re.sub(get_pattern(param["$lower"]), lambda m: m.group(0).lower(), value)
+            else:
+                value = value.lower()
+        elif "$upper" in param:
+            if isinstance(param['$upper'], dict) and get_pattern(param["$upper"]):
+                value = re.sub(get_pattern(param["$upper"]), lambda m: m.group(0).upper(), value)
+            else:
+                value = value.upper()
+
+    return value
 
 
 class RunCounter:
