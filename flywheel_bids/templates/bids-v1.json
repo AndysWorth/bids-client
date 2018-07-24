@@ -86,7 +86,7 @@
 		"session": {
 			"description": "BIDS session template",
 			"properties": {
-				"Label": {"type": "string", "title": "Label", "default": "", "auto_update": "{session.label}"},
+				"Label": {"type": "string", "title": "Label", "default": "", "auto_update": "<session.label>"},
 				"Subject": {"type": "string", "title": "Subject Code", "default": "", "auto_update": "<subject.code>"}
 			},
 			"required": []
@@ -113,9 +113,19 @@
 			"properties": {
 				"Filename": {"$ref": "#/definitions/Filename"},
 				"Folder": {"type": "string", "title": "Folder", "default": "",
-					"auto_update": "acq-<acquisition.label>"},
+					"auto_update": {
+						"$process": true,
+						"$value": "acq-<acquisition.label>",
+						"$format": [{"$lower": true}]
+					}
+				},
 				"Path": {"type": "string", "title": "Path", "default": "",
-					"auto_update": "sub-{session.info.BIDS.Subject}[/ses-{session.info.BIDS.Label}]/acq-<acquisition.label>"}
+					"auto_update": {
+						"$process": true,
+						"$value": "sub-{session.info.BIDS.Subject}[/ses-{session.info.BIDS.Label}]/acq-<acquisition.label>",
+						"$format": [{"$lower": true}]
+					}
+				}
 			},
 			"required": ["Filename"]
 		},

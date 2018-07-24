@@ -395,9 +395,6 @@ def processValueMatch(value, match):
 
         return value == match
 
-def get_pattern(format_params):
-    return format_params.get("$pattern")
-
 
 def loadTemplates(templates_dir=None):
     """

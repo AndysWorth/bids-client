@@ -73,7 +73,10 @@ def update_properties(properties, context, obj):
             if "auto_update" in properties[key]:
                 auto_update = properties[key]["auto_update"]
                 if isinstance(auto_update, dict):
-                    value = utils.dict_lookup(context, auto_update['$value'])
+                    if auto_update.get('$process'):
+                        value = utils.process_string_template(auto_update['$value'], context)
+                    else:
+                        value = utils.dict_lookup(context, auto_update['$value'])
                     obj[key] = utils.format_value(auto_update['$format'], value)
                 else:
                     obj[key] = utils.process_string_template(auto_update, context)

@@ -167,7 +167,7 @@ def process_string_template(template, context):
                             label, result = result.split('-')
                         # If not, take the entire result and remove underscores and dashes
                         else:
-                            result = ''.join(x for x in result.replace('_', ' ').replace('-', ' ').title() if x.isalnum())
+                            result = ''.join(x for x in result.replace('_', ' ').replace('-', ' ') if x.isalnum())
                             result = result[0] + result[1:]
 
                     # Replace the token with the result
@@ -188,6 +188,10 @@ def process_string_template(template, context):
     processed_template = re.sub('\[|\]', '', template)
 
     return processed_template
+
+
+def get_pattern(format_params):
+    return format_params.get("$pattern")
 
 
 def format_value(params, value):
