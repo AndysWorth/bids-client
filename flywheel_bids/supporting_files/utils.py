@@ -132,7 +132,7 @@ def normalize_strings(obj):
 # Use <path> for cases where you want the result converted to lowerCamelCase
 # Use {path} for cases where you want a literal value substitution
 # path uses dot notation to navigate the context for desired values
-# path examples:  <session.label>  returns session.label in lowercamelcase
+# path examples:  <session.label>  returns session.label withou _ and -
 #                 {file.info.BIDS.Filename} returns the value of file.info.BIDS.Filename
 #                 {file.info.BIDS.Modality} returns Modality without modification
 # example template string:
@@ -168,8 +168,6 @@ def process_string_template(template, context):
                         # If not, take the entire result and remove underscores and dashes
                         else:
                             result = ''.join(x for x in result.replace('_', ' ').replace('-', ' ') if x.isalnum())
-                            result = result[0] + result[1:]
-
                     # Replace the token with the result
                     template = template.replace(replace_token, str(result))
                 # If result not found, but the token is option, remove the token from the template
