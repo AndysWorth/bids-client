@@ -410,14 +410,10 @@ def download_bids_dir(fw, container_id, container_type, outdir, src_data=False,
 
     download_bids_files(fw, filepath_downloads, dry_run)
 
-def export_bids(fw, bids_dir, project_label, subjects=None, sessions=None, folders=None, replace=False, 
-        dry_run=False, container_type=None, container_id=None, source_data=False, validate=True):
-
-    ### Prep
-    # Check directory name - ensure it exists
-    validate_dirname(bids_dir)
-
-    # Check that container args are valid
+def determine_container(project_label, container_type, container_id):
+    """
+    Figures out what container_type and container_id should be if not given
+    """
     cid = ctype = None
     if container_type and container_id:
         # Download single container
@@ -433,6 +429,17 @@ def export_bids(fw, bids_dir, project_label, subjects=None, sessions=None, folde
         # Get project Id from label
         cid = utils.validate_project_label(fw, project_label)
         ctype = 'project'
+    return ctype, cid
+
+def export_bids(fw, bids_dir, project_label, subjects=None, sessions=None, folders=None, replace=False,
+        dry_run=False, container_type=None, container_id=None, source_data=False, validate=True):
+
+    ### Prep
+    # Check directory name - ensure it exists
+    validate_dirname(bids_dir)
+
+    # Check that container args are valid
+    cid, ctype = determine_container(project_label, container_type, container_id)
 
     ### Download BIDS project
     download_bids_dir(fw, cid, ctype, bids_dir,
