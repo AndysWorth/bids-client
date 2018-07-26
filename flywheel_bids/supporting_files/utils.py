@@ -210,6 +210,19 @@ def format_value(params, value):
                 value = re.sub(get_pattern(param["$upper"]), lambda m: m.group(0).upper(), value)
             else:
                 value = value.upper()
+        elif "$camelCase" in param:
+            if isinstance(param['$camelCase'], dict) and get_pattern(param["$camelCase"]):
+                patterns = get_pattern(param["$camelCase"])
+                if not isinstance(patterns, list):
+                    patterns = [pattern]
+                for pattern in patterns:
+                    value = value.replace(patter, ' ')
+                value = ''.join(x for x in value.title() if x.isalnum())
+                value = value[0].lower() + value[1:]
+            else:
+                # Best to not process string with <...> with $camelCase : true
+                value = ''.join(x for x in value.replace('_', ' ').replace('-', ' ').title() if x.isalnum())
+                value = value[0].lower() + value[1:]
 
     return value
 
