@@ -418,11 +418,11 @@ def export_bids(fw, bids_dir, project_label, subjects=None, sessions=None, folde
     validate_dirname(bids_dir)
 
     # Check that container args are valid
-    container_id = container_type = None
+    cid = ctype = None
     if container_type and container_id:
         # Download single container
-        container_id = container_id
-        container_type = container_type
+        cid = container_id
+        ctype = container_type
     else:
         if bool(container_id) != bool(container_type):
             logger.error('Did not provide all options necessary to download single container')
@@ -431,11 +431,11 @@ def export_bids(fw, bids_dir, project_label, subjects=None, sessions=None, folde
             logger.error('Project label information not provided')
             sys.exit(1)
         # Get project Id from label
-        container_id = utils.validate_project_label(fw, project_label)
-        container_type = 'project'
+        cid = utils.validate_project_label(fw, project_label)
+        ctype = 'project'
 
     ### Download BIDS project
-    download_bids_dir(fw, container_id, container_type, bids_dir,
+    download_bids_dir(fw, cid, ctype, bids_dir,
             src_data=source_data, dry_run=dry_run, replace=replace,
             subjects=subjects, sessions=sessions, folders=folders)
 
