@@ -247,7 +247,7 @@ class BidsExportTestCases(unittest.TestCase):
     def test_determine_single_container(self):
         ctype = 'session'
         cid = '123456789009876543211224'
-        self.assertTrue(export_bids.determine_container(None, ctype, cid) == (ctype, cid))
+        self.assertTrue(export_bids.determine_container(None, None, ctype, cid) == (ctype, cid))
 
 
 if __name__ == "__main__":
