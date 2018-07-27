@@ -439,7 +439,7 @@ def export_bids(fw, bids_dir, project_label, subjects=None, sessions=None, folde
     validate_dirname(bids_dir)
 
     # Check that container args are valid
-    cid, ctype = determine_container(project_label, container_type, container_id)
+    ctype, cid = determine_container(project_label, container_type, container_id)
 
     ### Download BIDS project
     download_bids_dir(fw, cid, ctype, bids_dir,
