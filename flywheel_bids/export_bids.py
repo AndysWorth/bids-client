@@ -410,7 +410,7 @@ def download_bids_dir(fw, container_id, container_type, outdir, src_data=False,
 
     download_bids_files(fw, filepath_downloads, dry_run)
 
-def determine_container(project_label, container_type, container_id):
+def determine_container(fw, project_label, container_type, container_id):
     """
     Figures out what container_type and container_id should be if not given
     """
@@ -439,7 +439,7 @@ def export_bids(fw, bids_dir, project_label, subjects=None, sessions=None, folde
     validate_dirname(bids_dir)
 
     # Check that container args are valid
-    ctype, cid = determine_container(project_label, container_type, container_id)
+    ctype, cid = determine_container(fw, project_label, container_type, container_id)
 
     ### Download BIDS project
     download_bids_dir(fw, cid, ctype, bids_dir,
