@@ -244,6 +244,11 @@ class BidsExportTestCases(unittest.TestCase):
 
         os.remove('filePath')
 
+    def test_determine_single_container(self):
+        ctype = 'session'
+        cid = '123456789009876543211224'
+        self.assertTrue(export_bids.determine_container(None, ctype, cid) == (ctype, cid))
+
 
 if __name__ == "__main__":
 

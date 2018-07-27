@@ -62,12 +62,24 @@ def add_properties(properties, obj, classification):
 # See process_string_template for details on how to use string templates
 # Updated keys are added to the obj object for later update to Flywheel
 
+# 'auto_update' can also be a dictionary with keys '$value' and '$format' that
+# will use util.format_value, the value is a direct dict_lookup, the string
+# is not processed
+
 def update_properties(properties, context, obj):
     for key in properties:
         proptype = properties[key]["type"]
         if proptype == "string":
             if "auto_update" in properties[key]:
-                obj[key] = utils.process_string_template(properties[key]['auto_update'],context)
+                auto_update = properties[key]["auto_update"]
+                if isinstance(auto_update, dict):
+                    if auto_update.get('$process'):
+                        value = utils.process_string_template(auto_update['$value'], context)
+                    else:
+                        value = utils.dict_lookup(context, auto_update['$value'])
+                    obj[key] = utils.format_value(auto_update['$format'], value)
+                else:
+                    obj[key] = utils.process_string_template(auto_update, context)
     return(obj)
 
 

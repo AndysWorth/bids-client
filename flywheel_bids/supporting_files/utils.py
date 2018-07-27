@@ -132,7 +132,7 @@ def normalize_strings(obj):
 # Use <path> for cases where you want the result converted to lowerCamelCase
 # Use {path} for cases where you want a literal value substitution
 # path uses dot notation to navigate the context for desired values
-# path examples:  <session.label>  returns session.label in lowercamelcase
+# path examples:  <session.label>  returns session.label withou _ and -
 #                 {file.info.BIDS.Filename} returns the value of file.info.BIDS.Filename
 #                 {file.info.BIDS.Modality} returns Modality without modification
 # example template string:
@@ -167,9 +167,7 @@ def process_string_template(template, context):
                             label, result = result.split('-')
                         # If not, take the entire result and remove underscores and dashes
                         else:
-                            result = ''.join(x for x in result.replace('_', ' ').replace('-', ' ').title() if x.isalnum())
-                            result = result[0].lower() + result[1:]
-
+                            result = ''.join(x for x in result.replace('_', ' ').replace('-', ' ') if x.isalnum())
                     # Replace the token with the result
                     template = template.replace(replace_token, str(result))
                 # If result not found, but the token is option, remove the token from the template
@@ -188,6 +186,45 @@ def process_string_template(template, context):
     processed_template = re.sub('\[|\]', '', template)
 
     return processed_template
+
+
+def get_pattern(format_params):
+    return format_params.get("$pattern")
+
+
+def format_value(params, value):
+    """
+    Formats a string value based on list of given parameters i.e. [{"$replace": {"$pattern": "ab", "$replacement": "c"}}]
+    will return "dcf" from "dabf"
+    """
+    for param in params:
+        if "$replace" in param:
+            value = re.sub(get_pattern(param["$replace"]), param["$replace"].get('$replacement'), value)
+        elif "$lower" in param:
+            if isinstance(param['$lower'], dict) and get_pattern(param["$lower"]):
+                value = re.sub(get_pattern(param["$lower"]), lambda m: m.group(0).lower(), value)
+            else:
+                value = value.lower()
+        elif "$upper" in param:
+            if isinstance(param['$upper'], dict) and get_pattern(param["$upper"]):
+                value = re.sub(get_pattern(param["$upper"]), lambda m: m.group(0).upper(), value)
+            else:
+                value = value.upper()
+        elif "$camelCase" in param:
+            if isinstance(param['$camelCase'], dict) and get_pattern(param["$camelCase"]):
+                patterns = get_pattern(param["$camelCase"])
+                if not isinstance(patterns, list):
+                    patterns = [pattern]
+                for pattern in patterns:
+                    value = value.replace(patter, ' ')
+                value = ''.join(x for x in value.title() if x.isalnum())
+                value = value[0].lower() + value[1:]
+            else:
+                # Best to not process string with <...> with $camelCase : true
+                value = ''.join(x for x in value.replace('_', ' ').replace('-', ' ').title() if x.isalnum())
+                value = value[0].lower() + value[1:]
+
+    return value
 
 
 class RunCounter:
