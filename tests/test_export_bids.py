@@ -206,7 +206,7 @@ class BidsExportTestCases(unittest.TestCase):
 
     def test_exclude_files(self):
         modifiedTimestamp = dateutil.parser.parse("2018-03-28T20:40:59.54Z")
-        is_file_excluded = export_bids.is_file_excluded_options('BIDS', True, False)
+        is_file_excluded = export_bids.is_file_excluded_options('BIDS', True, ['acquisitions'], False)
         # Test ignored files
         container = {
             'info': {
@@ -230,7 +230,7 @@ class BidsExportTestCases(unittest.TestCase):
         self.assertTrue(is_file_excluded(container, 'filePath'))
 
         # Test up to date files that are already downloaded
-        is_file_excluded = export_bids.is_file_excluded_options('BIDS', True, True)
+        is_file_excluded = export_bids.is_file_excluded_options('BIDS', True, ['acquisitions'], True)
         modifiedSinceEpoch = (modifiedTimestamp-export_bids.EPOCH).total_seconds()
         container['info']['BIDS']['ignore'] = False
         open('filePath', 'a').close()
@@ -243,15 +243,19 @@ class BidsExportTestCases(unittest.TestCase):
         self.assertTrue(not is_file_excluded(container, 'filePath'))
 
         # Test source data and derived data are excluded
-        is_file_excluded = export_bids.is_file_excluded_options('BIDS', False, True)
+        is_file_excluded = export_bids.is_file_excluded_options('BIDS', False, [], True)
 
         container['info']['BIDS']['Path'] = 'sourcedata/file'
         self.assertTrue(is_file_excluded(container, 'filePath'))
+        container['info']['BIDS']['Path'] = 'derivatives/file'
+        self.assertTrue(is_file_excluded(container, 'filePath'))
 
         # Test source data and derived data are not excluded
-        is_file_excluded = export_bids.is_file_excluded_options('BIDS', True, True)
+        is_file_excluded = export_bids.is_file_excluded_options('BIDS', True, ['acquisitions'], True)
 
         container['info']['BIDS']['Path'] = 'sourcedata/file'
+        self.assertTrue(not is_file_excluded(container, 'filePath'))
+        container['info']['BIDS']['Path'] = 'derivatives/file'
         self.assertTrue(not is_file_excluded(container, 'filePath'))
 
         os.remove('filePath')

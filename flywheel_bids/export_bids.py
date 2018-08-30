@@ -58,7 +58,7 @@ def get_metadata(ctx, namespace):
 
     return ctx['info'][namespace]
 
-def is_file_excluded_options(namespace, src_data, replace):
+def is_file_excluded_options(namespace, src_data, derivatives, replace):
     def is_file_excluded(f, fpath):
         metadata = get_metadata(f, namespace)
         if not metadata:
@@ -70,6 +70,11 @@ def is_file_excluded_options(namespace, src_data, replace):
         if not src_data:
             path = metadata.get('Path')
             if path and path.startswith('sourcedata'):
+                return True
+
+        if 'acquisitions' not in derivatives:
+            path = metadata.get('Path')
+            if path and path.startswith('derivatives'):
                 return True
 
         # Check if file already exists
@@ -233,6 +238,24 @@ def download_bids_files(fw, filepath_downloads, dry_run):
         modified_time = float(timestamp_to_int(modified))
         os.utime(f,(modified_time, modified_time))
 
+    if filepath_downloads.get('analyses'):
+        logger.info('Downloading analysis files')
+    for f in filepath_downloads['analysis']:
+        args = filepath_downloads['analysis'][f]['args']
+        modified = filepath_downloads['analysis'][f]['modified']
+        # Download the file
+        logger.info('Downloading analysis file: {0}'.format(args[1]))
+
+        # For dry run, don't actually download
+        if dry_run:
+            logger.info('  to {0}'.format(args[2]))
+            continue
+
+        fw.download_output_from_analysis(*args)
+        # Set the mtime of the downloaded file to the 'modified' timestamp in seconds
+        modified_time = float(timestamp_to_int(modified))
+        os.utime(f,(modified_time, modified_time))
+
     # Creating all JSON sidecar files
     logger.info('Creating sidecar files')
     for f in filepath_downloads['sidecars']:
@@ -248,7 +271,7 @@ def download_bids_files(fw, filepath_downloads, dry_run):
         create_json(*args)
 
 def download_bids_dir(fw, container_id, container_type, outdir, src_data=False,
-        dry_run=False, replace=False, subjects=[], sessions=[], folders=[]):
+        derivatives=False, dry_run=False, replace=False, subjects=[], sessions=[], folders=[]):
     """
 
     fw: Flywheel client
@@ -260,16 +283,19 @@ def download_bids_dir(fw, container_id, container_type, outdir, src_data=False,
 
     # Define namespace
     namespace = 'BIDS'
-    is_file_excluded = is_file_excluded_options(namespace, src_data, replace)
+    is_file_excluded = is_file_excluded_options(namespace, src_data, derivatives, replace)
 
     # Files and the corresponding download arguments separated by parent container
     filepath_downloads = {
         'project':{},
         'session':{},
         'acquisition':{},
-        'sidecars':{}
+        'sidecars':{},
+        'analysis': {}
     }
     valid = True
+    from_analyses = 'analyses' in derivatives
+    analyses = []
 
     if container_type == 'project':
         # Get project
@@ -298,6 +324,9 @@ def download_bids_dir(fw, container_id, container_type, outdir, src_data=False,
                 valid = False
 
             filepath_downloads['project'][path] = {'args': (project['_id'], f['name'], path), 'modified': f.get('modified')}
+
+        if from_analyses:
+            analyses += project.get('analyses', [])
 
         ## Create dataset_description.json filepath_download
         path = os.path.join(outdir, 'dataset_description.json')
@@ -328,10 +357,7 @@ def download_bids_dir(fw, container_id, container_type, outdir, src_data=False,
                     continue
 
             # Get true session if files aren't already retrieved, in order to access file info
-            if proj_ses.get('files'):
-                session = proj_ses
-            else:
-                session = fw.get_session(proj_ses['_id'])
+            session = fw.get_session(proj_ses['_id'])
             # Check if session contains files
             # Iterate over any session files
             for f in session.get('files', []):
@@ -354,6 +380,9 @@ def download_bids_dir(fw, container_id, container_type, outdir, src_data=False,
                     valid = False
 
                 filepath_downloads['session'][path] = {'args': (session['_id'], f['name'], path), 'modified': f.get('modified')}
+
+            if from_analyses:
+                analyses += session.get('analyses', [])
 
             logger.info('Processing acquisition files')
             # Get acquisitions
@@ -401,9 +430,34 @@ def download_bids_dir(fw, container_id, container_type, outdir, src_data=False,
 
                 # Create the sidecar JSON filepath_download
                 filepath_downloads['sidecars'][path] = {'args': (f['info'], path, namespace)}
+
+            if from_analyses:
+                analyses += acq.get('analyses', [])
     else:
         logger.error('{} is not a valid containertype'.format(container_type))
         valid = False
+
+    for analysis in analyses:
+        for f in analysis.get('files', []):
+            # Define path - ensure that the folder exists...
+            path = os.path.join(outdir, 'derivatives', analysis['label'],
+                                f['name'])
+
+            # If path is not defined (an empty string) move onto next file
+            if not path:
+                continue
+
+            if not os.path.exists(os.path.dirname(path)):
+                os.makedirs(os.path.dirname(path))
+
+            warn_if_bids_invalid(f, namespace)
+
+            if path in filepath_downloads['analysis']:
+                logger.error('Multiple files with path {0}:\n\t{1} and\n\t{2}'.format(path, f['name'], filepath_downloads['acquisition'][path]['args'][1]))
+                valid = False
+
+            filepath_downloads['analysis'][path] = {'args': (analysis['_id'], f['name'], path), 'modified': f.get('modified')}
+
 
     if not valid:
         sys.exit(1)
@@ -432,7 +486,7 @@ def determine_container(fw, project_label, container_type, container_id):
     return ctype, cid
 
 def export_bids(fw, bids_dir, project_label, subjects=None, sessions=None, folders=None, replace=False,
-        dry_run=False, container_type=None, container_id=None, source_data=False, validate=True):
+        dry_run=False, container_type=None, container_id=None, source_data=False, derivatives=False, validate=True):
 
     ### Prep
     # Check directory name - ensure it exists
@@ -442,9 +496,9 @@ def export_bids(fw, bids_dir, project_label, subjects=None, sessions=None, folde
     ctype, cid = determine_container(fw, project_label, container_type, container_id)
 
     ### Download BIDS project
-    download_bids_dir(fw, cid, ctype, bids_dir,
-            src_data=source_data, dry_run=dry_run, replace=replace,
-            subjects=subjects, sessions=sessions, folders=folders)
+    download_bids_dir(fw, cid, ctype, bids_dir, src_data=source_data,
+                      derivatives=derivatives, dry_run=dry_run, replace=replace,
+                      subjects=subjects, sessions=sessions, folders=folders)
 
     # Validate the downloaded directory
     #   Go one more step into the hierarchy to pass to the validator...
@@ -461,6 +515,9 @@ def main():
             required=True, help='API key')
     parser.add_argument('--source-data', dest='source_data', action='store_true',
             default=False, required=False, help='Include source data in BIDS export')
+    parser.add_argument('--derivatives', dest='derivatives', action='append',
+            default=[], required=False, choices=['acquisitions', 'analyses'],
+            help='Include derived files from acquisitions, analyses, or both')
     parser.add_argument('--dry-run', dest='dry_run', action='store_true',
             default=False, required=False, help='Don\'t actually export any data, just print what would be exported')
     parser.add_argument('--replace', dest='replace', action='store_true',
@@ -480,7 +537,7 @@ def main():
     fw = flywheel.Flywheel(args.api_key)
 
     export_bids(fw, args.bids_dir, args.project_label, subjects=args.subjects, sessions=args.sessions, folders=args.folders, replace=args.replace,
-            dry_run=args.dry_run, container_type=args.container_type, container_id=args.container_id, source_data=args.source_data)
+            dry_run=args.dry_run, container_type=args.container_type, container_id=args.container_id, source_data=args.source_data, derivatives=args.derivatives)
 
 if __name__ == '__main__':
     main()

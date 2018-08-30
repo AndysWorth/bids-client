@@ -55,7 +55,7 @@ def parse_bids_dir(bids_dir):
     return bids_hierarchy
 
 def handle_project_label(bids_hierarchy, project_label_cli, rootdir,
-                         include_source_data):
+                         include_source_data, include_derivatives):
     """ Determines the values for the group_id and project_label information
 
     Below is the expected hierarchy for the 'bids_hiearchy':
@@ -121,6 +121,8 @@ def handle_project_label(bids_hierarchy, project_label_cli, rootdir,
 
     if not include_source_data:
         bids_hierarchy[project_label_cli].pop('sourcedata', None)
+    if not include_derivatives:
+        bids_hierarchy[project_label_cli].pop('derivatives', None)
 
     return bids_hierarchy, rootdir
 
@@ -166,6 +168,31 @@ def handle_project(fw, group_id, project_label):
         disable_project_rules(fw, project_id)
 
     return project.to_dict()
+
+
+def handle_analysis(fw, parent_id, label):
+    """Returns a Flywheel analysis based on parent id and type"""
+    # Get all parents
+    existing_analyses = fw.get_container_analyses(parent_id)
+    parent = fw.get_container(parent_id).to_dict()
+    # Determine if session_name within project project_id already exists, with same subject_name...
+    found = False
+    for ea in existing_analyses:
+        if (ea['label'] == label):
+            logger.info('Analysis (%s) for parent (%s) was found. Adding data to existing session.' % (label, parent['label']))
+            # Session exists
+            analysis = ea
+            found = True
+            break
+    # If session does not exist, create new session
+    if not found:
+        logger.info('Analysis (%s) not found. Creating new analysis for parent %s.' % (label, parent['label']))
+
+        analysis_id = fw.add_container_analysis(parent_id, {'label': label})
+        analysis = fw.get_container_analysis(parent_id, analysis_id)
+
+    return analysis.to_dict()
+
 
 def handle_session(fw, project_id, session_name, subject_name):
     """ Returns a Flywheel session based on project_id and session_label
@@ -232,6 +259,15 @@ def upload_project_file(fw, context, full_fname):
     proj = fw.get_project(context['project']['id']).to_dict()
     # Return project file object
     return proj['files'][-1]
+
+def upload_analysis_file(fw, context, full_fname):
+    """"""
+    # Upload file
+    fw.upload_output_to_analysis(context['analysis']['id'], full_fname)
+    # Get project
+    analysis = fw.get_analysis(context['analysis']['id']).to_dict()
+    # Return project file object
+    return analysis['files'][-1]
 
 def upload_session_file(fw, context, full_fname):
     """"""
@@ -530,7 +566,7 @@ def handle_subject_folder(fw, context, files_of_interest, subject, rootdir, sub_
 
 
 def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type,
-                    local_properties):
+                    local_properties, derivatives_destination):
     """
 
     fw: Flywheel client
@@ -613,8 +649,10 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type,
         subjects = [key for key in bids_hierarchy[proj_label] if 'sub' in key]
         # Get source directory
         sourcedata_folder = [key for key in bids_hierarchy[proj_label].get('sourcedata', {}) if 'sub' in key]
+        # Get derivative directory
+        derivative_folder = [key for key in bids_hierarchy[proj_label].get('derivatives', {}) if key != 'files']
         # Get non-subject directories remaining
-        dirs = [item for item in bids_hierarchy[proj_label] if item not in subjects + ['files', 'sourcedata']]
+        dirs = [item for item in bids_hierarchy[proj_label] if item not in subjects + ['files', 'sourcedata', 'derivatives']]
 
         ### Iterate over project directories (that aren't 'sub' dirs) - zip up directory contents and add meta data
         for dirr in dirs:
@@ -651,6 +689,32 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type,
             handle_subject_folder(fw, context, files_of_interest, subject,
                                   rootdir, 'sourcedata', hierarchy_type,
                                   subject_code, local_properties)
+
+        # upload derivatives (If option not set, the folder was popped in handle_project_label)
+        for derivative in derivative_folder:
+            for subject_code in [s for s in bids_hierarchy[proj_label]['derivatives'][derivative] if 'sub' in s]:
+                subject = bids_hierarchy[proj_label]['derivatives'][derivative][subject_code]
+                if derivatives_destination == 'acquisitions':
+                    handle_subject_folder(fw, context, files_of_interest, subject,
+                                          rootdir, os.path.join('derivatives', derivative), hierarchy_type,
+                                          subject_code, local_properties)
+                elif derivatives_destination == 'analyses':
+                    ### Zip and Upload file
+                    # define full dirname and zipname
+                    for session_label in [s for s in subject if 'ses' in s]:
+                        # Create Session
+                        context['session'] = handle_session(fw, context['project']['id'], session_label, subject_code)
+                        analysis_label = '{}_{}_{}'.format(subject_code, session_label, derivative)
+                        context['analysis'] = handle_analysis(fw, context['session']['id'], analysis_label)
+                        context['subject'] = context['session']['subject']
+                        full_dname = os.path.join(rootdir, 'derivatives', derivative, subject_code, session_label)
+                        full_zname = os.path.join(rootdir, 'derivatives', derivative, subject_code, analysis_label)
+                        shutil.make_archive(full_zname, 'zip', full_dname)
+                        full_zname = full_zname + '.zip'
+                        # Upload project file
+                        context['file'] = upload_analysis_file(fw, context, full_zname)
+                        # remove the generated zipfile
+                        os.remove(full_zname)
 
     return files_of_interest
 
@@ -932,7 +996,7 @@ def parse_meta_files(fw, files_of_interest):
             logger.info('Do not recognize filetype')
 
 def upload_bids(fw, bids_dir, group_id, project_label=None, hierarchy_type='Flywheel', validate=True,
-                include_source_data=False, local_properties=False):
+                include_source_data=False, derivatives=False, local_properties=False):
     ### Prep
     # Check directory name - ensure it exists
     validate_dirname(bids_dir)
@@ -942,7 +1006,7 @@ def upload_bids(fw, bids_dir, group_id, project_label=None, hierarchy_type='Flyw
     bids_hierarchy = parse_bids_dir(bids_dir)
     # TODO: Determine if project label are present
     bids_hierarchy, rootdir = handle_project_label(bids_hierarchy, project_label, bids_dir,
-                                                   include_source_data)
+                                                   include_source_data, derivatives)
 
     # Determine if hierarchy is valid BIDS
     if validate:
@@ -950,7 +1014,7 @@ def upload_bids(fw, bids_dir, group_id, project_label=None, hierarchy_type='Flyw
 
     ### Upload BIDS directory
     # upload bids dir (and get files of interest and project id)
-    files_of_interest = upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type, local_properties)
+    files_of_interest = upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type, local_properties, derivatives)
 
     # Parse the BIDS meta files
     #    data_description.json, participants.tsv, *_sessions.tsv, *_scans.tsv
@@ -972,6 +1036,9 @@ def main():
             help="Hierarchy to load into, either 'BIDS' or 'Flywheel'")
     parser.add_argument('--source-data', dest='source_data', action='store_true',
             default=False, required=False, help='Include source data in BIDS upload')
+    parser.add_argument('--derivatives', dest='derivatives', action='store',
+            default=False, required=False, choices=['acquisitions', 'analyses'],
+            help='Include derivatives folder in BIDS upload')
     parser.add_argument('--use-template-defaults', dest='local_properties', action='store_false',
             default=True, required=False, help='Prioiritize template default values for BIDS information')
     args = parser.parse_args()
@@ -981,7 +1048,7 @@ def main():
 
     upload_bids(fw, args.bids_dir, args.group_id, project_label=args.project_label,
                 hierarchy_type=args.hierarchy_type, include_source_data=args.source_data,
-                local_properties=args.local_properties)
+                derivatives=args.derivatives, local_properties=args.local_properties)
 
 if __name__ == '__main__':
     main()

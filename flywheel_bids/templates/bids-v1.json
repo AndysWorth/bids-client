@@ -322,6 +322,17 @@
 			},
 			"required": ["Filename", "Folder"]
 		},
+		"derived_file": {
+			"description": "BIDS template for derived files",
+			"properties": {
+				"Derivative": {"type": "string", "title": "Derivative"},
+				"Filename": {"$ref":"#/definitions/Filename"},
+				"Folder": {"type": "string", "title": "Folder", "default": "derivatives"},
+				"Path": {"type": "string", "title": "Path", "default": "",
+					"auto_update": "{file.info.BIDS.Folder}[/{file.info.BIDS.Derivative}]/sub-{session.info.BIDS.Subject}[/ses-{session.info.BIDS.Label}]"}
+			},
+			"required": ["Filename", "Folder"]
+		},
 		"json_file": {
 			"description": "BIDS template for JSON files",
 			"properties": {
