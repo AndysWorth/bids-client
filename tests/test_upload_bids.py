@@ -1,3 +1,4 @@
+import copy
 import csv
 import json
 import os
@@ -414,7 +415,7 @@ class BidsUploadTestCases(unittest.TestCase):
                     }
                 }
         # Call function
-        meta_info = upload_bids.fill_in_properties(context, folder_name)
+        meta_info = upload_bids.fill_in_properties(context, folder_name, True)
         # Assert equal
         self.assertEqual(meta_info_expected, meta_info)
 
@@ -452,7 +453,7 @@ class BidsUploadTestCases(unittest.TestCase):
                     }
                 }
         # Call function
-        meta_info = upload_bids.fill_in_properties(context, folder_name)
+        meta_info = upload_bids.fill_in_properties(context, folder_name, True)
         # Assert equal
         self.assertEqual(meta_info_expected, meta_info)
 
@@ -484,7 +485,45 @@ class BidsUploadTestCases(unittest.TestCase):
                     }
                 }
         # Call function
-        meta_info = upload_bids.fill_in_properties(context, folder_name)
+        meta_info = upload_bids.fill_in_properties(context, folder_name, True)
+        # Assert equal
+        self.assertEqual(meta_info_expected, meta_info)
+
+    def test_fill_in_properties_dicoms_without_local_values(self):
+        """ """
+        # Define inputs
+        context = {
+                'ext': '.dcm.zip',
+                'file': {
+                    'name': 'sub-01_ses-01_acq-01_ce-label1_rec-label2_run-01_mod-label3_T1w.dcm.zip',
+                    'info': {
+                        'BIDS': {
+                            'Ce': '',
+                            'Rec': '',
+                            'Run': '03',
+                            'Mod': '',
+                            'Modality': '',
+                            'Folder': 'sourcedata',
+                            'Filename': ''
+                            }
+                        }
+                    }
+                }
+        folder_name = 'anat'
+        # Define expected outputs
+        meta_info_expected = {
+                'BIDS': {
+                    'Ce': 'label1',
+                    'Rec': 'label2',
+                    'Run': '03',
+                    'Mod': 'label3',
+                    'Modality': 'T1w',
+                    'Folder': 'sourcedata',
+                    'Filename': context['file']['name']
+                    }
+                }
+        # Call function
+        meta_info = upload_bids.fill_in_properties(context, folder_name, False)
         # Assert equal
         self.assertEqual(meta_info_expected, meta_info)
 
@@ -516,7 +555,7 @@ class BidsUploadTestCases(unittest.TestCase):
                     }
                 }
         # Call function
-        meta_info = upload_bids.fill_in_properties(context, folder_name)
+        meta_info = upload_bids.fill_in_properties(context, folder_name, True)
         # Assert equal
         self.assertEqual(meta_info_expected, meta_info)
 
@@ -550,7 +589,7 @@ class BidsUploadTestCases(unittest.TestCase):
                     }
                 }
         # Call function
-        meta_info = upload_bids.fill_in_properties(context, folder_name)
+        meta_info = upload_bids.fill_in_properties(context, folder_name, True)
         # Assert equal
         self.assertEqual(meta_info_expected, meta_info)
 

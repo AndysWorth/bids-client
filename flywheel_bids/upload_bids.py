@@ -119,6 +119,20 @@ def handle_project_label(bids_hierarchy, project_label_cli, rootdir):
     return bids_hierarchy, rootdir
 
 
+def disable_project_rules(fw, project_id):
+    """
+    Disables rules for a project, because the classifier and nifti will erase
+    the information from the upload
+    """
+    for rule in fw.get_project_rules(project_id):
+        fw.modify_project_rule(project_id, rule.id, {"disabled": True})
+
+def check_enabled_project_rules(fw, project_id):
+    for rule in fw.get_project_rules(project_id):
+        if not rule.get('disabled'):
+            return True
+    return False
+
 def handle_project(fw, group_id, project_label):
     """ Returns a Flywheel project based on group_id and project_label
 
@@ -135,12 +149,15 @@ def handle_project(fw, group_id, project_label):
             # project exists
             project = ep
             found = True
+            if check_enabled_rules(fw, project['_id']):
+                logger.warning('Project has enabled rules, these may overwrite BIDS data. Either disable rules or run bids curation gear after data is uploaded.')
             break
     # If project does not exist, create project
     if not found:
         logger.info('Project (%s) not found. Creating new project for group %s.' % (project_label, group_id))
         project_id = fw.add_project({'label': project_label, 'group': group_id})
         project = fw.get_project(project_id)
+        disable_project_rules(fw, project_id)
 
     return project.to_dict()
 
@@ -288,7 +305,7 @@ def classify_acquisition(full_fname):
 
 
 
-def fill_in_properties(context, path):
+def fill_in_properties(context, path, local_properties):
     """ """
     # Define the regex to use to find the property value from filename
     properties_regex = {
@@ -310,10 +327,17 @@ def fill_in_properties(context, path):
     namespace = template.namespace
     # Iterate over all of the keys within the info namespace ('BIDS')
     for mi in meta_info[namespace]:
-        if mi == 'Filename':
+        if not local_properties and meta_info[namespace][mi]:
+            continue
+        elif mi == 'Filename':
             meta_info[namespace][mi] = context['file']['name']
         elif mi == 'Folder':
-            meta_info[namespace][mi] = path.split('/')[-1]
+            if 'sourcedata' in path:
+                meta_info[namespace][mi] = 'sourcedata'
+            elif 'derivatives' in path:
+                meta_info[namespace][mi] = 'derivatives'
+            else:
+                meta_info[namespace][mi] = path.split('/')[-1]
         elif mi == 'Path':
             meta_info[namespace][mi] = path
             # Search for regex string within BIDS filename and populate meta_info
@@ -401,7 +425,7 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
             context['file'] = bidsify_flywheel.process_matching_templates(context, template, upload=True)
             # Update the meta info files w/ BIDS info from the filename...
             full_path = ''
-            meta_info = fill_in_properties(context, full_path)
+            meta_info = fill_in_properties(context, full_path, local_properties)
             # Upload the meta info onto the project file
             fw.set_project_file_info(context['project']['id'], fname, meta_info)
 
@@ -900,7 +924,7 @@ def upload_bids(fw, bids_dir, group_id, project_label=None, hierarchy_type='Flyw
 
     ### Upload BIDS directory
     # upload bids dir (and get files of interest and project id)
-    files_of_interest = upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type)
+    files_of_interest = upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type, local_properties)
 
     # Parse the BIDS meta files
     #    data_description.json, participants.tsv, *_sessions.tsv, *_scans.tsv
