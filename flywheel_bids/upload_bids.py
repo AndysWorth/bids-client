@@ -142,7 +142,7 @@ def handle_project(fw, group_id, project_label):
         project_id = fw.add_project({'label': project_label, 'group': group_id})
         project = fw.get_project(project_id)
 
-    return project
+    return project.to_dict()
 
 def handle_session(fw, project_id, session_name, subject_name):
     """ Returns a Flywheel session based on project_id and session_label
@@ -170,11 +170,11 @@ def handle_session(fw, project_id, session_name, subject_name):
             'label': session_name,
             'project': project_id,
             'subject': {'code': subject_name},
-            'info': { template.namespace: {} }
+            'info': { template.namespace: {'Subject': subject_name[4:], 'Label': session_name[4:]} }
         })
         session = fw.get_session(session_id)
 
-    return session
+    return session.to_dict()
 
 def handle_acquisition(fw, session_id, acquisition_label):
     """ Returns a Flywheel acquisition based on session_id and acquisition_label
@@ -199,30 +199,30 @@ def handle_acquisition(fw, session_id, acquisition_label):
         acquisition_id = fw.add_acquisition({'label': acquisition_label, 'session': session_id})
         acquisition = fw.get_acquisition(acquisition_id)
 
-    return acquisition
+    return acquisition.to_dict()
 
 def upload_project_file(fw, context, full_fname):
     """"""
     # Upload file
-    fw.upload_file_to_project(context['project']['_id'], full_fname)
+    fw.upload_file_to_project(context['project']['id'], full_fname)
     # Get project
-    proj = fw.get_project(context['project']['_id'])
+    proj = fw.get_project(context['project']['id']).to_dict()
     # Return project file object
     return proj['files'][-1]
 
 def upload_session_file(fw, context, full_fname):
     """"""
     # Upload file
-    fw.upload_file_to_session(context['session']['_id'], full_fname)
+    fw.upload_file_to_session(context['session']['id'], full_fname)
     # Get session
-    ses = fw.get_session(context['session']['_id'])
+    ses = fw.get_session(context['session']['id']).to_dict()
     # Return session file object
     return ses['files'][-1]
 
 def upload_acquisition_file(fw, context, full_fname):
     """"""
     # Upload file
-    fw.upload_file_to_acquisition(context['acquisition']['_id'], full_fname)
+    fw.upload_file_to_acquisition(context['acquisition']['id'], full_fname)
 
     ### Classify acquisition
     # Get classification based on filename
@@ -234,11 +234,11 @@ def upload_acquisition_file(fw, context, full_fname):
             'modality': 'MR',
             'replace': classification
         }
-        fw.modify_acquisition_file_classification(context['acquisition']['_id'],
+        fw.modify_acquisition_file_classification(context['acquisition']['id'],
               context['file']['name'], update)
 
     # Get acquisition
-    acq = fw.get_acquisition(context['acquisition']['_id'])
+    acq = fw.get_acquisition(context['acquisition']['id']).to_dict()
     # Return acquisition file object
     return acq['files'][-1]
 
@@ -373,7 +373,7 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
         context['container_type'] = 'project'
         context['project'] = handle_project(fw, group_id, proj_label)
         context['project'] = bidsify_flywheel.process_matching_templates(context, template, upload=True)
-        fw.modify_project(context['project']['_id'], {'info': {template.namespace: context['project']['info'][template.namespace]}})
+        fw.modify_project(context['project']['id'], {'info': {template.namespace: context['project']['info'][template.namespace]}})
 
         ### Iterate over project files - upload file and add meta data
         for fname in bids_hierarchy[proj_label].get('files'):
@@ -386,7 +386,7 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
             # Don't upload json sidecars
             if '.json' in fname:
                 files_of_interest[fname] = {
-                        '_id': context['project']['_id'],
+                        'id': context['project']['id'],
                         'id_type': 'project',
                         'full_filename': full_fname
                         }
@@ -403,13 +403,13 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
             full_path = ''
             meta_info = fill_in_properties(context, full_path)
             # Upload the meta info onto the project file
-            fw.set_project_file_info(context['project']['_id'], fname, meta_info)
+            fw.set_project_file_info(context['project']['id'], fname, meta_info)
 
             # Check if project files are of interest (to be parsed later)
             #    Interested in participants.tsv or any JSON file
             if (fname == 'participants.tsv'):
                 files_of_interest[fname] = {
-                        '_id': context['project']['_id'],
+                        'id': context['project']['id'],
                         'id_type': 'project',
                         'full_filename': full_fname
                         }
@@ -660,18 +660,18 @@ def attach_json(fw, file_info):
     contents = parse_json(file_info['full_filename'])
     # Attach parsed JSON to project
     if 'dataset_description.json' in file_info['full_filename']:
-        proj = fw.get_project(file_info['_id'])
+        proj = fw.get_project(file_info['id']).to_dict()
         proj.get('info').get(template.namespace).update(contents)
-        fw.modify_project(file_info['_id'], {'info': {template.namespace: proj.get('info').get(template.namespace)}})
+        fw.modify_project(file_info['id'], {'info': {template.namespace: proj.get('info').get(template.namespace)}})
     # Otherwise... it's a JSON file that should be assigned to acquisition file(s)
     else:
         # Figure out which acquisition files within PROJECT should have JSON info attached...
         if (file_info['id_type'] == 'project'):
             # Get sessions within project
-            proj_sess = fw.get_project_sessions(file_info['_id'])
+            proj_sess = [s.to_dict() for s in fw.get_project_sessions(file_info['id'])]
             for proj_ses in proj_sess:
                 # Get acquisitions within session
-                ses_acqs = fw.get_session_acquisitions(proj_ses['_id'])
+                ses_acqs = fw.get_session_acquisitions(proj_ses['id'])
                 for ses_acq in ses_acqs:
                     # Iterate over every acquisition file
                     for f in ses_acq['files']:
@@ -680,14 +680,14 @@ def attach_json(fw, file_info):
                             # JSON matches to file - assign json contents as file meta info
                             f["info"].update(contents)
                             fw.set_acquisition_file_info(
-                                    ses_acq['_id'],
+                                    ses_acq['id'],
                                     f['name'],
                                     f['info'])
 
         # Figure out which acquisition files within SESSION should have JSON info attached...
         elif (file_info['id_type'] == 'session'):
             # Get session and iterate over every acquisition file
-            ses_acqs = fw.get_session_acquisitions(file_info['_id'])
+            ses_acqs = [a.to_dict() for a in fw.get_session_acquisitions(file_info['id'])]
             for ses_acq in ses_acqs:
                 for f in ses_acq['files']:
                     # Determine if json file components are all within the acq filename
@@ -695,20 +695,20 @@ def attach_json(fw, file_info):
                         # JSON matches to file - assign json contents as file meta info
                         f["info"].update(contents)
                         fw.set_acquisition_file_info(
-                                ses_acq['_id'],
+                                ses_acq['id'],
                                 f['name'],
                                 f['info'])
 
         # Figure out which acquisition files within ACQUISITION should have JSON info attached...
         elif (file_info['id_type'] == 'acquisition'):
-            acq = fw.get_acquisition(file_info['_id'])
+            acq = fw.get_acquisition(file_info['id']).to_dict()
             for f in acq['files']:
                 # Determine if json file components are all within the acq filename
                 if compare_json_to_file(os.path.basename(file_info['full_filename']), f['name']):
                     # JSON matches to file - assign json contents as file meta info
                     f["info"].update(contents)
                     fw.set_acquisition_file_info(
-                            acq['_id'],
+                            acq['id'],
                             f['name'],
                             f['info'])
 
@@ -791,7 +791,7 @@ def attach_tsv(fw, file_info):
     # Get all sessions within project_id
     if file_info['id_type'] == 'project':
         # Get sessions within project
-        sessions = fw.get_project_sessions(file_info['_id'])
+        sessions = fw.get_project_sessions(file_info['id'])
         # Iterate over sessions
         for ses in sessions:
             # Iterate over all values within TSV -- see if it matches
@@ -819,12 +819,12 @@ def attach_tsv(fw, file_info):
                 else:
                     continue
                 # Modify session
-                fw.modify_session(ses['_id'], session_info)
+                fw.modify_session(ses['id'], session_info)
 
     # Else id_type is 'session' and we get acquisitions
     else:
         # Get all acquisitions within session
-        acquisitions = fw.get_session_acquisitions(file_info['_id'])
+        acquisitions = fw.get_session_acquisitions(file_info['id'])
         # Iterate over all acquisitions within session
         for acq in acquisitions:
             # Get files within acquisitions
@@ -842,7 +842,7 @@ def attach_tsv(fw, file_info):
                         # Create dict
                         info_object = dict(zip(keys, values))
                         # Modify acquisition file
-                        fw.set_acquisition_file_info(acq['_id'], filename, info_object)
+                        fw.set_acquisition_file_info(acq['id'], filename, info_object)
 
 def parse_meta_files(fw, files_of_interest):
     """
@@ -851,12 +851,12 @@ def parse_meta_files(fw, files_of_interest):
 
     files_of_interest = {
         'dataset_description.json': {
-            '_id': u'5a1364af9b89b7001d1f357f',
+            'id': u'5a1364af9b89b7001d1f357f',
             'id_type': 'project',
             'full_filename': '/7t_trt_reduced/dataset_description.json'
             },
         'participants.tsv': {
-            '_id': u'5a1364af9b89b7001d1f357f',
+            'id': u'5a1364af9b89b7001d1f357f',
             'id_type': 'project',
             'full_filename': '/7t_trt_reduced/participants.tsv'
             }
