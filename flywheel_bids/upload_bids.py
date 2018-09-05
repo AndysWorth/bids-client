@@ -155,7 +155,7 @@ def handle_project(fw, group_id, project_label):
             # project exists
             project = ep
             found = True
-            if check_enabled_rules(fw, project['_id']):
+            if check_enabled_rules(fw, project.to_dict()['id']):
                 logger.warning('Project has enabled rules, these may overwrite BIDS data. Either disable rules or run bids curation gear after data is uploaded.')
             break
     # If project does not exist, create project
@@ -719,7 +719,7 @@ def attach_json(fw, file_info):
             proj_sess = [s.to_dict() for s in fw.get_project_sessions(file_info['id'])]
             for proj_ses in proj_sess:
                 # Get acquisitions within session
-                ses_acqs = fw.get_session_acquisitions(proj_ses['id'])
+                ses_acqs = [a.to_dict() for a in fw.get_session_acquisitions(proj_ses['id'])]
                 for ses_acq in ses_acqs:
                     # Iterate over every acquisition file
                     for f in ses_acq['files']:
@@ -839,7 +839,7 @@ def attach_tsv(fw, file_info):
     # Get all sessions within project_id
     if file_info['id_type'] == 'project':
         # Get sessions within project
-        sessions = fw.get_project_sessions(file_info['id'])
+        sessions = [s.to_dict() for s in fw.get_project_sessions(file_info['id'])]
         # Iterate over sessions
         for ses in sessions:
             # Iterate over all values within TSV -- see if it matches
@@ -872,7 +872,7 @@ def attach_tsv(fw, file_info):
     # Else id_type is 'session' and we get acquisitions
     else:
         # Get all acquisitions within session
-        acquisitions = fw.get_session_acquisitions(file_info['id'])
+        acquisitions = [a.to_dict() for a in fw.get_session_acquisitions(file_info['id'])]
         # Iterate over all acquisitions within session
         for acq in acquisitions:
             # Get files within acquisitions
