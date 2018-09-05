@@ -133,7 +133,7 @@ def disable_project_rules(fw, project_id):
     for rule in fw.get_project_rules(project_id):
         fw.modify_project_rule(project_id, rule.id, {"disabled": True})
 
-def check_enabled_project_rules(fw, project_id):
+def check_enabled_rules(fw, project_id):
     for rule in fw.get_project_rules(project_id):
         if not rule.get('disabled'):
             return True
