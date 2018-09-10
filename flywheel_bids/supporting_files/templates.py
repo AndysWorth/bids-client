@@ -342,7 +342,7 @@ def processValueMatch(value, match, condition=None):
     """
     if condition:
         # Handle $or clauses at top-level
-        if '$or' in conditions:
+        if condition == "$or":
             for field, deeper_match in match:
                 value = utils.dict_lookup(context, field)
                 if processValueMatch(value, deeper_match):
@@ -350,7 +350,7 @@ def processValueMatch(value, match, condition=None):
             return False
 
         # Otherwise AND clauses
-        if '$and' in conditions:
+        if condition == "$and":
             for field, deeper_match in match:
                 value = utils.dict_lookup(context, field)
                 if not processValueMatch(value, deeper_match):
