@@ -160,3 +160,21 @@ class RuleTestCases(unittest.TestCase):
         })
         # Call function
         self.assertFalse(rule.test(context))
+
+    def test_rule_where_not(self):
+        """ """
+        rule = templates.Rule({
+            'template': 'test',
+            'where': {
+                'x': {
+                    '$not': {
+                        '$in': ["Value"]
+                    }
+                }
+            }
+        })
+        context = {'x': 'Value'}
+        self.assertFalse(rule.test(context))
+        context = {'x': 'Something'}
+        self.assertTrue(rule.test(context))
+

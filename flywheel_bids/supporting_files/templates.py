@@ -370,7 +370,7 @@ def processValueMatch(value, match):
 
         elif '$not' in match:
             # Negate result of nested match
-            return not processMatch(value, match['$not'])
+            return not processValueMatch(value, match['$not'])
 
         elif '$regex' in match:
             regex = re.compile(match['$regex'])
