@@ -6,6 +6,7 @@ import sys
 import subprocess
 import jsonschema
 import collections
+from builtins import input
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('utils')
@@ -225,6 +226,24 @@ def format_value(params, value):
                 value = value[0].lower() + value[1:]
 
     return value
+
+
+def confirmation_prompt(message):
+    """Continue prompting at the terminal for a yes/no repsonse
+
+    Arguments:
+        message (str): The prompt message
+
+    Returns:
+        bool: True if the user responded yes, otherwise False
+    """
+    responses = { 'yes': True, 'y': True, 'no': False, 'n': False }
+    while True:
+        six.print_('{} (yes/no): '.format(message), end='')
+        choice = input().lower()
+        if choice in responses:
+            return responses[choice]
+        six.print_('Please respond with "yes" or "no".')
 
 
 class RunCounter:

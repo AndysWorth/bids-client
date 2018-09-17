@@ -139,7 +139,7 @@ def check_enabled_rules(fw, project_id):
             return True
     return False
 
-def handle_project(fw, group_id, project_label):
+def handle_project(fw, group_id, project_label, assume_yes):
     """ Returns a Flywheel project based on group_id and project_label
 
     If project exists, project will be retrieved,
@@ -157,6 +157,8 @@ def handle_project(fw, group_id, project_label):
             found = True
             if check_enabled_rules(fw, project.to_dict()['id']):
                 logger.warning('Project has enabled rules, these may overwrite BIDS data. Either disable rules or run bids curation gear after data is uploaded.')
+                if not assume_yes and not utils.confirmation_prompt('Continue upload?'):
+                    return
             break
     # If project does not exist, create project
     if not found:
@@ -530,7 +532,7 @@ def handle_subject_folder(fw, context, files_of_interest, subject, rootdir, sub_
 
 
 def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type,
-                    local_properties):
+                    local_properties, assume_yes):
     """
 
     fw: Flywheel client
@@ -564,7 +566,9 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type,
         ## Validate the project
         #   (1) create a project OR (2) find an existing project by the project_label -- return project object
         context['container_type'] = 'project'
-        context['project'] = handle_project(fw, group_id, proj_label)
+        context['project'] = handle_project(fw, group_id, proj_label, assume_yes)
+        if context['project'] is None:
+            continue
         context['project'] = bidsify_flywheel.process_matching_templates(context, template, upload=True)
         fw.modify_project(context['project']['id'], {'info': {template.namespace: context['project']['info'][template.namespace]}})
 
@@ -932,7 +936,7 @@ def parse_meta_files(fw, files_of_interest):
             logger.info('Do not recognize filetype')
 
 def upload_bids(fw, bids_dir, group_id, project_label=None, hierarchy_type='Flywheel', validate=True,
-                include_source_data=False, local_properties=False):
+                include_source_data=False, local_properties=False, assume_yes=False):
     ### Prep
     # Check directory name - ensure it exists
     validate_dirname(bids_dir)
@@ -950,7 +954,7 @@ def upload_bids(fw, bids_dir, group_id, project_label=None, hierarchy_type='Flyw
 
     ### Upload BIDS directory
     # upload bids dir (and get files of interest and project id)
-    files_of_interest = upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type, local_properties)
+    files_of_interest = upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type, local_properties, assume_yes)
 
     # Parse the BIDS meta files
     #    data_description.json, participants.tsv, *_sessions.tsv, *_scans.tsv
@@ -974,6 +978,7 @@ def main():
             default=False, required=False, help='Include source data in BIDS upload')
     parser.add_argument('--use-template-defaults', dest='local_properties', action='store_false',
             default=True, required=False, help='Prioiritize template default values for BIDS information')
+    parser.add_argument('-y', '--yes', action='store_true', help='Assume the answer is yes to all prompts')
     args = parser.parse_args()
 
     # Check API key - raises Error if key is invalid
@@ -981,7 +986,7 @@ def main():
 
     upload_bids(fw, args.bids_dir, args.group_id, project_label=args.project_label,
                 hierarchy_type=args.hierarchy_type, include_source_data=args.source_data,
-                local_properties=args.local_properties)
+                local_properties=args.local_properties, assume_yes=args.yes)
 
 if __name__ == '__main__':
     main()
