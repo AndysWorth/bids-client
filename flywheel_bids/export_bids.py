@@ -110,9 +110,7 @@ def define_path(outdir, f, namespace):
     elif metadata.get('Filename'):
         # Ensure that the folder exists...
         full_path = os.path.join(outdir,
-                metadata['Path'])
-        if not os.path.exists(full_path):
-            os.makedirs(full_path)
+                                 metadata['Path'])
         # Define path to download file to...
         full_filename = os.path.join(full_path, metadata['Filename'])
     else:
@@ -289,6 +287,9 @@ def download_bids_dir(fw, container_id, container_type, outdir, src_data=False,
             if is_file_excluded(f, path):
                 continue
 
+            if not os.path.exists(os.path.dirname(path)):
+                os.makedirs(os.path.dirname(path))
+
             warn_if_bids_invalid(f, namespace)
 
 
@@ -346,6 +347,9 @@ def download_bids_dir(fw, container_id, container_type, outdir, src_data=False,
                 if is_file_excluded(f, path):
                     continue
 
+                if not os.path.exists(os.path.dirname(path)):
+                    os.makedirs(os.path.dirname(path))
+
                 warn_if_bids_invalid(f, namespace)
 
 
@@ -390,6 +394,9 @@ def download_bids_dir(fw, container_id, container_type, outdir, src_data=False,
                 # Don't exclude any files that specify exclusion
                 if is_file_excluded(f, path):
                     continue
+
+                if not os.path.exists(os.path.dirname(path)):
+                    os.makedirs(os.path.dirname(path))
 
                 warn_if_bids_invalid(f, namespace)
 
