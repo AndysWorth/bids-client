@@ -52,10 +52,10 @@ def parse_bids_dir(bids_dir):
         subdir = {'files': files}
         parent = reduce(dict.get, folders[:-1], bids_hierarchy)
         parent[folders[-1]] = subdir
-
     return bids_hierarchy
 
-def handle_project_label(bids_hierarchy, project_label_cli, rootdir):
+def handle_project_label(bids_hierarchy, project_label_cli, rootdir,
+                         include_source_data):
     """ Determines the values for the group_id and project_label information
 
     Below is the expected hierarchy for the 'bids_hiearchy':
@@ -108,18 +108,38 @@ def handle_project_label(bids_hierarchy, project_label_cli, rootdir):
 
     # If sub-YY directories found at second level
     #   project_label_cli does not NEED to be defined (no error raised)
-    if second_level and project_label_cli:
-        bids_hierarchy[project_label_cli] = bids_hierarchy.pop(k)
+    if second_level:
+        if project_label_cli:
+            bids_hierarchy[project_label_cli] = bids_hierarchy.pop(k)
+        else:
+            project_label_cli = k
 
     # If sub-YY directories are not found
     if not (top_level or second_level):
         logger.error('Did not find subject directories within hierarchy')
         sys.exit(1)
 
+    if not include_source_data:
+        bids_hierarchy[project_label_cli].pop('sourcedata', None)
+
     return bids_hierarchy, rootdir
 
 
-def handle_project(fw, group_id, project_label):
+def disable_project_rules(fw, project_id):
+    """
+    Disables rules for a project, because the classifier and nifti will erase
+    the information from the upload
+    """
+    for rule in fw.get_project_rules(project_id):
+        fw.modify_project_rule(project_id, rule.id, {"disabled": True})
+
+def check_enabled_rules(fw, project_id):
+    for rule in fw.get_project_rules(project_id):
+        if not rule.get('disabled'):
+            return True
+    return False
+
+def handle_project(fw, group_id, project_label, assume_yes):
     """ Returns a Flywheel project based on group_id and project_label
 
     If project exists, project will be retrieved,
@@ -135,14 +155,19 @@ def handle_project(fw, group_id, project_label):
             # project exists
             project = ep
             found = True
+            if check_enabled_rules(fw, project.to_dict()['id']):
+                logger.warning('Project has enabled rules, these may overwrite BIDS data. Either disable rules or run bids curation gear after data is uploaded.')
+                if not assume_yes and not utils.confirmation_prompt('Continue upload?'):
+                    return
             break
     # If project does not exist, create project
     if not found:
         logger.info('Project (%s) not found. Creating new project for group %s.' % (project_label, group_id))
         project_id = fw.add_project({'label': project_label, 'group': group_id})
         project = fw.get_project(project_id)
+        disable_project_rules(fw, project_id)
 
-    return project
+    return project.to_dict()
 
 def handle_session(fw, project_id, session_name, subject_name):
     """ Returns a Flywheel session based on project_id and session_label
@@ -170,11 +195,11 @@ def handle_session(fw, project_id, session_name, subject_name):
             'label': session_name,
             'project': project_id,
             'subject': {'code': subject_name},
-            'info': { template.namespace: {} }
+            'info': { template.namespace: {'Subject': subject_name[4:], 'Label': session_name[4:]} }
         })
         session = fw.get_session(session_id)
 
-    return session
+    return session.to_dict()
 
 def handle_acquisition(fw, session_id, acquisition_label):
     """ Returns a Flywheel acquisition based on session_id and acquisition_label
@@ -199,30 +224,30 @@ def handle_acquisition(fw, session_id, acquisition_label):
         acquisition_id = fw.add_acquisition({'label': acquisition_label, 'session': session_id})
         acquisition = fw.get_acquisition(acquisition_id)
 
-    return acquisition
+    return acquisition.to_dict()
 
 def upload_project_file(fw, context, full_fname):
     """"""
     # Upload file
-    fw.upload_file_to_project(context['project']['_id'], full_fname)
+    fw.upload_file_to_project(context['project']['id'], full_fname)
     # Get project
-    proj = fw.get_project(context['project']['_id'])
+    proj = fw.get_project(context['project']['id']).to_dict()
     # Return project file object
     return proj['files'][-1]
 
 def upload_session_file(fw, context, full_fname):
     """"""
     # Upload file
-    fw.upload_file_to_session(context['session']['_id'], full_fname)
+    fw.upload_file_to_session(context['session']['id'], full_fname)
     # Get session
-    ses = fw.get_session(context['session']['_id'])
+    ses = fw.get_session(context['session']['id']).to_dict()
     # Return session file object
     return ses['files'][-1]
 
 def upload_acquisition_file(fw, context, full_fname):
     """"""
     # Upload file
-    fw.upload_file_to_acquisition(context['acquisition']['_id'], full_fname)
+    fw.upload_file_to_acquisition(context['acquisition']['id'], full_fname)
 
     ### Classify acquisition
     # Get classification based on filename
@@ -234,11 +259,11 @@ def upload_acquisition_file(fw, context, full_fname):
             'modality': 'MR',
             'replace': classification
         }
-        fw.modify_acquisition_file_classification(context['acquisition']['_id'],
+        fw.modify_acquisition_file_classification(context['acquisition']['id'],
               context['file']['name'], update)
 
     # Get acquisition
-    acq = fw.get_acquisition(context['acquisition']['_id'])
+    acq = fw.get_acquisition(context['acquisition']['id']).to_dict()
     # Return acquisition file object
     return acq['files'][-1]
 
@@ -288,7 +313,7 @@ def classify_acquisition(full_fname):
 
 
 
-def fill_in_properties(context, path):
+def fill_in_properties(context, path, local_properties):
     """ """
     # Define the regex to use to find the property value from filename
     properties_regex = {
@@ -310,10 +335,17 @@ def fill_in_properties(context, path):
     namespace = template.namespace
     # Iterate over all of the keys within the info namespace ('BIDS')
     for mi in meta_info[namespace]:
-        if mi == 'Filename':
+        if not local_properties and meta_info[namespace][mi]:
+            continue
+        elif mi == 'Filename':
             meta_info[namespace][mi] = context['file']['name']
         elif mi == 'Folder':
-            meta_info[namespace][mi] = path.split('/')[-1]
+            if 'sourcedata' in path:
+                meta_info[namespace][mi] = 'sourcedata'
+            elif 'derivatives' in path:
+                meta_info[namespace][mi] = 'derivatives'
+            else:
+                meta_info[namespace][mi] = path.split('/')[-1]
         elif mi == 'Path':
             meta_info[namespace][mi] = path
             # Search for regex string within BIDS filename and populate meta_info
@@ -337,7 +369,170 @@ def fill_in_properties(context, path):
 
     return meta_info
 
-def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
+def handle_subject_folder(fw, context, files_of_interest, subject, rootdir, sub_rootdir, hierarchy_type, subject_code, local_properties):
+    #   In BIDS, the session is optional, if not present - use subject_code as session_label
+    # Get all keys that are session - 'ses-<session.label>'
+    if sub_rootdir:
+        rootdir = os.path.join(rootdir, sub_rootdir)
+    sessions = [key for key in subject if 'ses' in key]
+    # If no sessions, add session layer, just subject_label will be the subject_code
+    if not sessions:
+        sessions = ['ses-']
+        subject = {'ses-': subject}
+
+    ## Iterate over subject files
+    # NOTE: Attaching files to project instead of subject....
+    subject_files = subject.get('files')
+    if subject_files:
+        for fname in subject.get('files'):
+            # Exclude filenames that begin with .
+            if fname.startswith('.'):
+                continue
+            ### Upload file
+            # define full filename
+            full_fname = os.path.join(rootdir, subject_code, fname)
+            # Don't upload sidecars
+            if ('.json' in fname):
+                files_of_interest[fname] = {
+                        'id': context['project']['id'],
+                        'id_type': 'project',
+                        'full_filename': full_fname
+                        }
+                continue
+            # Upload project file ## TODO: once subjects are containers, add new method to upload to subject
+            context['file'] = upload_project_file(fw, context, full_fname)
+            # Update the context for this file
+            context['container_type'] = 'file'
+            context['parent_container_type'] = 'project' # TODO: once subjects are containers, change this to 'subject'
+            context['ext'] = utils.get_extension(fname)
+            # Identify the templates for the file and return file object
+            context['file'] = bidsify_flywheel.process_matching_templates(context, template, upload=True)
+            # Update the meta info files w/ BIDS info from the filename...
+            full_path = os.path.join(sub_rootdir, subject_code)
+            meta_info = fill_in_properties(context, full_path, local_properties)
+            # Upload the meta info onto the project file
+            fw.set_project_file_info(context['project']['id'], fname, meta_info)
+
+            # Check if any subject files are of interest (to be parsed later)
+            #   interested in _sessions files and JSON files
+            val = '%s_sessions.tsv' % subject_code
+            if (fname == val) or ('.json' in fname):
+                files_of_interest[fname] = {
+                        'id': context['project']['id'],
+                        'id_type': 'project',
+                        'full_filename': full_fname
+                        }
+
+    ### Iterate over sessions
+    for session_label in sessions:
+        # Create Session
+        context['session'] = handle_session(fw, context['project']['id'], session_label, subject_code)
+        # Hand off subject info to context
+        context['subject'] = context['session']['subject']
+
+        ## Iterate over session files - upload file and add meta data
+        for fname in subject[session_label].get('files'):
+            # Exclude filenames that begin with .
+            if fname.startswith('.'):
+                continue
+            ### Upload file
+            # define full filename
+            #   NOTE: If session_label equals 'ses-', session label is not
+            #       actually present within the original directory structure
+            if session_label == 'ses-':
+                full_fname = os.path.join(rootdir, subject_code, fname)
+                full_path = os.path.join(sub_rootdir, subject_code)
+            else:
+                full_fname = os.path.join(rootdir, subject_code, session_label, fname)
+                full_path = os.path.join(sub_rootdir, subject_code, session_label)
+
+            # Don't upload sidecars
+            if ('.json' in fname):
+                files_of_interest[fname] = {
+                        'id': context['session']['id'],
+                        'id_type': 'session',
+                        'full_filename': full_fname
+                        }
+                continue
+            # Upload session file
+            context['file'] = upload_session_file(fw, context, full_fname)
+            # Update the context for this file
+            context['container_type'] = 'file'
+            context['parent_container_type'] = 'session'
+            context['ext'] = utils.get_extension(fname)
+            # Identify the templates for the file and return file object
+            context['file'] = bidsify_flywheel.process_matching_templates(context, template, upload=True)
+            # Update the meta info files w/ BIDS info from the filename...
+            meta_info = fill_in_properties(context, full_path, local_properties)
+            # Upload the meta info onto the project file
+            fw.set_session_file_info(context['session']['id'], fname, meta_info)
+
+            # Check if any session files are of interest (to be parsed later)
+            #   interested in _scans.tsv and JSON files
+            val = '%s_%s_scans.tsv' % (subject_code, session_label)
+            if (fname == val):
+                files_of_interest[fname] = {
+                            'id': context['session']['id'],
+                            'id_type': 'session',
+                            'full_filename': full_fname
+                            }
+
+        ## Iterate over 'folders' which are ['anat', 'func', 'fmap', 'dwi'...]
+        #          NOTE: could there be any other dirs that would be handled differently?
+        # get folders
+        folders = [item for item in subject[session_label] if item != 'files']
+        for foldername in folders:
+
+            # Iterate over acquisition files -- upload file and add meta data
+            for fname in subject[session_label][foldername].get('files'):
+                # Exclude filenames that begin with .
+                if fname.startswith('.'):
+                    continue
+                # Determine acquisition label -- it can either be the folder name OR the basename of the file...
+                acq_label = determine_acquisition_label(foldername, fname, hierarchy_type)
+                # Create acquisition
+                context['acquisition'] = handle_acquisition(fw, context['session']['id'], acq_label)
+                ### Upload file
+                # define full filename
+                #   NOTE: If session_label equals 'ses-', session label is not
+                #       actually present within the original directory structure
+                if session_label == 'ses-':
+                    full_fname = os.path.join(rootdir, subject_code, foldername, fname)
+                    full_path = os.path.join(sub_rootdir, subject_code, foldername)
+                else:
+                    full_fname = os.path.join(rootdir, subject_code, session_label, foldername, fname)
+                    full_path = os.path.join(sub_rootdir, subject_code, session_label, foldername)
+
+                # Check if any acquisition files are of interest (to be parsed later)
+                #   interested in JSON files
+                if '.json' in fname:
+                    files_of_interest[fname] = {
+                            'id': context['acquisition']['id'],
+                            'id_type': 'acquisition',
+                            'full_filename': full_fname
+                            }
+                    continue
+
+                # Place filename in context
+                context['file'] = {u'name': fname}
+                # Upload acquisition file
+                context['file'] = upload_acquisition_file(fw, context, full_fname)
+                # Update the context for this file
+                context['container_type'] = 'file'
+                context['parent_container_type'] = 'acquisition'
+                context['ext'] = utils.get_extension(fname)
+                # Identify the templates for the file and return file object
+                context['file'] = bidsify_flywheel.process_matching_templates(context, template, upload=True)
+                # Check that the file matched a template
+                if context['file'].get('info'):
+                    # Update the meta info files w/ BIDS info from the filename and foldername...
+                    meta_info = fill_in_properties(context, full_path, local_properties)
+                    # Upload the meta info onto the project file
+                    fw.set_acquisition_file_info(context['acquisition']['id'], fname, meta_info)
+
+
+def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type,
+                    local_properties, assume_yes):
     """
 
     fw: Flywheel client
@@ -371,9 +566,11 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
         ## Validate the project
         #   (1) create a project OR (2) find an existing project by the project_label -- return project object
         context['container_type'] = 'project'
-        context['project'] = handle_project(fw, group_id, proj_label)
+        context['project'] = handle_project(fw, group_id, proj_label, assume_yes)
+        if context['project'] is None:
+            continue
         context['project'] = bidsify_flywheel.process_matching_templates(context, template, upload=True)
-        fw.modify_project(context['project']['_id'], {'info': {template.namespace: context['project']['info'][template.namespace]}})
+        fw.modify_project(context['project']['id'], {'info': {template.namespace: context['project']['info'][template.namespace]}})
 
         ### Iterate over project files - upload file and add meta data
         for fname in bids_hierarchy[proj_label].get('files'):
@@ -386,7 +583,7 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
             # Don't upload json sidecars
             if '.json' in fname:
                 files_of_interest[fname] = {
-                        '_id': context['project']['_id'],
+                        'id': context['project']['id'],
                         'id_type': 'project',
                         'full_filename': full_fname
                         }
@@ -401,15 +598,15 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
             context['file'] = bidsify_flywheel.process_matching_templates(context, template, upload=True)
             # Update the meta info files w/ BIDS info from the filename...
             full_path = ''
-            meta_info = fill_in_properties(context, full_path)
+            meta_info = fill_in_properties(context, full_path, local_properties)
             # Upload the meta info onto the project file
-            fw.set_project_file_info(context['project']['_id'], fname, meta_info)
+            fw.set_project_file_info(context['project']['id'], fname, meta_info)
 
             # Check if project files are of interest (to be parsed later)
             #    Interested in participants.tsv or any JSON file
             if (fname == 'participants.tsv'):
                 files_of_interest[fname] = {
-                        '_id': context['project']['_id'],
+                        'id': context['project']['id'],
                         'id_type': 'project',
                         'full_filename': full_fname
                         }
@@ -418,8 +615,10 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
         #       that should be zipped up and add to project
         # Get subjects
         subjects = [key for key in bids_hierarchy[proj_label] if 'sub' in key]
+        # Get source directory
+        sourcedata_folder = [key for key in bids_hierarchy[proj_label].get('sourcedata', {}) if 'sub' in key]
         # Get non-subject directories remaining
-        dirs = [item for item in bids_hierarchy[proj_label] if item not in subjects and item != 'files']
+        dirs = [item for item in bids_hierarchy[proj_label] if item not in subjects + ['files', 'sourcedata']]
 
         ### Iterate over project directories (that aren't 'sub' dirs) - zip up directory contents and add meta data
         for dirr in dirs:
@@ -440,169 +639,22 @@ def upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type):
             context['file'] = bidsify_flywheel.process_matching_templates(context, template, upload=True)
             # Update the meta info files w/ BIDS info from the filename...
             full_path = ''
-            meta_info = fill_in_properties(context, full_path)
+            meta_info = fill_in_properties(context, full_path, local_properties)
             # Upload the meta info onto the project file
-            fw.set_project_file_info(context['project']['_id'], dirr+'.zip', meta_info)
+            fw.set_project_file_info(context['project']['id'], dirr+'.zip', meta_info)
 
         ### Iterate over subjects
         for subject_code in subjects:
-            #   In BIDS, the session is optional, if not present - use subject_code as session_label
-            # Get all keys that are session - 'ses-<session.label>'
-            sessions = [key for key in bids_hierarchy[proj_label][subject_code] if 'ses' in key]
-            # If no sessions, add session layer, just subject_label will be the subject_code
-            if not sessions:
-                sessions = ['ses-']
-                bids_hierarchy[proj_label][subject_code] = {'ses-': bids_hierarchy[proj_label][subject_code]}
+            subject = bids_hierarchy[proj_label][subject_code]
+            handle_subject_folder(fw, context, files_of_interest, subject, rootdir,
+                                  '', hierarchy_type, subject_code, local_properties)
 
-            ## Iterate over subject files
-            # NOTE: Attaching files to project instead of subject....
-            subject_files = bids_hierarchy[proj_label][subject_code].get('files')
-            if subject_files:
-                for fname in bids_hierarchy[proj_label][subject_code].get('files'):
-                    # Exclude filenames that begin with .
-                    if fname.startswith('.'):
-                        continue
-                    ### Upload file
-                    # define full filename
-                    full_fname = os.path.join(rootdir, subject_code, fname)
-                    # Don't upload sidecars
-                    if ('.json' in fname):
-                        files_of_interest[fname] = {
-                                '_id': context['project']['_id'],
-                                'id_type': 'project',
-                                'full_filename': full_fname
-                                }
-                        continue
-                    # Upload project file ## TODO: once subjects are containers, add new method to upload to subject
-                    context['file'] = upload_project_file(fw, context, full_fname)
-                    # Update the context for this file
-                    context['container_type'] = 'file'
-                    context['parent_container_type'] = 'project' # TODO: once subjects are containers, change this to 'subject'
-                    context['ext'] = utils.get_extension(fname)
-                    # Identify the templates for the file and return file object
-                    context['file'] = bidsify_flywheel.process_matching_templates(context, template, upload=True)
-                    # Update the meta info files w/ BIDS info from the filename...
-                    full_path = subject_code
-                    meta_info = fill_in_properties(context, full_path)
-                    # Upload the meta info onto the project file
-                    fw.set_project_file_info(context['project']['_id'], fname, meta_info)
-
-                    # Check if any subject files are of interest (to be parsed later)
-                    #   interested in _sessions files and JSON files
-                    val = '%s_sessions.tsv' % subject_code
-                    if (fname == val) or ('.json' in fname):
-                        files_of_interest[fname] = {
-                                '_id': context['project']['_id'],
-                                'id_type': 'project',
-                                'full_filename': full_fname
-                                }
-
-            ### Iterate over sessions
-            for session_label in sessions:
-                # Create Session
-                context['session'] = handle_session(fw, context['project']['_id'], session_label, subject_code)
-                # Hand off subject info to context
-                context['subject'] = context['session']['subject']
-
-                ## Iterate over session files - upload file and add meta data
-                for fname in bids_hierarchy[proj_label][subject_code][session_label].get('files'):
-                    # Exclude filenames that begin with .
-                    if fname.startswith('.'):
-                        continue
-                    ### Upload file
-                    # define full filename
-                    #   NOTE: If session_label equals 'ses-', session label is not
-                    #       actually present within the original directory structure
-                    if session_label == 'ses-':
-                        full_fname = os.path.join(rootdir, subject_code, fname)
-                        full_path = subject_code
-                    else:
-                        full_fname = os.path.join(rootdir, subject_code, session_label, fname)
-                        full_path = os.path.join(subject_code, session_label)
-
-                    # Don't upload sidecars
-                    if ('.json' in fname):
-                        files_of_interest[fname] = {
-                                '_id': context['session']['_id'],
-                                'id_type': 'session',
-                                'full_filename': full_fname
-                                }
-                        continue
-                    # Upload session file
-                    context['file'] = upload_session_file(fw, context, full_fname)
-                    # Update the context for this file
-                    context['container_type'] = 'file'
-                    context['parent_container_type'] = 'session'
-                    context['ext'] = utils.get_extension(fname)
-                    # Identify the templates for the file and return file object
-                    context['file'] = bidsify_flywheel.process_matching_templates(context, template, upload=True)
-                    # Update the meta info files w/ BIDS info from the filename...
-                    meta_info = fill_in_properties(context, full_path)
-                    # Upload the meta info onto the project file
-                    fw.set_session_file_info(context['session']['_id'], fname, meta_info)
-
-                    # Check if any session files are of interest (to be parsed later)
-                    #   interested in _scans.tsv and JSON files
-                    val = '%s_%s_scans.tsv' % (subject_code, session_label)
-                    if (fname == val):
-                        files_of_interest[fname] = {
-                                    '_id': context['session']['_id'],
-                                    'id_type': 'session',
-                                    'full_filename': full_fname
-                                    }
-
-                ## Iterate over 'folders' which are ['anat', 'func', 'fmap', 'dwi'...]
-                #          NOTE: could there be any other dirs that would be handled differently?
-                # get folders
-                folders = [item for item in bids_hierarchy[proj_label][subject_code][session_label] if item != 'files']
-                for foldername in folders:
-
-                    # Iterate over acquisition files -- upload file and add meta data
-                    for fname in bids_hierarchy[proj_label][subject_code][session_label][foldername].get('files'):
-                        # Exclude filenames that begin with .
-                        if fname.startswith('.'):
-                            continue
-                        # Determine acquisition label -- it can either be the folder name OR the basename of the file...
-                        acq_label = determine_acquisition_label(foldername, fname, hierarchy_type)
-                        # Create acquisition
-                        context['acquisition'] = handle_acquisition(fw, context['session']['_id'], acq_label)
-                        ### Upload file
-                        # define full filename
-                        #   NOTE: If session_label equals 'ses-', session label is not
-                        #       actually present within the original directory structure
-                        if session_label == 'ses-':
-                            full_fname = os.path.join(rootdir, subject_code, foldername, fname)
-                            full_path = os.path.join(subject_code, foldername)
-                        else:
-                            full_fname = os.path.join(rootdir, subject_code, session_label, foldername, fname)
-                            full_path = os.path.join(subject_code, session_label, foldername)
-
-                        # Check if any acquisition files are of interest (to be parsed later)
-                        #   interested in JSON files
-                        if '.json' in fname:
-                            files_of_interest[fname] = {
-                                    '_id': context['acquisition']['_id'],
-                                    'id_type': 'acquisition',
-                                    'full_filename': full_fname
-                                    }
-                            continue
-
-                        # Place filename in context
-                        context['file'] = {u'name': fname}
-                        # Upload acquisition file
-                        context['file'] = upload_acquisition_file(fw, context, full_fname)
-                        # Update the context for this file
-                        context['container_type'] = 'file'
-                        context['parent_container_type'] = 'acquisition'
-                        context['ext'] = utils.get_extension(fname)
-                        # Identify the templates for the file and return file object
-                        context['file'] = bidsify_flywheel.process_matching_templates(context, template, upload=True)
-                        # Check that the file matched a template
-                        if context['file'].get('info'):
-                            # Update the meta info files w/ BIDS info from the filename and foldername...
-                            meta_info = fill_in_properties(context, full_path)
-                            # Upload the meta info onto the project file
-                            fw.set_acquisition_file_info(context['acquisition']['_id'], fname, meta_info)
+        # upload sourcedata (If option not set, the folder was popped in handle_project_label)
+        for subject_code in sourcedata_folder:
+            subject = bids_hierarchy[proj_label]['sourcedata'][subject_code]
+            handle_subject_folder(fw, context, files_of_interest, subject,
+                                  rootdir, 'sourcedata', hierarchy_type,
+                                  subject_code, local_properties)
 
     return files_of_interest
 
@@ -660,18 +712,18 @@ def attach_json(fw, file_info):
     contents = parse_json(file_info['full_filename'])
     # Attach parsed JSON to project
     if 'dataset_description.json' in file_info['full_filename']:
-        proj = fw.get_project(file_info['_id'])
+        proj = fw.get_project(file_info['id']).to_dict()
         proj.get('info').get(template.namespace).update(contents)
-        fw.modify_project(file_info['_id'], {'info': {template.namespace: proj.get('info').get(template.namespace)}})
+        fw.modify_project(file_info['id'], {'info': {template.namespace: proj.get('info').get(template.namespace)}})
     # Otherwise... it's a JSON file that should be assigned to acquisition file(s)
     else:
         # Figure out which acquisition files within PROJECT should have JSON info attached...
         if (file_info['id_type'] == 'project'):
             # Get sessions within project
-            proj_sess = fw.get_project_sessions(file_info['_id'])
+            proj_sess = [s.to_dict() for s in fw.get_project_sessions(file_info['id'])]
             for proj_ses in proj_sess:
                 # Get acquisitions within session
-                ses_acqs = fw.get_session_acquisitions(proj_ses['_id'])
+                ses_acqs = [a.to_dict() for a in fw.get_session_acquisitions(proj_ses['id'])]
                 for ses_acq in ses_acqs:
                     # Iterate over every acquisition file
                     for f in ses_acq['files']:
@@ -680,14 +732,14 @@ def attach_json(fw, file_info):
                             # JSON matches to file - assign json contents as file meta info
                             f["info"].update(contents)
                             fw.set_acquisition_file_info(
-                                    ses_acq['_id'],
+                                    ses_acq['id'],
                                     f['name'],
                                     f['info'])
 
         # Figure out which acquisition files within SESSION should have JSON info attached...
         elif (file_info['id_type'] == 'session'):
             # Get session and iterate over every acquisition file
-            ses_acqs = fw.get_session_acquisitions(file_info['_id'])
+            ses_acqs = [a.to_dict() for a in fw.get_session_acquisitions(file_info['id'])]
             for ses_acq in ses_acqs:
                 for f in ses_acq['files']:
                     # Determine if json file components are all within the acq filename
@@ -695,20 +747,20 @@ def attach_json(fw, file_info):
                         # JSON matches to file - assign json contents as file meta info
                         f["info"].update(contents)
                         fw.set_acquisition_file_info(
-                                ses_acq['_id'],
+                                ses_acq['id'],
                                 f['name'],
                                 f['info'])
 
         # Figure out which acquisition files within ACQUISITION should have JSON info attached...
         elif (file_info['id_type'] == 'acquisition'):
-            acq = fw.get_acquisition(file_info['_id'])
+            acq = fw.get_acquisition(file_info['id']).to_dict()
             for f in acq['files']:
                 # Determine if json file components are all within the acq filename
                 if compare_json_to_file(os.path.basename(file_info['full_filename']), f['name']):
                     # JSON matches to file - assign json contents as file meta info
                     f["info"].update(contents)
                     fw.set_acquisition_file_info(
-                            acq['_id'],
+                            acq['id'],
                             f['name'],
                             f['info'])
 
@@ -791,7 +843,7 @@ def attach_tsv(fw, file_info):
     # Get all sessions within project_id
     if file_info['id_type'] == 'project':
         # Get sessions within project
-        sessions = fw.get_project_sessions(file_info['_id'])
+        sessions = [s.to_dict() for s in fw.get_project_sessions(file_info['id'])]
         # Iterate over sessions
         for ses in sessions:
             # Iterate over all values within TSV -- see if it matches
@@ -819,12 +871,12 @@ def attach_tsv(fw, file_info):
                 else:
                     continue
                 # Modify session
-                fw.modify_session(ses['_id'], session_info)
+                fw.modify_session(ses['id'], session_info)
 
     # Else id_type is 'session' and we get acquisitions
     else:
         # Get all acquisitions within session
-        acquisitions = fw.get_session_acquisitions(file_info['_id'])
+        acquisitions = [a.to_dict() for a in fw.get_session_acquisitions(file_info['id'])]
         # Iterate over all acquisitions within session
         for acq in acquisitions:
             # Get files within acquisitions
@@ -842,7 +894,7 @@ def attach_tsv(fw, file_info):
                         # Create dict
                         info_object = dict(zip(keys, values))
                         # Modify acquisition file
-                        fw.set_acquisition_file_info(acq['_id'], filename, info_object)
+                        fw.set_acquisition_file_info(acq['id'], filename, info_object)
 
 def parse_meta_files(fw, files_of_interest):
     """
@@ -851,12 +903,12 @@ def parse_meta_files(fw, files_of_interest):
 
     files_of_interest = {
         'dataset_description.json': {
-            '_id': u'5a1364af9b89b7001d1f357f',
+            'id': u'5a1364af9b89b7001d1f357f',
             'id_type': 'project',
             'full_filename': '/7t_trt_reduced/dataset_description.json'
             },
         'participants.tsv': {
-            '_id': u'5a1364af9b89b7001d1f357f',
+            'id': u'5a1364af9b89b7001d1f357f',
             'id_type': 'project',
             'full_filename': '/7t_trt_reduced/participants.tsv'
             }
@@ -883,7 +935,8 @@ def parse_meta_files(fw, files_of_interest):
         else:
             logger.info('Do not recognize filetype')
 
-def upload_bids(fw, bids_dir, group_id, project_label=None, hierarchy_type='Flywheel', validate=True):
+def upload_bids(fw, bids_dir, group_id, project_label=None, hierarchy_type='Flywheel', validate=True,
+                include_source_data=False, local_properties=True, assume_yes=False):
     ### Prep
     # Check directory name - ensure it exists
     validate_dirname(bids_dir)
@@ -892,7 +945,8 @@ def upload_bids(fw, bids_dir, group_id, project_label=None, hierarchy_type='Flyw
     # parse BIDS dir
     bids_hierarchy = parse_bids_dir(bids_dir)
     # TODO: Determine if project label are present
-    bids_hierarchy, rootdir = handle_project_label(bids_hierarchy, project_label, bids_dir)
+    bids_hierarchy, rootdir = handle_project_label(bids_hierarchy, project_label, bids_dir,
+                                                   include_source_data)
 
     # Determine if hierarchy is valid BIDS
     if validate:
@@ -900,7 +954,7 @@ def upload_bids(fw, bids_dir, group_id, project_label=None, hierarchy_type='Flyw
 
     ### Upload BIDS directory
     # upload bids dir (and get files of interest and project id)
-    files_of_interest = upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type)
+    files_of_interest = upload_bids_dir(fw, bids_hierarchy, group_id, rootdir, hierarchy_type, local_properties, assume_yes)
 
     # Parse the BIDS meta files
     #    data_description.json, participants.tsv, *_sessions.tsv, *_scans.tsv
@@ -920,12 +974,19 @@ def main():
     parser.add_argument('--type', dest='hierarchy_type', action='store',
             required=False, default='Flywheel', choices=['BIDS', 'Flywheel'],
             help="Hierarchy to load into, either 'BIDS' or 'Flywheel'")
+    parser.add_argument('--source-data', dest='source_data', action='store_true',
+            default=False, required=False, help='Include source data in BIDS upload')
+    parser.add_argument('--use-template-defaults', dest='local_properties', action='store_false',
+            default=True, required=False, help='Prioiritize template default values for BIDS information')
+    parser.add_argument('-y', '--yes', action='store_true', help='Assume the answer is yes to all prompts')
     args = parser.parse_args()
 
     # Check API key - raises Error if key is invalid
     fw = flywheel.Flywheel(args.api_key)
 
-    upload_bids(fw, args.bids_dir, args.group_id, project_label=args.project_label, hierarchy_type=args.hierarchy_type)
+    upload_bids(fw, args.bids_dir, args.group_id, project_label=args.project_label,
+                hierarchy_type=args.hierarchy_type, include_source_data=args.source_data,
+                local_properties=args.local_properties, assume_yes=args.yes)
 
 if __name__ == '__main__':
     main()

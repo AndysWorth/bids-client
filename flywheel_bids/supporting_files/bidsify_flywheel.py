@@ -99,7 +99,7 @@ def process_matching_templates(context, template=templates.DEFAULT_TEMPLATE, upl
             or ('template' not in container['info'][namespace]))
 
     templateDef = None
-    if container.get('info', {}).get('BIDS') == 'NA':
+    if container.get('info', {}).get(namespace) == 'NA':
         return container
 
     # add objects based on template if they don't already exist

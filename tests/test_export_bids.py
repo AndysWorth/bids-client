@@ -242,6 +242,18 @@ class BidsExportTestCases(unittest.TestCase):
         container['modified'] = dateutil.parser.parse("2718-03-28T20:40:59.54Z") # 700 years in the future
         self.assertTrue(not is_file_excluded(container, 'filePath'))
 
+        # Test source data and derived data are excluded
+        is_file_excluded = export_bids.is_file_excluded_options('BIDS', False, True)
+
+        container['info']['BIDS']['Path'] = 'sourcedata/file'
+        self.assertTrue(is_file_excluded(container, 'filePath'))
+
+        # Test source data and derived data are not excluded
+        is_file_excluded = export_bids.is_file_excluded_options('BIDS', True, True)
+
+        container['info']['BIDS']['Path'] = 'sourcedata/file'
+        self.assertTrue(not is_file_excluded(container, 'filePath'))
+
         os.remove('filePath')
 
     def test_determine_single_container(self):
