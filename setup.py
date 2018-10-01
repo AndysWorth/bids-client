@@ -18,7 +18,7 @@ VERSION = "0.6.8"
 # prerequisite: setuptools
 # http://pypi.python.org/pypi/setuptools
 
-REQUIRES = ["jsonschema>=2.6.0", "flywheel-sdk>=2.4.0"]
+REQUIRES = ["jsonschema>=2.6.0", "flywheel-sdk>=2.4.0", "future>=0.16.0"]
 
 class VerifyVersionCommand(install):
     """Custom command to verify that the git tag matches our version"""

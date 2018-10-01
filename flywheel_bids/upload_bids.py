@@ -936,7 +936,7 @@ def parse_meta_files(fw, files_of_interest):
             logger.info('Do not recognize filetype')
 
 def upload_bids(fw, bids_dir, group_id, project_label=None, hierarchy_type='Flywheel', validate=True,
-                include_source_data=False, local_properties=False, assume_yes=False):
+                include_source_data=False, local_properties=True, assume_yes=False):
     ### Prep
     # Check directory name - ensure it exists
     validate_dirname(bids_dir)
