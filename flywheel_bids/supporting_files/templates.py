@@ -323,26 +323,15 @@ def test_where_clause(conditions, context):
     Returns:
         bool: True if the rule matches the given context.
     """
-    # Handle $or clauses at top-level
-    if '$or' in conditions:
-        for field, match in conditions['$or']:
-            value = utils.dict_lookup(context, field)
-            if processValueMatch(value, match):
-                return True
-        return False
-
-    # Otherwise AND clauses
-    if '$and' in conditions:
-        conditions = conditions['$and']
 
     for field, match in conditions.items():
         value = utils.dict_lookup(context, field)
-        if not processValueMatch(value, match):
+        if not processValueMatch(value, match, field):
             return False
 
     return True
 
-def processValueMatch(value, match):
+def processValueMatch(value, match, condition=None):
     """
     Helper function that recursively performs value matching.
     Args:
@@ -351,6 +340,23 @@ def processValueMatch(value, match):
     Returns:
         bool: The result of matching the value against the match spec.
     """
+    if condition:
+        # Handle $or clauses at top-level
+        if condition == "$or":
+            for field, deeper_match in match:
+                value = utils.dict_lookup(context, field)
+                if processValueMatch(value, deeper_match):
+                    return True
+            return False
+
+        # Otherwise AND clauses
+        if condition == "$and":
+            for field, deeper_match in match:
+                value = utils.dict_lookup(context, field)
+                if not processValueMatch(value, deeper_match):
+                    return False
+            return True
+
     if isinstance(match, dict):
         # Deeper processing
         if '$in' in match:
@@ -370,7 +376,7 @@ def processValueMatch(value, match):
 
         elif '$not' in match:
             # Negate result of nested match
-            return not processMatch(value, match['$not'])
+            return not processValueMatch(value, match['$not'])
 
         elif '$regex' in match:
             regex = re.compile(match['$regex'])
