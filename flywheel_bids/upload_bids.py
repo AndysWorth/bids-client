@@ -55,7 +55,7 @@ def parse_bids_dir(bids_dir):
     return bids_hierarchy
 
 def handle_project_label(bids_hierarchy, project_label_cli, rootdir,
-                         include_source_data):
+                         include_source_data, subject_label, session_label):
     """ Determines the values for the group_id and project_label information
 
     Below is the expected hierarchy for the 'bids_hiearchy':
@@ -121,6 +121,12 @@ def handle_project_label(bids_hierarchy, project_label_cli, rootdir,
 
     if not include_source_data:
         bids_hierarchy[project_label_cli].pop('sourcedata', None)
+
+    if subject_label and subject_label in bids_hierarchy[project_label_cli]:
+        if session_label and session_label in bids_hierarchy[project_label_cli][subject_label]:
+            bids_hierarchy = {project_label_cli: {'files': [], subject_label: {'files': [], session_label: bids_hierarchy[project_label_cli][subject_label][session_label]}}}
+        else:
+            bids_hierarchy = {project_label_cli: {'files': [], subject_label: bids_hierarchy[project_label_cli][subject_label]}}
 
     return bids_hierarchy, rootdir
 
@@ -936,7 +942,8 @@ def parse_meta_files(fw, files_of_interest):
             logger.info('Do not recognize filetype')
 
 def upload_bids(fw, bids_dir, group_id, project_label=None, hierarchy_type='Flywheel', validate=True,
-                include_source_data=False, local_properties=True, assume_yes=False):
+                include_source_data=False, local_properties=True, assume_yes=False, subject_label=None,
+                session_label=None):
     ### Prep
     # Check directory name - ensure it exists
     validate_dirname(bids_dir)
@@ -946,7 +953,7 @@ def upload_bids(fw, bids_dir, group_id, project_label=None, hierarchy_type='Flyw
     bids_hierarchy = parse_bids_dir(bids_dir)
     # TODO: Determine if project label are present
     bids_hierarchy, rootdir = handle_project_label(bids_hierarchy, project_label, bids_dir,
-                                                   include_source_data)
+                                                   include_source_data, subject_label, session_label)
 
     # Determine if hierarchy is valid BIDS
     if validate:
@@ -971,6 +978,8 @@ def main():
             required=True, help='Group ID on Flywheel instance')
     parser.add_argument('-p', dest='project_label', action='store',
             required=False, default=None, help='Project Label on Flywheel instance')
+    parser.add_argument('--subject', default=None, help='Only upload data from single subject folder (i.e. sub-01)')
+    parser.add_argument('--session', default=None, help='Only upload data from single session fodler (i.e. ses-01)')
     parser.add_argument('--type', dest='hierarchy_type', action='store',
             required=False, default='Flywheel', choices=['BIDS', 'Flywheel'],
             help="Hierarchy to load into, either 'BIDS' or 'Flywheel'")
@@ -986,7 +995,8 @@ def main():
 
     upload_bids(fw, args.bids_dir, args.group_id, project_label=args.project_label,
                 hierarchy_type=args.hierarchy_type, include_source_data=args.source_data,
-                local_properties=args.local_properties, assume_yes=args.yes)
+                local_properties=args.local_properties, assume_yes=args.yes,
+                subject_label=args.subject, session_label=args.session)
 
 if __name__ == '__main__':
     main()
