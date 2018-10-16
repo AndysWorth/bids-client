@@ -243,6 +243,36 @@ class BidsUploadTestCases(unittest.TestCase):
         # Assert rootdir is expected
         self.assertEqual(rootdir_returned, rootdir)
 
+    def test_handle_project_label_subject_not_found(self):
+        """ """
+        # Define inputs
+        bids_hierarchy = {
+                'files': ['CHANGES', 'dataset_description.json'],
+                'code1': {'files': ['debug.py']},
+                'code2': {'files': ['debug.py']},
+                'sub-01': {
+                        'ses-01': {
+                            'files': [],
+                            'anat': {'files': ['test.nii.gz']},
+                            'dwi': {'files': ['test.nii.gz']},
+                            'func': {'files': ['test.nii.gz']}
+                        },
+                        'ses-02': {
+                            'files': [],
+                            'anat': {'files': ['test.nii.gz']},
+                            'dwi': {'files': ['test.nii.gz']},
+                            'func': {'files': ['test.nii.gz']}
+                        }
+                    }
+                }
+        project_label_cli = 'new_project_label'
+        rootdir = '/root/sub-01'
+        # Call function
+        with self.assertRaises(SystemExit) as err:
+            bids_hierarchy_returned, rootdir_returned = upload_bids.handle_project_label(
+                    copy.deepcopy(bids_hierarchy), project_label_cli, rootdir,
+                    False, 'sub-03', None)
+
     def test_handle_project_label_single_subject(self):
         """ """
         # Define inputs
@@ -275,6 +305,35 @@ class BidsUploadTestCases(unittest.TestCase):
         # Assert rootdir is expected
         self.assertEqual(rootdir_returned, '/root')
 
+    def test_handle_project_label_session_not_found(self):
+        """ """
+        # Define inputs
+        bids_hierarchy = {
+                'files': ['CHANGES', 'dataset_description.json'],
+                'code1': {'files': ['debug.py']},
+                'code2': {'files': ['debug.py']},
+                'sub-01': {
+                        'ses-01': {
+                            'files': [],
+                            'anat': {'files': ['test.nii.gz']},
+                            'dwi': {'files': ['test.nii.gz']},
+                            'func': {'files': ['test.nii.gz']}
+                        },
+                        'ses-02': {
+                            'files': [],
+                            'anat': {'files': ['test.nii.gz']},
+                            'dwi': {'files': ['test.nii.gz']},
+                            'func': {'files': ['test.nii.gz']}
+                        }
+                    }
+                }
+        project_label_cli = 'new_project_label'
+        rootdir = '/root/sub-01'
+        # Call function
+        with self.assertRaises(SystemExit) as err:
+            bids_hierarchy_returned, rootdir_returned = upload_bids.handle_project_label(
+                    copy.deepcopy(bids_hierarchy), project_label_cli, rootdir,
+                    False, 'sub-01', 'ses-03')
 
     def test_handle_project_label_single_session(self):
         """ """

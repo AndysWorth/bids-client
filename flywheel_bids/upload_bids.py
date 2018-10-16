@@ -125,8 +125,14 @@ def handle_project_label(bids_hierarchy, project_label_cli, rootdir,
     if subject_label and subject_label in bids_hierarchy[project_label_cli]:
         if session_label and session_label in bids_hierarchy[project_label_cli][subject_label]:
             bids_hierarchy = {project_label_cli: {'files': [], subject_label: {'files': [], session_label: bids_hierarchy[project_label_cli][subject_label][session_label]}}}
+        elif session_label:
+            logger.error('Could not find Session {} in BIDS hierarchy!'.format(session_label))
+            sys.exit(2)
         else:
             bids_hierarchy = {project_label_cli: {'files': [], subject_label: bids_hierarchy[project_label_cli][subject_label]}}
+    elif subject_label:
+        logger.error('Could not find Subject {} in BIDS hierarchy!'.format(subject_label))
+        sys.exit(2)
 
     return bids_hierarchy, rootdir
 
@@ -989,6 +995,10 @@ def main():
             default=True, required=False, help='Prioiritize template default values for BIDS information')
     parser.add_argument('-y', '--yes', action='store_true', help='Assume the answer is yes to all prompts')
     args = parser.parse_args()
+
+    if args.session and not args.subject:
+        logger.error('Cannot only provide session without subject')
+        sys.exit(1)
 
     # Check API key - raises Error if key is invalid
     fw = flywheel.Flywheel(args.api_key)
