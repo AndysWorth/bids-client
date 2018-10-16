@@ -77,7 +77,8 @@ class BidsUploadTestCases(unittest.TestCase):
         # Assert SystemExit raised
         with self.assertRaises(SystemExit) as err:
             upload_bids.handle_project_label(
-                copy.deepcopy(bids_hierarchy), project_label_cli, rootdir, False)
+                copy.deepcopy(bids_hierarchy), project_label_cli, rootdir,
+                False, None, None)
 
     def test_handle_project_label_project_nocli(self):
         """ """
@@ -96,7 +97,8 @@ class BidsUploadTestCases(unittest.TestCase):
         rootdir = '/root'
         # Call function
         bids_hierarchy_returned, rootdir_returned = upload_bids.handle_project_label(
-                copy.deepcopy(bids_hierarchy), project_label_cli, rootdir, False)
+                copy.deepcopy(bids_hierarchy), project_label_cli, rootdir,
+                False, None, None)
         # Assert output is as expected
         self.assertEqual(bids_hierarchy_returned,
                 bids_hierarchy)
@@ -120,7 +122,8 @@ class BidsUploadTestCases(unittest.TestCase):
         rootdir = '/root'
         # Call function
         bids_hierarchy_returned, rootdir_returned = upload_bids.handle_project_label(
-                copy.deepcopy(bids_hierarchy), project_label_cli, rootdir, False)
+                copy.deepcopy(bids_hierarchy), project_label_cli, rootdir,
+                False, None, None)
         # Assert output is as expected
         bids_hierarchy_expected = {
                 'new_project_label': {
@@ -155,8 +158,8 @@ class BidsUploadTestCases(unittest.TestCase):
         # Call function -- assert error raised because project label cannot be determined
         with self.assertRaises(SystemExit) as err:
             bids_hierarchy_returned = upload_bids.handle_project_label(
-                copy.deepcopy(bids_hierarchy), project_label_cli, rootdir, False)
-
+                copy.deepcopy(bids_hierarchy), project_label_cli, rootdir,
+                False, None, None)
     def test_handle_project_label_sub_cli(self):
         """ """
         # Define inputs
@@ -174,7 +177,8 @@ class BidsUploadTestCases(unittest.TestCase):
         rootdir = '/root/sub-01'
         # Call function
         bids_hierarchy_returned, rootdir_returned = upload_bids.handle_project_label(
-                copy.deepcopy(bids_hierarchy), project_label_cli, rootdir, False)
+                copy.deepcopy(bids_hierarchy), project_label_cli, rootdir,
+                False, None, None)
         # Assert output is as expected
         bids_hierarchy_expected = {project_label_cli: bids_hierarchy}
         bids_hierarchy_expected[project_label_cli]['files'] = []
@@ -192,7 +196,8 @@ class BidsUploadTestCases(unittest.TestCase):
         # Assert SystemExit raised
         with self.assertRaises(SystemExit) as err:
             bids_hierarchy_returned = upload_bids.handle_project_label(
-                copy.deepcopy(bids_hierarchy), project_label_cli, rootdir, False)
+                copy.deepcopy(bids_hierarchy), project_label_cli, rootdir,
+                False, None, None)
 
     def test_handle_project_label_sourcedata(self):
         """ """
@@ -221,20 +226,151 @@ class BidsUploadTestCases(unittest.TestCase):
         rootdir = '/root'
         # Call function
         bids_hierarchy_returned, rootdir_returned = upload_bids.handle_project_label(
-                copy.deepcopy(bids_hierarchy), project_label_cli, rootdir, True)
+                copy.deepcopy(bids_hierarchy), project_label_cli, rootdir,
+                True, None, None)
         # Assert output is as expected
         self.assertEqual(bids_hierarchy_returned,
                 bids_hierarchy)
         # Assert rootdir is expected
         self.assertEqual(rootdir_returned, rootdir)
         bids_hierarchy_returned, rootdir_returned = upload_bids.handle_project_label(
-                copy.deepcopy(bids_hierarchy), project_label_cli, rootdir, False)
+                copy.deepcopy(bids_hierarchy), project_label_cli, rootdir,
+                False, None, None)
         # Assert output is as expected
         bids_hierarchy['project_label'].pop('sourcedata')
         self.assertEqual(bids_hierarchy_returned,
                 bids_hierarchy)
         # Assert rootdir is expected
         self.assertEqual(rootdir_returned, rootdir)
+
+    def test_handle_project_label_subject_not_found(self):
+        """ """
+        # Define inputs
+        bids_hierarchy = {
+                'files': ['CHANGES', 'dataset_description.json'],
+                'code1': {'files': ['debug.py']},
+                'code2': {'files': ['debug.py']},
+                'sub-01': {
+                        'ses-01': {
+                            'files': [],
+                            'anat': {'files': ['test.nii.gz']},
+                            'dwi': {'files': ['test.nii.gz']},
+                            'func': {'files': ['test.nii.gz']}
+                        },
+                        'ses-02': {
+                            'files': [],
+                            'anat': {'files': ['test.nii.gz']},
+                            'dwi': {'files': ['test.nii.gz']},
+                            'func': {'files': ['test.nii.gz']}
+                        }
+                    }
+                }
+        project_label_cli = 'new_project_label'
+        rootdir = '/root/sub-01'
+        # Call function
+        with self.assertRaises(SystemExit) as err:
+            bids_hierarchy_returned, rootdir_returned = upload_bids.handle_project_label(
+                    copy.deepcopy(bids_hierarchy), project_label_cli, rootdir,
+                    False, 'sub-03', None)
+
+    def test_handle_project_label_single_subject(self):
+        """ """
+        # Define inputs
+        bids_hierarchy = {
+                'files': ['CHANGES', 'dataset_description.json'],
+                'code1': {'files': ['debug.py']},
+                'code2': {'files': ['debug.py']},
+                'sub-02': {
+                    'files': [],
+                    'anat': {'files': ['test.nii.gz']},
+                    'dwi': {'files': ['test.nii.gz']},
+                    'func': {'files': ['test.nii.gz']}},
+                'sub-01': {
+                    'files': [],
+                    'anat': {'files': ['test.nii.gz']},
+                    'dwi': {'files': ['test.nii.gz']},
+                    'func': {'files': ['test.nii.gz']}}
+                }
+        project_label_cli = 'new_project_label'
+        rootdir = '/root/sub-01'
+        # Call function
+        bids_hierarchy_returned, rootdir_returned = upload_bids.handle_project_label(
+                copy.deepcopy(bids_hierarchy), project_label_cli, rootdir,
+                False, 'sub-02', None)
+        # Assert output is as expected
+        bids_hierarchy_expected = {project_label_cli: {'sub-02': bids_hierarchy['sub-02']}}
+        bids_hierarchy_expected[project_label_cli]['files'] = []
+        self.assertEqual(bids_hierarchy_returned,
+                bids_hierarchy_expected)
+        # Assert rootdir is expected
+        self.assertEqual(rootdir_returned, '/root')
+
+    def test_handle_project_label_session_not_found(self):
+        """ """
+        # Define inputs
+        bids_hierarchy = {
+                'files': ['CHANGES', 'dataset_description.json'],
+                'code1': {'files': ['debug.py']},
+                'code2': {'files': ['debug.py']},
+                'sub-01': {
+                        'ses-01': {
+                            'files': [],
+                            'anat': {'files': ['test.nii.gz']},
+                            'dwi': {'files': ['test.nii.gz']},
+                            'func': {'files': ['test.nii.gz']}
+                        },
+                        'ses-02': {
+                            'files': [],
+                            'anat': {'files': ['test.nii.gz']},
+                            'dwi': {'files': ['test.nii.gz']},
+                            'func': {'files': ['test.nii.gz']}
+                        }
+                    }
+                }
+        project_label_cli = 'new_project_label'
+        rootdir = '/root/sub-01'
+        # Call function
+        with self.assertRaises(SystemExit) as err:
+            bids_hierarchy_returned, rootdir_returned = upload_bids.handle_project_label(
+                    copy.deepcopy(bids_hierarchy), project_label_cli, rootdir,
+                    False, 'sub-01', 'ses-03')
+
+    def test_handle_project_label_single_session(self):
+        """ """
+        # Define inputs
+        bids_hierarchy = {
+                'files': ['CHANGES', 'dataset_description.json'],
+                'code1': {'files': ['debug.py']},
+                'code2': {'files': ['debug.py']},
+                'sub-01': {
+                        'ses-01': {
+                            'files': [],
+                            'anat': {'files': ['test.nii.gz']},
+                            'dwi': {'files': ['test.nii.gz']},
+                            'func': {'files': ['test.nii.gz']}
+                        },
+                        'ses-02': {
+                            'files': [],
+                            'anat': {'files': ['test.nii.gz']},
+                            'dwi': {'files': ['test.nii.gz']},
+                            'func': {'files': ['test.nii.gz']}
+                        }
+                    }
+                }
+        project_label_cli = 'new_project_label'
+        rootdir = '/root/sub-01'
+        # Call function
+        bids_hierarchy_returned, rootdir_returned = upload_bids.handle_project_label(
+                copy.deepcopy(bids_hierarchy), project_label_cli, rootdir,
+                False, 'sub-01', 'ses-02')
+        # Assert output is as expected
+        bids_hierarchy_expected = {project_label_cli: {'sub-01': {'ses-02': bids_hierarchy['sub-01']['ses-02']}}}
+        bids_hierarchy_expected[project_label_cli]['files'] = []
+        bids_hierarchy_expected[project_label_cli]['sub-01']['files'] = []
+        self.assertEqual(bids_hierarchy_returned,
+                bids_hierarchy_expected)
+        # Assert rootdir is expected
+        self.assertEqual(rootdir_returned, '/root')
 
 
     def test_handle_project_label_failure(self):
@@ -269,7 +405,8 @@ class BidsUploadTestCases(unittest.TestCase):
         rootdir = '/root'
         # Call function
         bids_hierarchy_returned, rootdir_returned = upload_bids.handle_project_label(
-                copy.deepcopy(bids_hierarchy), project_label_cli, rootdir, False)
+                copy.deepcopy(bids_hierarchy), project_label_cli, rootdir,
+                False, None, None)
 
     def test_determine_acquisition_label_bids(self):
         """ """
