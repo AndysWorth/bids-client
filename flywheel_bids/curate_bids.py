@@ -249,7 +249,7 @@ def main():
 
     ### Prep
     # Check API key - raises Error if key is invalid
-    fw = flywheel.Flywheel(args.api_key)
+    fw = flywheel.Flywheel(args.api_key, skip_version_check=True)
     # Get project id from label
     if args.project_label:
         project_id = utils.validate_project_label(fw, args.project_label)

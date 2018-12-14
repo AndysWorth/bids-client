@@ -387,6 +387,11 @@
 				}
 			},
 			"initialize": {
+				"Modality": {
+					"acquisition.label": {
+						"$regex": "_(?P<value>T[12]w)"
+					}
+				},
 				"Task": {
 					"acquisition.label": {
 						"$regex": "(^|_)task-(?P<value>[^-_]+)"
@@ -400,7 +405,7 @@
 						]
 					},
 					"$run_counter": {
-						"key": "anat.{file.info.BIDS.Task}"
+						"key": "anat.{file.info.BIDS.Modality}"
 					}
 				}
 			}
