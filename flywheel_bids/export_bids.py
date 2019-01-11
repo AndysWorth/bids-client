@@ -4,6 +4,7 @@ import logging
 import json
 import os
 import re
+import sys
 import zipfile
 
 import flywheel
@@ -495,6 +496,7 @@ def main():
                 dry_run=args.dry_run, container_type=args.container_type, container_id=args.container_id, source_data=args.source_data)
     except utils.BIDSException as bids_exception:
         logger.error(bids_exception)
+        sys.exit(bids_exception.status_code)
 
 if __name__ == '__main__':
     main()
