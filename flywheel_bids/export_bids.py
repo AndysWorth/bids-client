@@ -9,6 +9,7 @@ import zipfile
 import flywheel
 
 from .supporting_files import utils
+from .supporting_files.errors import BIDSExportError
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('bids-exporter')
@@ -27,7 +28,7 @@ def validate_dirname(dirname):
     # Check dirname is a directory
     if not os.path.isdir(dirname):
         logger.error('Path (%s) is not a directory' % dirname)
-        raise utils.BIDSExportError('Path (%s) is not a directory' % dirname)
+        raise BIDSExportError('Path (%s) is not a directory' % dirname)
 
     # Check dirname exists
     if not os.path.exists(dirname):
@@ -274,7 +275,7 @@ def download_bids_dir(fw, container_id, container_type, outdir, src_data=False,
 
         # Check that project is curated
         if not project['info'].get(namespace):
-            raise utils.BIDSExportError('Project {} has not been curated for {}'.format(project.label, namespace))
+            raise BIDSExportError('Project {} has not been curated for {}'.format(project.label, namespace))
 
         logger.info('Processing project files')
         # Iterate over any project files
@@ -416,7 +417,7 @@ def download_bids_dir(fw, container_id, container_type, outdir, src_data=False,
         valid = False
 
     if not valid:
-        raise utils.BIDSExportError('Error mapping files from Flywheel to BIDS')
+        raise BIDSExportError('Error mapping files from Flywheel to BIDS')
 
     download_bids_files(fw, filepath_downloads, dry_run)
 
@@ -432,10 +433,10 @@ def determine_container(fw, project_label, container_type, container_id):
     else:
         if bool(container_id) != bool(container_type):
             logger.error('Did not provide all options necessary to download single container')
-            raise utils.BIDSExportError('Did not provide all options necessary to download single container')
+            raise BIDSExportError('Did not provide all options necessary to download single container')
         elif not project_label:
             logger.error('Project label information not provided')
-            raise utils.BIDSExportError('Project label information not provided')
+            raise BIDSExportError('Project label information not provided')
         # Get project Id from label
         cid = utils.validate_project_label(fw, project_label)
         ctype = 'project'

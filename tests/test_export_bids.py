@@ -9,7 +9,7 @@ import dateutil.parser
 import flywheel
 
 from flywheel_bids import export_bids
-from flywheel_bids.supporting_files.utils import BIDSExportError
+from flywheel_bids.supporting_files.errors import BIDSExportError
 
 class BidsExportTestCases(unittest.TestCase):
 
