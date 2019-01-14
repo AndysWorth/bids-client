@@ -10,6 +10,7 @@ import zipfile
 import flywheel
 
 from .supporting_files import utils
+from .supporting_files.errors import BIDSExportError
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('bids-exporter')
@@ -28,7 +29,7 @@ def validate_dirname(dirname):
     # Check dirname is a directory
     if not os.path.isdir(dirname):
         logger.error('Path (%s) is not a directory' % dirname)
-        sys.exit(1)
+        raise BIDSExportError('Path (%s) is not a directory' % dirname)
 
     # Check dirname exists
     if not os.path.exists(dirname):
@@ -273,6 +274,10 @@ def download_bids_dir(fw, container_id, container_type, outdir, src_data=False,
         # Get project
         project = fw.get_project(container_id)
 
+        # Check that project is curated
+        if not project['info'].get(namespace):
+            raise BIDSExportError('Project {} has not been curated for {}'.format(project.label, namespace))
+
         logger.info('Processing project files')
         # Iterate over any project files
         for f in project.get('files', []):
@@ -413,7 +418,7 @@ def download_bids_dir(fw, container_id, container_type, outdir, src_data=False,
         valid = False
 
     if not valid:
-        sys.exit(1)
+        raise BIDSExportError('Error mapping files from Flywheel to BIDS')
 
     download_bids_files(fw, filepath_downloads, dry_run)
 
@@ -429,10 +434,10 @@ def determine_container(fw, project_label, container_type, container_id):
     else:
         if bool(container_id) != bool(container_type):
             logger.error('Did not provide all options necessary to download single container')
-            sys.exit(1)
+            raise BIDSExportError('Did not provide all options necessary to download single container')
         elif not project_label:
             logger.error('Project label information not provided')
-            sys.exit(1)
+            raise BIDSExportError('Project label information not provided')
         # Get project Id from label
         cid = utils.validate_project_label(fw, project_label)
         ctype = 'project'
@@ -486,8 +491,12 @@ def main():
     # Check API key - raises Error if key is invalid
     fw = flywheel.Flywheel(args.api_key)
 
-    export_bids(fw, args.bids_dir, args.project_label, subjects=args.subjects, sessions=args.sessions, folders=args.folders, replace=args.replace,
-            dry_run=args.dry_run, container_type=args.container_type, container_id=args.container_id, source_data=args.source_data)
+    try:
+        export_bids(fw, args.bids_dir, args.project_label, subjects=args.subjects, sessions=args.sessions, folders=args.folders, replace=args.replace,
+                dry_run=args.dry_run, container_type=args.container_type, container_id=args.container_id, source_data=args.source_data)
+    except utils.BIDSException as bids_exception:
+        logger.error(bids_exception)
+        sys.exit(bids_exception.status_code)
 
 if __name__ == '__main__':
     main()

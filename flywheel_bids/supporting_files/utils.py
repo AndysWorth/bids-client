@@ -15,7 +15,7 @@ BIDS_VALIDATOR_PATH = '/usr/bin/bids-validator'
 
 def validate_bids(dirname):
     """ """
-    if os.path.isfile(BIDS_VALIDATOR_PATH): 
+    if os.path.isfile(BIDS_VALIDATOR_PATH):
         logger.info('Validating BIDS directory')
 
         cmd = [BIDS_VALIDATOR_PATH, dirname]

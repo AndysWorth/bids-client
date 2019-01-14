@@ -9,6 +9,7 @@ import dateutil.parser
 import flywheel
 
 from flywheel_bids import export_bids
+from flywheel_bids.supporting_files.errors import BIDSExportError
 
 class BidsExportTestCases(unittest.TestCase):
 
@@ -42,16 +43,16 @@ class BidsExportTestCases(unittest.TestCase):
         """ Assert function raises error when dirname does not exist"""
         # Define path that does not exist
         dirname = '/pathdoesnotexist'
-        # Assert SystemExit raised
-        with self.assertRaises(SystemExit) as err:
+        # Assert BIDSExportError raised
+        with self.assertRaises(BIDSExportError) as err:
             export_bids.validate_dirname(dirname)
 
     def test_validate_dirname_file(self):
         """ Assert function raises error when file used as an input"""
         # Get filename of the test script
         filename = os.path.abspath(__file__)
-        # Assert SystemExit raised
-        with self.assertRaises(SystemExit) as err:
+        # Assert BIDSExportError raised
+        with self.assertRaises(BIDSExportError) as err:
             export_bids.validate_dirname(filename)
 
     def test_define_path_valid(self):
