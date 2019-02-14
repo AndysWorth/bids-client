@@ -28,8 +28,8 @@ def validate_bids(dirname):
 
         # TODO: Determine if an error should be raised or just a warning
         logger.info('returncode: %d' % returncode)
-        logger.info('stderr: ' + stderr)
-        logger.info('stdout: ' + stdout)
+        logger.info('stderr: ' + str(stderr))
+        logger.info('stdout: ' + str(stdout))
     else:
         logger.warn('Skipping validation, validator is not present')
 

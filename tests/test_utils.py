@@ -77,6 +77,10 @@ class UtilsTestCases(unittest.TestCase):
         ext = utils.get_extension(fname)
         self.assertEqual('.nii.gz', ext)
 
+    def test_validate_bids_error(self):
+        utils.BIDS_VALIDATOR_PATH = '/bin/echo'
+        utils.validate_bids('.')
+
     @unittest.skip("Integration test")
     def test_validate_project_label_invalidproject(self):
         """ Get project that does not exist. Assert function returns None.
