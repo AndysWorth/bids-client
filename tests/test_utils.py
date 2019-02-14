@@ -79,10 +79,7 @@ class UtilsTestCases(unittest.TestCase):
 
     def test_validate_bids_error(self):
         utils.BIDS_VALIDATOR_PATH = '/bin/echo'
-        with self.assertLogs('utils', 'INFO') as cm:
-            utils.validate_bids('.')
-
-        self.assertEqual(len(cm.records), 4)
+        utils.validate_bids('.')
 
     @unittest.skip("Integration test")
     def test_validate_project_label_invalidproject(self):
