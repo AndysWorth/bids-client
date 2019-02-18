@@ -11,6 +11,7 @@ from builtins import input
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('utils')
 
+PROJECT_TEMPLATE_FILE_NAME_REGEX = re.compile('^.*project-template\.json$')
 BIDS_VALIDATOR_PATH = '/usr/bin/bids-validator'
 
 def validate_bids(dirname):
@@ -32,6 +33,12 @@ def validate_bids(dirname):
         logger.info('stdout: ' + str(stdout))
     else:
         logger.warn('Skipping validation, validator is not present')
+
+def find_custom_template(files):
+    for f in files:
+        if PROJECT_TEMPLATE_FILE_NAME_REGEX.search(f['name']):
+            # Don't look for another file that might match
+            return f['name']
 
 def validate_project_label(fw, project_label):
     """ """

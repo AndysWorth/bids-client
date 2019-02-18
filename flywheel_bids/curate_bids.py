@@ -11,8 +11,6 @@ import flywheel
 from .supporting_files import bidsify_flywheel, utils, templates
 from .supporting_files.project_tree import get_project_tree
 
-PROJECT_TEMPLATE_FILE_NAME_REGEX = re.compile('^([a-z0-9]+\-)*project-template\.json$')
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('curate-bids')
 
@@ -144,17 +142,14 @@ def curate_bids_tree(fw, project, reset=False, template_file=None, update=True):
 
     # Check for project file
     if not template_file:
-        for f in project_files:
-            if PROJECT_TEMPLATE_FILE_NAME_REGEX.search(f['name']):
-                fd, path = tempfile.mkstemp('.json')
-                os.close(fd)
+        fd, path = tempfile.mkstemp('.json')
+        os.close(fd)
 
-                logger.info('Using project template: {0}'.format(f['name']))
-                fw.download_file_from_project(project['id'], f['name'], path)
-                template_file = path
-                # Don't look for another file that might match
-                break
-
+        template_filename = utils.find_custom_template(project_files)
+        if template_filename:
+            logger.info('Using project template: {0}'.format(template_filename))
+            fw.download_file_from_project(project['id'], template_filename, path)
+            template_file = path
     if template_file:
         template = templates.loadTemplate(template_file)
 
