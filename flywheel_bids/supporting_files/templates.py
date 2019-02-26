@@ -1,4 +1,5 @@
 import os, os.path, json, re
+import operator
 import jsonschema
 import six
 
@@ -281,16 +282,33 @@ def apply_initializers(initializers, info, context):
 
 
 def handle_switch_initializer(switchDef, context):
+    """Evaluate the switch statement on the context to return value"""
+
+    def switch_regex_case(value, regex_pattern):
+        return bool(re.match(regex_pattern, str(value)))
+
+
     value = utils.dict_lookup(context, switchDef['$on'])
     if isinstance(value, list):
         value = set(value)
 
+    comparators = {
+        '$eq': operator.eq,
+        '$regex': switch_regex_case,
+        '$neq': operator.ne
+    }
+
     for caseDef in switchDef['$cases']:
-        compValue = caseDef.get('$eq')
+        compOperation = None
+        for comparator in comparators.keys():
+            compValue = caseDef.get(comparator)
+            if compValue:
+                compOperation = comparators[comparator]
+                break
         if isinstance(compValue, list):
             compValue = set(compValue)
 
-        if '$default' in caseDef or value == compValue:
+        if '$default' in caseDef or (compOperation and compOperation(value, compValue)):
             return caseDef.get('$value')
 
     return None

@@ -368,6 +368,23 @@
 			"template": "acquisition",
 			"where": {
 				"container_type": "acquisition"
+			},
+			"initialize": {
+				"ignore": {
+					"$switch": {
+						"$on": "acquisition.label",
+						"$cases": [
+							{
+								"$regex": "(^|_)ignore-BIDS",
+								"$value": true
+							},
+							{
+								"$default": true,
+								"$value": false
+							}
+						]
+					}
+				}
 			}
 		},
 		{

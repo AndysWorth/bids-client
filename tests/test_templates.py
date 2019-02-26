@@ -79,6 +79,66 @@ class RuleTestCases(unittest.TestCase):
         rule.initializeProperties(info, context)
         self.assertEqual( info, { 'Property': 'no_match' } )
 
+    def test_rule_initialize_switch_regex(self):
+        rule = templates.Rule({
+            'template': 'test',
+            'where': { 'x': True },
+            'initialize': {
+                'Property': {
+                    '$switch': {
+                        '$on': 'value',
+                        '$cases': [
+                            { '$regex': '^[a-z]_[0-9]$', '$value': 'match1' },
+                            { '$regex': '^[0-9]_[A-Z]$', '$value': 'match2' },
+                            { '$default': True, '$value': 'no_match' }
+                        ]
+                    }
+                }
+            }
+        })
+
+        context = { 'value': 'f_5'}
+        info = { }
+        rule.initializeProperties(info, context)
+        self.assertEqual( info, { 'Property': 'match1' } )
+
+        context = { 'value': '8_U' }
+        info = { }
+        rule.initializeProperties(info, context)
+        self.assertEqual( info, { 'Property': 'match2' } )
+
+        context = { 'value': 'asdf' }
+        info = { }
+        rule.initializeProperties(info, context)
+        self.assertEqual( info, { 'Property': 'no_match' } )
+
+    def test_rule_initialize_switch_neq(self):
+        rule = templates.Rule({
+            'template': 'test',
+            'where': {'x': True},
+            'initialize': {
+                'Property': {
+                    '$switch': {
+                        '$on': 'value',
+                        '$cases': [
+                            { '$neq': 'foo', '$value': 'match1' },
+                            { '$default': True, '$value': 'no_match' }
+                        ]
+                    }
+                }
+            }
+        })
+
+        context = { 'value': 'bar'}
+        info = { }
+        rule.initializeProperties(info, context)
+        self.assertEqual( info, { 'Property': 'match1' } )
+
+        context = { 'value': 'foo' }
+        info = { }
+        rule.initializeProperties(info, context)
+        self.assertEqual( info, { 'Property': 'no_match' } )
+
     def test_rule_initialize_format(self):
         rule = templates.Rule({
             'template': 'test',
