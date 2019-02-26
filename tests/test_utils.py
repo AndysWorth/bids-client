@@ -81,6 +81,26 @@ class UtilsTestCases(unittest.TestCase):
         utils.BIDS_VALIDATOR_PATH = '/bin/echo'
         utils.validate_bids('.')
 
+    def test_no_custom_template(self):
+        files = [{'name': 'alskdfjl.txt'}]
+        template_file = utils.find_custom_template(files)
+        self.assertFalse(bool(template_file))
+
+    def test_find_custom_template(self):
+        files = [
+            {'name': 'alskdjf.txt'},
+            {'name': 'bids-project-template.json'}
+        ]
+        template_file = utils.find_custom_template(files)
+        self.assertEqual(template_file, 'bids-project-template.json')
+
+    def test_find_custom_template_with_caps_and_num(self):
+        files = [
+            {'name': 'BIDSv1-project-template.json'}
+        ]
+        template_file = utils.find_custom_template(files)
+        self.assertEqual(template_file, 'BIDSv1-project-template.json')
+
     @unittest.skip("Integration test")
     def test_validate_project_label_invalidproject(self):
         """ Get project that does not exist. Assert function returns None.
