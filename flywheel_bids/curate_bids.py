@@ -142,11 +142,12 @@ def curate_bids_tree(fw, project, reset=False, template_file=None, update=True):
 
     # Check for project file
     if not template_file:
-        fd, path = tempfile.mkstemp('.json')
-        os.close(fd)
-
         template_filename = utils.find_custom_template(project_files)
+
         if template_filename:
+            fd, path = tempfile.mkstemp('.json')
+            os.close(fd)
+
             logger.info('Using project template: {0}'.format(template_filename))
             fw.download_file_from_project(project['id'], template_filename, path)
             template_file = path
