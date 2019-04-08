@@ -3,11 +3,17 @@ import csv
 import json
 import os
 import shutil
+import tempfile
 import unittest
 
 import flywheel
 
 from flywheel_bids import upload_bids
+
+try:
+    from uniitest import mock
+except ImportError:
+    import mock
 
 class BidsUploadTestCases(unittest.TestCase):
 
@@ -985,6 +991,152 @@ class BidsUploadTestCases(unittest.TestCase):
         self.assertEqual(contents_converted,
                 contents_expected)
 
+    def test_attach_tsv_project(self):
+        fw = mock_attach_tsv('project', [
+            {'id': 's1', 'label': 'ses-01', 'subject': {'code': 'sub-01'}},
+            {'id': 's2', 'label': 'ses-01', 'subject': {'code': 'sub-02'}},
+            {'id': 's3', 'label': 'ses-01', 'subject': {'code': 'sub-03'}},
+            {'id': 's4', 'label': 'ses-01', 'subject': {'code': 'sub-04'}},
+            {'id': 's5', 'label': 'ses-01', 'subject': {'code': 'sub-05'}},
+        ], [
+            ['participant_id', 'sex'],
+            ['sub-01', 'M'],
+            ['sub-03', 'F'],
+        ])
+
+        self.assertEqual(fw.modify_session.call_count, 2)
+        fw.modify_session.assert_any_call('s1', {
+            'subject': {
+                'info': {},
+                'sex': 'male'
+            }
+        })
+        fw.modify_session.assert_any_call('s3', {
+            'subject': {
+                'info': {},
+                'sex': 'female'
+            }
+        })
+
+    def test_attach_tsv_project_with_session(self):
+        fw = mock_attach_tsv('project', [
+            {'id': 's1.1', 'label': 'ses-01', 'subject': {'code': 'sub-01'}},
+            {'id': 's1.2', 'label': 'ses-02', 'subject': {'code': 'sub-01'}},
+            {'id': 's2.1', 'label': 'ses-01', 'subject': {'code': 'sub-02'}},
+            {'id': 's2.2', 'label': 'ses-02', 'subject': {'code': 'sub-02'}},
+        ], [
+            ['participant_id', 'session_id', 'age', 'sex'],
+            ['sub-01', 'ses-01', '23', 'M'],
+            ['sub-01', 'ses-02', '25', 'M'],
+            ['sub-02', 'ses-01', '29', 'F'],
+            ['sub-02', 'ses-02', '33', 'F'],
+        ])
+
+        self.assertEqual(fw.modify_session.call_count, 4)
+        fw.modify_session.assert_any_call('s1.1', {
+            'subject': {
+                'info': {},
+                'sex': 'male',
+                'age': 23 * 31557600
+            }
+        })
+        fw.modify_session.assert_any_call('s1.2', {
+            'subject': {
+                'info': {},
+                'sex': 'male',
+                'age': 25 * 31557600
+            }
+        })
+        fw.modify_session.assert_any_call('s2.1', {
+            'subject': {
+                'info': {},
+                'sex': 'female',
+                'age': 29 * 31557600
+            }
+        })
+        fw.modify_session.assert_any_call('s2.2', {
+            'subject': {
+                'info': {},
+                'sex': 'female',
+                'age': 33 * 31557600
+            }
+        })
+
+
+    def test_attach_tsv_subject(self):
+        fw = mock_attach_tsv('subject', [
+            {'id': 's1.1', 'label': 'ses-01', 'subject': {'code': 'sub-01'}},
+            {'id': 's1.2', 'label': 'ses-02', 'subject': {'code': 'sub-01'}},
+        ], [
+            ['session', 'age'],
+            ['ses-01', '37'],
+            ['ses-02', '39'],
+        ])
+
+        self.assertEqual(fw.modify_session.call_count, 2)
+        fw.modify_session.assert_any_call('s1.1', {
+            'info': {},
+            'age': 37 * 31557600
+        })
+        fw.modify_session.assert_any_call('s1.2', {
+            'info': {},
+            'age': 39 * 31557600
+        })
+
+    def test_attach_tsv_session(self):
+        fw = mock_attach_tsv('session', [
+            {'id': 'acq1', 'files': [{'name': 'sub-control01_task-nback_bold.nii.gz'}]},
+            {'id': 'acq2', 'files': [{'name': 'garbage.dcm'}, {'name': 'sub-control01_task-motor_bold.nii.gz'}]},
+        ], [
+            ['filename', 'acq_time'],
+            ['func/sub-control01_task-nback_bold.nii.gz', '1877-06-15T13:45:30'],
+            ['func/sub-control01_task-motor_bold.nii.gz', '1889-06-15T13:55:33'],
+        ])
+
+        self.assertEqual(fw.set_acquisition_file_info.call_count, 2)
+        fw.set_acquisition_file_info.assert_any_call('acq1', 'sub-control01_task-nback_bold.nii.gz',
+            {'acq_time': '1877-06-15T13:45:30'})
+        fw.set_acquisition_file_info.assert_any_call('acq2', 'sub-control01_task-motor_bold.nii.gz',
+            {'acq_time': '1889-06-15T13:55:33'})
+
+
+def write_tsv(rows):
+    csv_out = tempfile.NamedTemporaryFile(mode='w', suffix='.tsv')
+    writer = csv.writer(csv_out, dialect='excel-tab')
+    writer.writerows(rows)
+    csv_out.flush()
+    return csv_out
+
+def mock_attach_tsv(container_type, containers, tsv_rows):
+    fw = mock.MagicMock()
+
+    def wrap(d):
+        m = mock.MagicMock()
+        m.to_dict.return_value = d
+        return m
+    cont_results = [wrap(cont) for cont in containers]
+
+    if container_type == 'project':
+        fw.get_project_sessions.return_value = cont_results
+    elif container_type == 'subject':
+        fw.get_subject_sessions.return_value = cont_results
+    else:
+        fw.get_session_acquisitions.return_value = cont_results
+
+    tsv_file = tempfile.NamedTemporaryFile(mode='w', suffix='.tsv')
+    writer = csv.writer(tsv_file, dialect='excel-tab')
+    writer.writerows(tsv_rows)
+    tsv_file.flush()
+
+    file_info = {
+        'id_type': container_type,
+        'id': container_type + '_id',
+        'full_filename': tsv_file.name
+    }
+
+    upload_bids.attach_tsv(fw, file_info)
+
+    return fw
 
 
 if __name__ == "__main__":

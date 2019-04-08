@@ -15,6 +15,8 @@ from .supporting_files import bidsify_flywheel, classifications, utils
 from .supporting_files.templates import BIDS_TEMPLATE as template
 
 
+SECONDS_PER_YEAR = (86400 * 365.25)
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('bids-uploader')
 
@@ -181,6 +183,35 @@ def handle_project(fw, group_id, project_label, assume_yes):
 
     return project.to_dict()
 
+
+def handle_subject(fw, project_id, subject_code):
+    """Returns a Flywheel subject based on project_id and subject_code"""
+    # Get all subjects
+    existing_subjects = fw.get_project_subjects(project_id)
+    # Determine if subject_name within project project_id already exists, with same subject_name...
+    found = False
+    for es in existing_subjects:
+        if (es['code'] == subject_code):
+            logger.info('Subject (%s) was found. Adding data to existing subject.' % subject_code)
+            # Session exists
+            subject = es
+            found = True
+            break
+    # If subject does not exist, create new subject
+    if not found:
+        logger.info('Subject (%s) not found. Creating new subject for %s.' % (subject_code, project_id))
+
+        subject_id = fw.add_subject({
+            'code': subject_code,
+            'label': subject_code,
+            'project': project_id
+        })
+        subject = fw.get_subject(subject_id)
+
+    return subject.to_dict()
+
+
+
 def handle_session(fw, project_id, session_name, subject_name):
     """ Returns a Flywheel session based on project_id and session_label
 
@@ -246,6 +277,15 @@ def upload_project_file(fw, context, full_fname):
     proj = fw.get_project(context['project']['id']).to_dict()
     # Return project file object
     return proj['files'][-1]
+
+def upload_subject_file(fw, context, full_fname):
+    """"""
+    # Upload file
+    fw.upload_file_to_subject(context['subject']['id'], full_fname)
+    # Get project
+    subj = fw.get_subject(context['subject']['id']).to_dict()
+    # Return project file object
+    return subj['files'][-1]
 
 def upload_session_file(fw, context, full_fname):
     """"""
@@ -392,6 +432,8 @@ def handle_subject_folder(fw, context, files_of_interest, subject, rootdir, sub_
         sessions = ['ses-']
         subject = {'ses-': subject}
 
+    context['subject'] = handle_subject(fw, context['project']['id'], subject_code)
+
     ## Iterate over subject files
     # NOTE: Attaching files to project instead of subject....
     subject_files = subject.get('files')
@@ -403,16 +445,25 @@ def handle_subject_folder(fw, context, files_of_interest, subject, rootdir, sub_
             ### Upload file
             # define full filename
             full_fname = os.path.join(rootdir, subject_code, fname)
+
             # Don't upload sidecars
             if ('.json' in fname):
                 files_of_interest[fname] = {
-                        'id': context['project']['id'],
-                        'id_type': 'project',
+                        'id': context['subject']['id'],
+                        'id_type': 'subject',
                         'full_filename': full_fname
                         }
                 continue
+            if fname == ('%s_sessions.tsv' % subject_code):
+                files_of_interest[fname] = {
+                        'id': context['subject']['id'],
+                        'id_type': 'subject',
+                        'full_filename': full_fname
+                        }
+                continue
+
             # Upload project file ## TODO: once subjects are containers, add new method to upload to subject
-            context['file'] = upload_project_file(fw, context, full_fname)
+            context['file'] = upload_subject_file(fw, context, full_fname)
             # Update the context for this file
             context['container_type'] = 'file'
             context['parent_container_type'] = 'project' # TODO: once subjects are containers, change this to 'subject'
@@ -422,18 +473,8 @@ def handle_subject_folder(fw, context, files_of_interest, subject, rootdir, sub_
             # Update the meta info files w/ BIDS info from the filename...
             full_path = os.path.join(sub_rootdir, subject_code)
             meta_info = fill_in_properties(context, full_path, local_properties)
-            # Upload the meta info onto the project file
-            fw.set_project_file_info(context['project']['id'], fname, meta_info)
-
-            # Check if any subject files are of interest (to be parsed later)
-            #   interested in _sessions files and JSON files
-            val = '%s_sessions.tsv' % subject_code
-            if (fname == val) or ('.json' in fname):
-                files_of_interest[fname] = {
-                        'id': context['project']['id'],
-                        'id_type': 'project',
-                        'full_filename': full_fname
-                        }
+            # Upload the meta info onto the subject file
+            fw.set_subject_file_info(context['subject']['id'], fname, meta_info)
 
     ### Iterate over sessions
     for session_label in sessions:
@@ -841,6 +882,7 @@ def parse_tsv(filename):
 
     return contents
 
+
 def attach_tsv(fw, file_info):
     ## Parse TSV file
     contents = parse_tsv(file_info['full_filename'])
@@ -848,65 +890,95 @@ def attach_tsv(fw, file_info):
     ## Attach TSV file contents
     #Get headers of the TSV file
     headers = contents[0]
+
+    # Normalize session
+    if headers and headers[0] == 'session':
+        headers[0] = 'session_id'
+
     tsvdata = contents[1:]
-    # Define keys for the info dict
-    keys = headers[1:]
 
-    # Get all sessions within project_id
+    info_rows = [dict(zip(headers, row)) for row in tsvdata]
+
     if file_info['id_type'] == 'project':
-        # Get sessions within project
-        sessions = [s.to_dict() for s in fw.get_project_sessions(file_info['id'])]
-        # Iterate over sessions
-        for ses in sessions:
-            # Iterate over all values within TSV -- see if it matches
-            for row in tsvdata:
-                # Get values for the specific subject
-                values = row[1:]
-                # Create dict
-                info_object = dict(zip(keys, values))
-                # If it is a session label
-                if row[0] == ses['label']:
-                    session_info = {'info': info_object}
-                # If it is a subject code
-                elif row[0] == ses['subject']['code']:
-                    session_info = {'subject': {'info': {}}}
-                    # Iterate over subject info object
-                    #   if a known field, (age, sex, etc) do not place in 'info' object
-                    for key in info_object:
-                        # If key is age, convert from years to seconds
-                        if key == 'age':
-                            session_info['subject'][key] = int(info_object[key] * 31536000)
-                        elif key in ['first name', 'last name', 'sex', 'race', 'ethnicity']:
-                            session_info['subject'][key] = info_object[key]
-                        else:
-                            session_info['subject']['info'][key] = info_object[key]
-                else:
-                    continue
-                # Modify session
-                fw.modify_session(ses['id'], session_info)
+        attach_project_tsv(fw, file_info['id'], info_rows)
+    elif file_info['id_type'] == 'subject':
+        attach_subject_tsv(fw, file_info['id'], info_rows)
+    if file_info['id_type'] == 'session':
+        attach_session_tsv(fw, file_info['id'], info_rows)
 
-    # Else id_type is 'session' and we get acquisitions
-    else:
-        # Get all acquisitions within session
-        acquisitions = [a.to_dict() for a in fw.get_session_acquisitions(file_info['id'])]
-        # Iterate over all acquisitions within session
+
+def attach_project_tsv(fw, project_id, info_rows):
+    # Get sessions within project
+    sessions = [s.to_dict() for s in fw.get_project_sessions(project_id)]
+    sessions_by_code = {}
+
+    for ses in sessions:
+        code = ses['subject']['code']
+        sessions_by_code.setdefault(code, []).append(ses)
+
+    # Iterate over participants
+    for row in info_rows:
+        sessions = sessions_by_code.get(row['participant_id'], [])
+        for ses in sessions:
+            # If they supplied a session_id, we can verify
+            have_session_id = 'session_id' in row
+            if have_session_id and row['session_id'] != ses['label']:
+                continue
+
+            session_info = {'subject': {'info': {}}}
+            for key, value in row.items():
+                # If key is age, convert from years to seconds
+                if key == 'age':
+                    if not have_session_id and len(sessions) > 1:
+                        logger.warning('Setting subject age on session in a longitudinal study!')
+                    session_info['subject'][key] = int(value * SECONDS_PER_YEAR)
+                elif key in ['first name', 'last name', 'sex', 'race', 'ethnicity']:
+                    session_info['subject'][key] = value
+                elif key not in ('participant_id', 'session_id'):
+                    session_info['subject']['info'][key] = value
+
+            fw.modify_session(ses['id'], session_info)
+
+
+def attach_subject_tsv(fw, subject_id, info_rows):
+    # Get sessions within subject
+    sessions = [s.to_dict() for s in fw.get_subject_sessions(subject_id)]
+
+    for row in info_rows:
+        for ses in sessions:
+            if row['session_id'] != ses['label']:
+                continue
+
+            session_info = {'info': {}}
+            for key, value in row.items():
+                if key == 'age':
+                    session_info[key] = int(value * SECONDS_PER_YEAR)
+                elif key != 'session_id':
+                    session_info['info'][key] = value
+
+            fw.modify_session(ses['id'], session_info)
+
+
+def attach_session_tsv(fw, session_id, info_rows):
+    """Attach info to acquisition files."""
+    # Get all acquisitions within session
+    acquisitions = [a.to_dict() for a in fw.get_session_acquisitions(session_id)]
+    # Iterate over all acquisitions within session
+    for row in info_rows:
+        # Get filename from within tsv
+        #     format is 'func/<filename>'
+        filename = row.pop('filename').split('/')[-1]
+
         for acq in acquisitions:
             # Get files within acquisitions
             for f in acq['files']:
                 # Iterate over all values within TSV -- see if it matches the file
-                for row in tsvdata:
-                    # Get filename from within tsv
-                    #     format is 'func/<filename>'
-                    filename = row[0].split('/')[-1]
 
                     # If file in acquisiton matches file in TSV file, add file info
                     if filename == f['name']:
-                        # Get values for the specific subject
-                        values = row[1:]
-                        # Create dict
-                        info_object = dict(zip(keys, values))
                         # Modify acquisition file
-                        fw.set_acquisition_file_info(acq['id'], filename, info_object)
+                        fw.set_acquisition_file_info(acq['id'], filename, row)
+
 
 def parse_meta_files(fw, files_of_interest):
     """
