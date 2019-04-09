@@ -455,7 +455,7 @@ def handle_subject_folder(fw, context, files_of_interest, subject, rootdir, sub_
                         }
                 continue
 
-            # Upload project file ## TODO: once subjects are containers, add new method to upload to subject
+            # Upload subject file
             context['file'] = upload_subject_file(fw, context, full_fname)
             # Update the context for this file
             context['container_type'] = 'file'
