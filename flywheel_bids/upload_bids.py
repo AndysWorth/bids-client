@@ -447,14 +447,7 @@ def handle_subject_folder(fw, context, files_of_interest, subject, rootdir, sub_
             full_fname = os.path.join(rootdir, subject_code, fname)
 
             # Don't upload sidecars
-            if ('.json' in fname):
-                files_of_interest[fname] = {
-                        'id': context['subject']['id'],
-                        'id_type': 'subject',
-                        'full_filename': full_fname
-                        }
-                continue
-            if fname == ('%s_sessions.tsv' % subject_code):
+            if '.json' in fname or fname == ('%s_sessions.tsv' % subject_code):
                 files_of_interest[fname] = {
                         'id': context['subject']['id'],
                         'id_type': 'subject',

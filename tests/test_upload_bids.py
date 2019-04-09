@@ -11,7 +11,7 @@ import flywheel
 from flywheel_bids import upload_bids
 
 try:
-    from uniitest import mock
+    from unittest import mock
 except ImportError:
     import mock
 
